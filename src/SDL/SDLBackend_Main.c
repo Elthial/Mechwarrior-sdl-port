@@ -5,6 +5,7 @@
 #include "mechwarrior/dos_files.h"
 #include "mechwarrior/launcher.h"
 #include "mechwarrior/campaign_startup.h"
+#include "mechwarrior/combat_startup.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -136,6 +137,8 @@ bool MwSdlInitialize(const char *gameDirectory,const char *captureDirectory)
     if (!MwSdlInitializeVideo(captureDirectory) || !MwSdlInitializeAudio()) {MwSdlShutdown();return false;}
     MwSdlInitializeTimer();MwSdlInitializeInput();
     MwSdlInitializeCombatHardware();
+    mwMusicHardware.readInterruptVector=btechHostGetInterruptVector;
+    mwMusicHardware.writeInterruptVector=btechHostSetInterruptVector;
     if (!MwSdlInitializeCombatProcess(gameDirectory)) {MwSdlShutdown();return false;}
     mwHostValidateFileDestination=ValidateFileDestination;
     mwCampaignPlatform=(MwCampaignPlatformCalls){AllocateParagraphs,LoadOverlay,
@@ -150,9 +153,8 @@ bool MwSdlInitialize(const char *gameDirectory,const char *captureDirectory)
 int MwSdlRunCampaign(void)
 {
     if (!initialized) MwSdlFail("Host not initialized");
-    /* Same command-tail scan as MW.EXE: first digit1=EGA, first letterS=speaker.
-     * Host currently exposes only this configured adapter/audio slice. */
-    static const uint8_t commandTail[]={'1','S'};
+    /* Keep MW.EXE's original graphics/audio command-tail selection. */
+    const uint8_t commandTail[]={'1',mwSdlSoundSystem==MW_SOUND_MT32?'R':'S'};
     MwLauncherCommandLine commandLine={commandTail,sizeof(commandTail)};
     return MwLauncherMain(&commandLine);
 }

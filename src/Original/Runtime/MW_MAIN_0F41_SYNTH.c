@@ -2,14 +2,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* This conversion supports the native PC-speaker callback targets only.
- * Writable dispatch words stay observable. Other code targets are unsupported
- * execution, never silently replaced by the speaker or a successful no-op. */
+/* Writable native callback identities stay observable; synthesis lives below
+ * the original byte/register outputs, not in a replacement host sequencer. */
 
 /* MW_MAIN0F41:0B3C..0B45. */
 uint16_t MwProbeMusicBackend(MwCampaignAudioBackend *backend)
 {
-    if (!backend || backend->probeOffset!=0x0EE4) abort();
+    if (!backend) abort();
+    if (backend->probeOffset==0x0912) return MwProbeMpuBackend();
+    if (backend->probeOffset!=0x0EE4) abort();
     return MwProbeSpeakerBackend();
 }
 
@@ -19,19 +20,34 @@ void MwSelectAndInitializeMidiBackend(MwCampaignAudioBackend *backend)
 {
     if (selectedAudioBackend)
     {
-        if (selectedAudioBackend->shutdownOffset!=0x0F01) abort();
-        MwShutdownSpeakerBackend();
+        if (selectedAudioBackend->shutdownOffset==0x098A) MwDrainAndShutdownMpuBackend();
+        else if (selectedAudioBackend->shutdownOffset==0x0F01) MwShutdownSpeakerBackend();
+        else abort();
     }
     selectedAudioBackend=backend;
     if (!backend) abort();
     uint16_t timerRate=backend->timerRateShift;
     uint16_t timerTarget=backend->timerOffset;
-    if (backend->initializeOffset!=0x0EE8) abort();
-    MwInitializeSpeakerBackend();
-    backend->selectedVoiceCount=backend->voiceCapacity;
+    if (backend->initializeOffset==0x0946)
+    {
+        MwInitializeMpuUartBackend();
+        /* 0B6C uses BX left by DOS GET VECTOR, NOT the selected descriptor.
+         * The existing host's zero saved-vector identity aliases this header.
+         * Do not silently set MPU selectedVoiceCount to voiceCapacity instead. */
+        uint16_t previousOffset=(uint16_t)mpuPreviousIrq;
+        if ((uint32_t)previousOffset+0x17>=sizeof(musicRuntimeHeader)) abort();
+        musicRuntimeHeader[previousOffset+0x17]=musicRuntimeHeader[previousOffset+3];
+    }
+    else
+    {
+        if (backend->initializeOffset!=0x0EE8) abort();
+        MwInitializeSpeakerBackend();
+        backend->selectedVoiceCount=backend->voiceCapacity;
+    }
     MwResetMidiParserState(MIDI_RESET_PARSER_ENTRY);
-    if (timerTarget!=0x0F73) abort();
-    MwTimerSetCallback(MUSIC_TIMER_FAST_SLOT,MwTickSpeakerVoices,timerRate);
+    if (timerTarget==0x09D0) MwTimerSetCallback(MUSIC_TIMER_FAST_SLOT,MwTickMpuTransmitQueue,timerRate);
+    else if (timerTarget==0x0F73) MwTimerSetCallback(MUSIC_TIMER_FAST_SLOT,MwTickSpeakerVoices,timerRate);
+    else abort();
 }
 
 /* MW_MAIN0F41:0B80..0B9F. */
@@ -39,8 +55,9 @@ void MwShutdownMusicBackend(void)
 {
     if (selectedAudioBackend)
     {
-        if (selectedAudioBackend->shutdownOffset!=0x0F01) abort();
-        MwShutdownSpeakerBackend();
+        if (selectedAudioBackend->shutdownOffset==0x098A) MwDrainAndShutdownMpuBackend();
+        else if (selectedAudioBackend->shutdownOffset==0x0F01) MwShutdownSpeakerBackend();
+        else abort();
     }
     selectedAudioBackend=NULL;
     MwTimerSetCallback(MUSIC_TIMER_FAST_SLOT,NULL,0);
@@ -49,7 +66,7 @@ void MwShutdownMusicBackend(void)
 /* MW_MAIN0F41:0BA0..0BAD. PC hook deliberately ignores the full input WORD. */
 uint16_t MwSendMidiByteToSelectedBackend(uint16_t midiWord)
 {
-    (void)midiWord;
+    if (selectedAudioBackend && selectedAudioBackend->rawByteOffset==0x09A4) return MwQueueMpuByte(midiWord);
     if (!selectedAudioBackend || selectedAudioBackend->rawByteOffset!=0x0F0A) abort();
     return MwIgnoreSpeakerRawMidiByte();
 }
@@ -397,8 +414,9 @@ void MwResetMidiParserState(uint16_t entryOffset)
     }
     if (!selectedAudioBackend) abort();
     selectedAudioBackend->voicePoolOffset=MIDI_VOICES_OFFSET;
-    if (selectedAudioBackend->initializeVoicesOffset!=0x0F4F) abort();
-    MwInitializeSpeakerVoiceRouting();
+    if (selectedAudioBackend->initializeVoicesOffset==0x09CB) (void)MwQueueMpuByte(0xFF);
+    else if (selectedAudioBackend->initializeVoicesOffset==0x0F4F) MwInitializeSpeakerVoiceRouting();
+    else abort();
 }
 
 /* MW_MAIN0F41:0EE4..0EE7. Native unconditional success, no hardware probe. */

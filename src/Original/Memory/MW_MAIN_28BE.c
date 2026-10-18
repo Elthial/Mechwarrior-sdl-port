@@ -15,6 +15,11 @@ MwMidiVoicePool audioVoicePool;
 MwMidiChannel audioChannels[MIDI_CHANNEL_RECORDS],audioDummyChannel;
 MwMidiSysexWorkspace midiSysex;
 MwCampaignAudioBackend *selectedAudioBackend;
+MwCampaignAudioBackend mpuBackend;
+uint8_t mpuTransmitQueue[MIDI_MPU_QUEUE_CAPACITY];
+volatile uint16_t mpuQueueWriteIndex,mpuQueueReadIndex,mpuQueueByteCount;
+uint32_t mpuPreviousIrq;
+uint8_t musicRuntimeHeader[0x42];
 uint16_t midiByteHandlerDisplacement,midiDispatchChannel,midiFirstDataByte,midiControllerValue;
 uint16_t midiByteHandlers[14];
 
@@ -25,7 +30,14 @@ bool MwImportCampaignMusicData(const uint8_t *data,size_t byteCount)
     uint16_t hostEndian=1;
     if (!data || byteCount<0x0A12 || *(uint8_t *)&hostEndian!=1) return false;
     uint16_t backendOffset=MwReadNativeWord(data,0x03F8);
-    if (backendOffset && backendOffset!=MIDI_SPEAKER_BACKEND_OFFSET) return false;
+    if (backendOffset && backendOffset!=MIDI_SPEAKER_BACKEND_OFFSET && backendOffset!=MIDI_MPU_BACKEND_OFFSET) return false;
+    for (size_t i=0;i<sizeof(musicRuntimeHeader);++i) musicRuntimeHeader[i]=data[i];
+    for (size_t i=0;i<sizeof(mpuBackend);++i) ((uint8_t *)&mpuBackend)[i]=data[MIDI_MPU_BACKEND_OFFSET+i];
+    for (size_t i=0;i<sizeof(mpuTransmitQueue);++i) mpuTransmitQueue[i]=data[0x0224+i];
+    mpuQueueWriteIndex=MwReadNativeWord(data,0x0324);
+    mpuQueueReadIndex=MwReadNativeWord(data,0x0326);
+    mpuQueueByteCount=MwReadNativeWord(data,0x0328);
+    mpuPreviousIrq=(uint32_t)MwReadNativeWord(data,0x0220)|((uint32_t)MwReadNativeWord(data,0x0222)<<16);
     midiTickDenominator=MwReadNativeWord(data,0x0042);
     midiTickNumerator=MwReadNativeWord(data,0x0044);
     midiTickRemainder=MwReadNativeWord(data,0x0046);
@@ -57,6 +69,6 @@ bool MwImportCampaignMusicData(const uint8_t *data,size_t byteCount)
     for (size_t i=0;i<sizeof(audioChannels);++i) ((uint8_t *)audioChannels)[i]=data[0x04C6+i];
     for (size_t i=0;i<sizeof(audioDummyChannel);++i) ((uint8_t *)&audioDummyChannel)[i]=data[0x0646+i];
     for (size_t i=0;i<sizeof(midiSysex);++i) ((uint8_t *)&midiSysex)[i]=data[0x07CE+i];
-    selectedAudioBackend=backendOffset?&speakerBackend:NULL;
+    selectedAudioBackend=backendOffset==MIDI_MPU_BACKEND_OFFSET?&mpuBackend:backendOffset?&speakerBackend:NULL;
     return true;
 }

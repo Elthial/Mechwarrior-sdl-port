@@ -34,6 +34,9 @@ typedef struct MwMusicHardwareCalls
     void (*writeIrq0Handler)(MwMusicTimerHandler handler);
     void (*writePort)(uint16_t port,uint8_t value);
     uint8_t (*readPort)(uint16_t port);
+    void (*waitForInterrupt)(void);
+    uint32_t (*readInterruptVector)(uint8_t interrupt);
+    void (*writeInterruptVector)(uint8_t interrupt,uint32_t vector);
 } MwMusicHardwareCalls;
 extern MwMusicHardwareCalls mwMusicHardware;
 extern uint16_t timerClockLow,timerClockHigh;
@@ -78,7 +81,8 @@ enum { MIDI_VOICE_CAPACITY=11, MIDI_CHANNEL_RECORDS=48,
     MIDI_VOICES_OFFSET=0x0400, MIDI_CHANNELS_OFFSET=0x04C6,
     MIDI_DUMMY_CHANNEL_OFFSET=0x0646, MIDI_INSTRUMENTS_OFFSET=0x064E,
     MIDI_INSTRUMENT_BYTES=0x0C, MIDI_SYSEX_BUFFER_OFFSET=0x07CE,
-    MIDI_SPEAKER_BACKEND_OFFSET=0x07FC, MIDI_DRUM_CHANNEL_BIT=0x40,
+    MIDI_SPEAKER_BACKEND_OFFSET=0x07FC, MIDI_MPU_BACKEND_OFFSET=0x01EE,
+    MIDI_MPU_QUEUE_CAPACITY=256, MIDI_DRUM_CHANNEL_BIT=0x40,
     MIDI_DRUM_CHANNEL_FIRST=16, MIDI_DRUM_CHANNEL_COUNT=32,
     SPEAKER_SILENT_PERIOD=0x0014, SPEAKER_FIRST_NOTE=14,
     SPEAKER_PERIOD_WORDS=242, SPEAKER_ROTATION_TICKS=2 };
@@ -156,6 +160,17 @@ extern MwMidiVoicePool audioVoicePool;
 extern MwMidiChannel audioChannels[MIDI_CHANNEL_RECORDS],audioDummyChannel;
 extern MwMidiSysexWorkspace midiSysex;
 extern MwCampaignAudioBackend *selectedAudioBackend;
+extern MwCampaignAudioBackend mpuBackend;
+extern uint8_t mpuTransmitQueue[MIDI_MPU_QUEUE_CAPACITY];
+extern volatile uint16_t mpuQueueWriteIndex,mpuQueueReadIndex,mpuQueueByteCount;
+extern uint32_t mpuPreviousIrq;
+extern uint8_t musicRuntimeHeader[0x42];
+uint16_t MwProbeMpuBackend(void);
+void MwInitializeMpuUartBackend(void);
+void MwDrainAndShutdownMpuBackend(void);
+uint16_t MwQueueMpuByte(uint16_t midiWord);
+void MwTickMpuTransmitQueue(void);
+void MwMpuReceiveInterrupt(void);
 extern uint16_t midiByteHandlerDisplacement,midiDispatchChannel,midiFirstDataByte,midiControllerValue;
 extern uint16_t midiByteHandlers[14];
 #define audioVoiceListHead audioVoiceList.fromHead.head.nextOffset

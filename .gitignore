@@ -57,6 +57,8 @@
 *.ovl
 *.raw
 *.pcm
+*.rom
+*.ROM
 # Only the explicitly inventoried documentation illustrations are publishable.
 *.png
 *.jpg

@@ -1,4 +1,5 @@
 #include "SDLBackend.h"
+#include "mechwarrior/audio_devices.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,7 +12,8 @@
 static SDL_AudioStream *speakerStream;
 static SDL_Mutex *speakerQueueMutex;
 enum { SPEAKER_QUEUE_FRAMES=0x4000,SPEAKER_START_LEAD_FRAMES=0x0800 };
-static float speakerQueue[SPEAKER_QUEUE_FRAMES];
+static float speakerQueue[SPEAKER_QUEUE_FRAMES][2];
+static uint32_t outputChannels=1;
 static uint64_t generatedFrames,playbackFrames,lateFrames,underrunFrames;
 static uint64_t audioStartedNanoseconds,clockSkippedFrames;
 static uint32_t playbackLeadFrames;
@@ -20,7 +22,7 @@ static uint32_t speakerDivisor;
 static uint8_t speakerControl,periodLow;
 static bool highByteNext,counting;
 static double audioTime,speakerPhase,sampleCycles,sampleIntegral;
-static float queuedSamples[256];
+static float queuedSamples[512];
 static uint32_t queuedCount;
 void (*mwSdlAudioObserver)(const float *samples,uint32_t count);
 
@@ -46,29 +48,38 @@ static void SDLCALL FeedSpeaker(void *unused,SDL_AudioStream *stream,int additio
         playbackFrames = currentFrame;
     }
     SDL_UnlockMutex(speakerQueueMutex);
-    float samples[256];
+    float samples[512];
     while (additionalBytes>0)
     {
-        uint32_t count=(uint32_t)additionalBytes/sizeof(float);
+        uint32_t count=(uint32_t)additionalBytes/(sizeof(float)*outputChannels);
         if (count>256) count=256;
         if (!count) return;
         SDL_LockMutex(speakerQueueMutex);
         for (uint32_t index=0;index<count;++index)
         {
-            if (leadFrames) {samples[index]=0;--leadFrames;continue;}
-            if (playbackFrames<generatedFrames) samples[index]=speakerQueue[playbackFrames%SPEAKER_QUEUE_FRAMES];
-            else {samples[index]=0;++underrunFrames;}
+            for (uint32_t channel=0;channel<outputChannels;++channel)
+                samples[index*outputChannels+channel]=!leadFrames && playbackFrames<generatedFrames
+                    ?speakerQueue[playbackFrames%SPEAKER_QUEUE_FRAMES][channel]:0;
+            if (leadFrames) {--leadFrames;continue;}
+            if (playbackFrames>=generatedFrames) ++underrunFrames;
             ++playbackFrames;
         }
         SDL_UnlockMutex(speakerQueueMutex);
-        if (!SDL_PutAudioStreamData(stream,samples,(int)(count*sizeof(float)))) MwSdlFail("Feed speaker PCM");
-        additionalBytes-=(int)(count*sizeof(float));
+        if (!SDL_PutAudioStreamData(stream,samples,(int)(count*sizeof(float)*outputChannels))) MwSdlFail("Feed audio PCM");
+        additionalBytes-=(int)(count*sizeof(float)*outputChannels);
     }
 }
 
 bool MwSdlInitializeAudio(void)
 {
-    SDL_AudioSpec format={SDL_AUDIO_F32,1,HOST_AUDIO_SAMPLE_RATE};
+    outputChannels=mwSdlSoundSystem==MW_SOUND_MT32?2:1;
+    if (mwSdlSoundSystem==MW_SOUND_MT32)
+    {
+        char error[1024];
+        if (!MwMt32Open(mwSdlMt32ControlRom,mwSdlMt32PcmRom,HOST_AUDIO_SAMPLE_RATE,error,sizeof(error)))
+            return SDL_SetError("%s",error);
+    }
+    SDL_AudioSpec format={SDL_AUDIO_F32,(int)outputChannels,HOST_AUDIO_SAMPLE_RATE};
     speakerQueueMutex=SDL_CreateMutex();
     if (!speakerQueueMutex) return false;
     generatedFrames=playbackFrames=lateFrames=underrunFrames=clockSkippedFrames=0;leadFrames=SPEAKER_START_LEAD_FRAMES;
@@ -114,11 +125,19 @@ void MwSdlAdvanceAudio(double pitTime)
         audioTime+=duration;sampleCycles+=duration;
         if (sampleCycles>=cyclesPerSample-1e-8)
         {
-            queuedSamples[queuedCount++]=(float)(0.15*sampleIntegral/cyclesPerSample);
+            float speaker=(float)(0.15*sampleIntegral/cyclesPerSample);
+            if (mwSdlSoundSystem==MW_SOUND_MT32)
+            {
+                MwMt32Render(&queuedSamples[queuedCount*outputChannels],1);
+                queuedSamples[queuedCount*outputChannels]+=speaker;
+                queuedSamples[queuedCount*outputChannels+1]+=speaker;
+            }
+            else queuedSamples[queuedCount]=speaker;
+            ++queuedCount;
             sampleCycles=sampleIntegral=0;
             if (queuedCount==256)
             {
-                if (mwSdlAudioObserver) mwSdlAudioObserver(queuedSamples,queuedCount);
+                if (mwSdlAudioObserver) mwSdlAudioObserver(queuedSamples,queuedCount*outputChannels);
                 SDL_LockMutex(speakerQueueMutex);
                 for (uint32_t index=0;index<queuedCount;++index,++generatedFrames)
                 {
@@ -128,7 +147,8 @@ void MwSdlAdvanceAudio(double pitTime)
                         SDL_UnlockMutex(speakerQueueMutex);
                         MwSdlFail("Speaker producer advanced beyond bounded timeline");
                     }
-                    speakerQueue[generatedFrames%SPEAKER_QUEUE_FRAMES]=queuedSamples[index];
+                    for (uint32_t channel=0;channel<outputChannels;++channel)
+                        speakerQueue[generatedFrames%SPEAKER_QUEUE_FRAMES][channel]=queuedSamples[index*outputChannels+channel];
                 }
                 SDL_UnlockMutex(speakerQueueMutex);
                 queuedCount=0;
@@ -162,7 +182,7 @@ uint32_t MwSdlQueuedAudioMilliseconds(void)
     SDL_LockMutex(speakerQueueMutex);
     uint64_t pending=leadFrames+(generatedFrames>playbackFrames?generatedFrames-playbackFrames:0);
     SDL_UnlockMutex(speakerQueueMutex);
-    return (uint32_t)((pending+(uint32_t)bytes/sizeof(float))*1000/HOST_AUDIO_SAMPLE_RATE);
+    return (uint32_t)((pending+(uint32_t)bytes/(sizeof(float)*outputChannels))*1000/HOST_AUDIO_SAMPLE_RATE);
 }
 uint64_t MwSdlLateAudioFrames(void)
 {SDL_LockMutex(speakerQueueMutex);uint64_t frames=lateFrames;SDL_UnlockMutex(speakerQueueMutex);return frames;}
@@ -175,4 +195,5 @@ void MwSdlShutdownAudio(void)
     if (speakerStream) SDL_DestroyAudioStream(speakerStream);
     speakerStream=NULL;
     SDL_DestroyMutex(speakerQueueMutex);speakerQueueMutex=NULL;
+    MwMt32Close();
 }

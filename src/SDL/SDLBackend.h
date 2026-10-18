@@ -5,6 +5,12 @@
 #include "mechwarrior/launcher.h"
 #include <SDL3/SDL.h>
 enum { HOST_PIT_CLOCK_HZ=1193182,HOST_AUDIO_SAMPLE_RATE=48000 };
+typedef enum MwHostSoundSystem {MW_SOUND_SPEAKER,MW_SOUND_MT32} MwHostSoundSystem;
+extern MwHostSoundSystem mwSdlSoundSystem;
+extern char mwSdlMt32ControlRom[4096],mwSdlMt32PcmRom[4096];
+void MwMpuReset(void);
+void MwMpuWritePort(uint16_t port,uint8_t value);
+uint8_t MwMpuReadPort(uint16_t port);
 /* Captured DOS machine profile, shared by physical aliases and first-fit MCBs. */
 enum { HOST_DOS_COMBAT_CODE_SELECTOR=0x0956 };
 _Noreturn void MwSdlFail(const char *operation);

@@ -10,9 +10,10 @@ int16_t MwRunCampaignProgram(const MwCampaignLaunch *launch,uint8_t audioCode)
 {
     /* Original A/a, R/r and T/t select other backends. Do not silently fall
      * back to PC or claim their probes/side effects have been implemented. */
-    if (audioCode=='A' || audioCode=='a' || audioCode=='R' || audioCode=='r'
+    if (audioCode=='A' || audioCode=='a'
         || audioCode=='T' || audioCode=='t') abort();
     MwCampaignAudioBackend *backend=&speakerBackend;
+    if (audioCode=='R' || audioCode=='r') backend=&mpuBackend;
     MwInstallMusicTimer();
     MwTimerSetCallback(1,MwTickMidiTrack,0);
     MwTimerSetCallback(3,MwTickMidiTrack,0);
