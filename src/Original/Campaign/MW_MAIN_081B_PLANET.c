@@ -52,7 +52,7 @@ uint16_t MwEnterCampaignPlanetHub(uint16_t entryOffset)
     MwResetRepairAttemptFailures();
     MwShowPendingNotifications();
     campaignEventDispatchReturnContinuation=CAMPAIGN_CONTINUE_HUB_MENU;
-    uint16_t transfer=MwDispatchCampaignEvents(0,0x6236);
+    uint16_t transfer=MwDispatchCampaignEvents(0,CAMPAIGN_CALL_DISPATCH_EVENTS);
     if (transfer) return transfer;
     campaignEventDispatchReturnContinuation=0;
 selectHubMenu:

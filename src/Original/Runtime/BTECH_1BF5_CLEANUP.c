@@ -16,16 +16,16 @@ void BtechShutdownPlatformHandlers(void)
 /*1BF5:00EA. FF means no saved adapter, not a request to force mode03. */
 void BtechRestoreTextVideoMode(void)
 {
-    if (videoAdapter!=0xFF) BtechSetBiosTextModeAndAdapterBits(videoAdapter);
+    if (videoAdapter!=VIDEO_ADAPTER_UNSAVED) BtechSetBiosTextModeAndAdapterBits(videoAdapter);
 }
 
 /*1BF5:0287. Native BIOS equipment BYTE has two ordered read/modify/writes. */
 void BtechSetBiosTextModeAndAdapterBits(uint16_t displayBits)
 {
     if (!btechHostReadBiosByte || !btechHostWriteBiosByte || !btechHostSetVideoMode) abort();
-    btechHostWriteBiosByte(BIOS_VIDEO_EQUIPMENT,btechHostReadBiosByte(BIOS_VIDEO_EQUIPMENT)&0xCF);
-    btechHostWriteBiosByte(BIOS_VIDEO_EQUIPMENT,btechHostReadBiosByte(BIOS_VIDEO_EQUIPMENT)|(uint8_t)(displayBits<<4));
-    btechHostSetVideoMode(3);
+    btechHostWriteBiosByte(BIOS_VIDEO_EQUIPMENT,btechHostReadBiosByte(BIOS_VIDEO_EQUIPMENT)&BIOS_EQUIPMENT_CLEAR_DISPLAY_BITS);
+    btechHostWriteBiosByte(BIOS_VIDEO_EQUIPMENT,btechHostReadBiosByte(BIOS_VIDEO_EQUIPMENT)|(uint8_t)(displayBits<<BIOS_EQUIPMENT_DISPLAY_SHIFT));
+    btechHostSetVideoMode(BIOS_TEXT_MODE_80_COLUMN);
 }
 
 /*1BF5:2C8D. Flag clears before discarding queued BIOS keys and restoring IVT. */
@@ -56,8 +56,8 @@ void BtechRestoreTimerScheduler(void)
     btechHostSetInterrupts(0);
     btechHostWritePort(PIT_CONTROL_PORT,PIT_MODE_3_LOW_HIGH);
     btechHostWritePort(PIT_CHANNEL_ZERO_PORT,0);btechHostWritePort(PIT_CHANNEL_ZERO_PORT,0);
-    btechHostWritePort(PIC_MASK_PORT,0x28);
-    btechHostSetInterruptVector(8,savedTimerVector);
+    btechHostWritePort(PIC_MASK_PORT,COMBAT_PIC_DEVICE_MASK);
+    btechHostSetInterruptVector(TIMER_INTERRUPT,savedTimerVector);
     runtimeDelayActive=0;
     btechHostSetInterrupts(1);
 }
@@ -71,6 +71,6 @@ void BtechDeactivateDivideErrorHook(void)
     if (!btechHostSetInterrupts || !btechHostGetInterruptVector) abort();
     btechHostSetInterrupts(0);
     (void)savedDivideErrorVector;
-    (void)btechHostGetInterruptVector(0);
+    (void)btechHostGetInterruptVector(DIVIDE_ERROR_INTERRUPT);
     btechHostSetInterrupts(1);
 }

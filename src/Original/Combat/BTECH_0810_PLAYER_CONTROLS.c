@@ -16,7 +16,8 @@ enum { PLAYER_THROTTLE_STEP=4,PLAYER_GROUND_TURN_STEP=0x80,PLAYER_GROUND_TURN_LI
     PLAYER_PPC_SOUND=4,PLAYER_JUMP_SOUND=14,PLAYER_JUMP_SOUND_PRIORITY=15,
     PLAYER_RECOVERY_ROLL_BOUND=12,PLAYER_RECOVERY_ROLL_THRESHOLD=5,
     PLAYER_ZOOM_MINIMUM=7,PLAYER_ZOOM_MAXIMUM=9,PLAYER_RADAR_RANGE_MINIMUM=7,PLAYER_RADAR_RANGE_MAXIMUM=10,
-    PLAYER_HUD_COLOUR_MASK=0x0F,PLAYER_ENGINE_DISABLED_HITS=3 };
+    PLAYER_HUD_COLOUR_MASK=0x0F,PLAYER_ENGINE_DISABLED_HITS=3,
+    PLAYER_MECH_TARGET_INDEX_MASK=0x07,PLAYER_QUARTER_SIGN_EXTENSION=0xC000 };
 
 /* Apply cockpit commands to the player's BattleMech, accounting for ammunition,
  * heat, jump charge and weapon selection before converging throttle and aim.
@@ -64,7 +65,7 @@ void BtechProcessPlayerControls(void)
         }
         break;
     case COMBAT_KEY_E:
-        if (!cockpitFullRedrawPending && (playerTargetSlot&7) && !playerMechState->sensorHits)
+        if (!cockpitFullRedrawPending && (playerTargetSlot&PLAYER_MECH_TARGET_INDEX_MASK) && !playerMechState->sensorHits)
             combatDispatchState=PLAYER_SCREEN_TARGET_INSPECTION;
         break;
     case COMBAT_KEY_R:
@@ -79,7 +80,7 @@ void BtechProcessPlayerControls(void)
         if (unitControls[0].movementMode==MOVEMENT_MODE_FALLEN_POSE
             && playerMechState->currentInternalStructure[COMBAT_BODY_LEFT_LEG]
             && playerMechState->currentInternalStructure[COMBAT_BODY_RIGHT_LEG]
-            && playerMechState->actuatorCondition[2] && playerMechState->actuatorCondition[3])
+            && playerMechState->actuatorCondition[COMBAT_ACTUATOR_LEFT_LEG] && playerMechState->actuatorCondition[COMBAT_ACTUATOR_RIGHT_LEG])
             unitControls[0].animationRequestFlags=(int16_t)BtechRandomBelowBound(PLAYER_RECOVERY_ROLL_BOUND)<PLAYER_RECOVERY_ROLL_THRESHOLD
                 ?ANIMATION_REQUEST_RECOVER:ANIMATION_REQUEST_FAILED_RECOVERY;
         break;
@@ -232,17 +233,17 @@ dampTurn:
         }
         if (playerMechState->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
         int16_t limit=(int16_t)(uint16_t)(mechTemplates[playerMechState->templateIndex].maximumSpeedScale-heatSpeedPenalties[0]);
-        int16_t actuator=(int16_t)playerMechState->actuatorCondition[2];
-        if (actuator>(int16_t)playerMechState->actuatorCondition[3]) actuator=(int16_t)playerMechState->actuatorCondition[3];
+        int16_t actuator=(int16_t)playerMechState->actuatorCondition[COMBAT_ACTUATOR_LEFT_LEG];
+        if (actuator>(int16_t)playerMechState->actuatorCondition[COMBAT_ACTUATOR_RIGHT_LEG]) actuator=(int16_t)playerMechState->actuatorCondition[COMBAT_ACTUATOR_RIGHT_LEG];
         uint16_t product=(uint16_t)((int32_t)limit*actuator),sign=(int16_t)product<0?UINT16_MAX:0;
         uint16_t magnitude=(uint16_t)((product^sign)-sign);
         /* SAR of signed8000 remains negative; use unsigned sign extension. */
-        uint16_t quarter=(magnitude>>2)|((magnitude&0x8000)?0xC000:0);
+        uint16_t quarter=(magnitude>>2)|((magnitude&NATIVE_WORD_SIGN_BIT)?PLAYER_QUARTER_SIGN_EXTENSION:0);
         limit=(int16_t)(uint16_t)((quarter^sign)-sign);
         if (directions&COMBAT_DIRECTION_DOWN)
         {
             uint16_t reverse=(uint16_t)(limit-(limit<0?UINT16_MAX:0));
-            reverse=(reverse>>1)|((reverse&0x8000)?0x8000:0);
+            reverse=(reverse>>1)|((reverse&NATIVE_WORD_SIGN_BIT)?NATIVE_WORD_SIGN_BIT:0);
             int16_t reverseLimit=(int16_t)(uint16_t)(0-reverse),requested=(int16_t)(uint16_t)(forward-PLAYER_THROTTLE_STEP);
             requestedPlayerForwardStepScale=(uint16_t)(requested<reverseLimit?reverseLimit:requested);
             if (directions&COMBAT_DIRECTION_LEFT) turn=(int16_t)(uint16_t)(turn-PLAYER_GROUND_TURN_STEP);
@@ -261,7 +262,7 @@ dampTurn:
         if (!(directions&(COMBAT_DIRECTION_LEFT|COMBAT_DIRECTION_RIGHT))) motion->orientationSteps[2]=0;
         else
         {
-            int16_t turnMagnitude=(uint16_t)turn==0x8000?INT16_MAX:turn<0?-turn:turn;
+            int16_t turnMagnitude=(uint16_t)turn==NATIVE_WORD_SIGN_BIT?INT16_MAX:turn<0?-turn:turn;
             if (turnMagnitude<PLAYER_GROUND_TURN_LIMIT) motion->orientationSteps[2]=turn;
         }
     }
@@ -305,16 +306,16 @@ aiming:;
         aimPitch=(int16_t)playerMechState->aimPitch;
         torsoHeading=(int16_t)torso->orientationC;
         int16_t target=(int16_t)requestedAimPitch;
-        int16_t step=(uint16_t)(aimPitch-target)==0x8000?INT16_MAX:(int16_t)(uint16_t)(aimPitch<target?target-aimPitch:aimPitch-target);
+        int16_t step=(uint16_t)(aimPitch-target)==NATIVE_WORD_SIGN_BIT?INT16_MAX:(int16_t)(uint16_t)(aimPitch<target?target-aimPitch:aimPitch-target);
         if (step>PLAYER_AIM_STEP) step=PLAYER_AIM_STEP;
         playerMechState->aimPitch=(uint16_t)(aimPitch+(aimPitch>target?-step:step));
         target=(int16_t)requestedTorsoAngle;
-        step=(uint16_t)(torsoHeading-target)==0x8000?INT16_MAX:(int16_t)(uint16_t)(torsoHeading<target?target-torsoHeading:torsoHeading-target);
+        step=(uint16_t)(torsoHeading-target)==NATIVE_WORD_SIGN_BIT?INT16_MAX:(int16_t)(uint16_t)(torsoHeading<target?target-torsoHeading:torsoHeading-target);
         if (step>PLAYER_TORSO_STEP) step=PLAYER_TORSO_STEP;
         torso->orientationC=(uint16_t)(torsoHeading+(torsoHeading>target?-step:step));
     }
     int16_t forward=motion->forwardStepScale,target=(int16_t)requestedPlayerForwardStepScale;
-    int16_t step=(uint16_t)(forward-target)==0x8000?INT16_MAX:(int16_t)(uint16_t)(forward<target?target-forward:forward-target);
+    int16_t step=(uint16_t)(forward-target)==NATIVE_WORD_SIGN_BIT?INT16_MAX:(int16_t)(uint16_t)(forward<target?target-forward:forward-target);
     if (step>PLAYER_THROTTLE_STEP) step=PLAYER_THROTTLE_STEP;
     motion->forwardStepScale=(int16_t)(uint16_t)(forward+(forward>target?-step:step));
     if (!playerMechState->currentInternalStructure[COMBAT_BODY_LEFT_LEG] || !playerMechState->currentInternalStructure[COMBAT_BODY_RIGHT_LEG])

@@ -10,7 +10,7 @@
  *2DE2 is the folded post-event entry, not a second game procedure. */
 uint16_t MwEnterMechServiceMenuContinuation(uint16_t entryOffset)
 {
-    if (entryOffset==0x2DE2) goto showServicePanel;
+    if (entryOffset==CAMPAIGN_CONTINUE_MECH_COMPLEX_EVENT_RETURN) goto showServicePanel;
     if (entryOffset!=CAMPAIGN_CONTINUE_MECH_COMPLEX) abort();
     hubSelectedRecordIndex=MECH_COMPLEX_HUB_ROW;
     ownedUnitListSelectedRow=0;
@@ -22,8 +22,8 @@ uint16_t MwEnterMechServiceMenuContinuation(uint16_t entryOffset)
     if (unitInspectionContextCode==MECH_COMPLEX_FIRST_VISIT)
     {
         unitInspectionContextCode=MECH_COMPLEX_REVIEW_CONTEXT;
-        campaignEventDispatchReturnContinuation=0x2DE2;
-        uint16_t transfer=MwDispatchCampaignEvents(MECH_COMPLEX_EVENT_CLASS,0x6236);
+        campaignEventDispatchReturnContinuation=CAMPAIGN_CONTINUE_MECH_COMPLEX_EVENT_RETURN;
+        uint16_t transfer=MwDispatchCampaignEvents(MECH_COMPLEX_EVENT_CLASS,CAMPAIGN_CALL_DISPATCH_EVENTS);
         if (transfer) return transfer;
         campaignEventDispatchReturnContinuation=0;
     }
@@ -56,7 +56,7 @@ void MwAnimateMechServiceIdle(void)
  * entryOffset transports that shared label, not a native pushed argument. */
 uint16_t MwPurchaseSelectedMarketUnit(uint16_t entryOffset)
 {
-    if (entryOffset==0x475A) goto purchaseFinished;
+    if (entryOffset==CAMPAIGN_CONTINUE_MECH_PURCHASE_FINISHED) goto purchaseFinished;
     uint32_t purchasePrice=((uint32_t)unitTransactionPriceHigh<<NATIVE_WORD_BITS)|unitTransactionPriceLow;
     uint32_t funds=((uint32_t)campaignFundsHigh<<NATIVE_WORD_BITS)|campaignFundsLow;
     if (purchasePrice>funds)
@@ -195,7 +195,7 @@ uint16_t MwOpenMarketMechComponentInspectionCallback(void)
         row->display.colour=tier==0?REPAIR_CONDITION_HEALTHY_COLOUR:REPAIR_CONDITION_DAMAGED_COLOUR;
         strcpy(row->caption.text+REPAIR_COMPONENT_LABEL_COLUMNS,campaignDamageTierLabels[tier]);
     } while (--mountsRemaining!=0);
-    done->x=REPAIR_DONE_X;done->y=DEALER_COMPONENT_DONE_Y;done->activateCodeOffset=0x43E0;
+    done->x=REPAIR_DONE_X;done->y=DEALER_COMPONENT_DONE_Y;done->activateCodeOffset=CAMPAIGN_CONTINUE_MARKET_COMPONENT_INSPECTION_RETURN;
     kind=selectedMarketUnitKind;
     marketComponentPanel.lineCount=unitWeaponCounts[kind]+DEALER_COMPONENT_FIXED_LINES;
     EgaFillDisplayPageRectangle(REPAIR_PANEL_X,REPAIR_PANEL_Y,REPAIR_PANEL_WIDTH,REPAIR_PANEL_HEIGHT,MECH_DETAIL_BACKGROUND);
@@ -208,13 +208,13 @@ uint16_t MwOpenMarketMechComponentInspectionCallback(void)
  * extract the picture/specification/ammo fallthroughs into new procedures. */
 uint16_t MwDrawMarketMechDetailContinuation(uint16_t entryOffset)
 {
-    if (entryOffset==0x43EB) goto marketStatus;
-    if (entryOffset==0x43E0)
+    if (entryOffset==CAMPAIGN_CONTINUE_MARKET_MECH_STATUS) goto marketStatus;
+    if (entryOffset==CAMPAIGN_CONTINUE_MARKET_COMPONENT_INSPECTION_RETURN)
     {
         EgaSelectFont(TEXT_PANEL_COMPACT_FONT);
         goto marketStatus; /* Native POP at43E0 is represented by caller transport. */
     }
-    if (entryOffset!=0x4379)
+    if (entryOffset!=CAMPAIGN_CONTINUE_MARKET_DETAIL_KEEP_BACKGROUND)
     {
         EgaSelectFont(TEXT_PANEL_COMPACT_FONT);
         EgaClearDrawPage(MECH_DETAIL_BACKGROUND);
@@ -299,7 +299,7 @@ purchasePrice:
 /* MW_MAIN081B:2DF4..2E06. Genuine near initializer also used by empty dealer. */
 void MwInitializeMechServiceIdle(void)
 {
-    uiIdleCodeOffset=0x35E3;
+    uiIdleCodeOffset=CAMPAIGN_CALLBACK_MECH_SERVICE_IDLE;
     mechServiceNextAnimationTick=campaignTimerTicks;
     mechServiceAnimationByteOffset=0;
 }
@@ -330,7 +330,7 @@ uint16_t MwOpenMarketMechList(void)
     {
         MwUiRecord *record=&marketUnitListMenu.records[row];
         record->upRecordIndex=previousRow++;record->downRecordIndex=nextRow++;
-        record->activateCodeOffset=0x4317;
+        record->activateCodeOffset=CAMPAIGN_CALLBACK_SELECT_MARKET_MECH;
     }
     MwUiRecord *done=&marketUnitListMenu.records[(uint8_t)marketUnitCount];
     done->downRecordIndex=0;done->activateCodeOffset=CAMPAIGN_CONTINUE_MECH_COMPLEX;

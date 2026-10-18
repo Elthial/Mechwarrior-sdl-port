@@ -413,7 +413,7 @@ beginDebrief:
     }
 postCombatEvents:
     campaignEventDispatchReturnContinuation=CAMPAIGN_CONTINUE_PLANET_HUB;
-    continuation=MwDispatchCampaignEvents(6,0x6236);
+    continuation=MwDispatchCampaignEvents(6,CAMPAIGN_CALL_DISPATCH_EVENTS);
     if (!continuation)
     {campaignEventDispatchReturnContinuation=0;continuation=CAMPAIGN_CONTINUE_PLANET_HUB;}
     goto resumeCampaign;

@@ -10,7 +10,7 @@
 uint16_t MwRepairSelectedMechComponentCallback(void)
 {
     repairMenuSelectedCategory=selectedUiRecordIndex;
-    uiSelectionChangedCodeOffset=0x3DF3;
+    uiSelectionChangedCodeOffset=CAMPAIGN_CALLBACK_REFRESH_COMPONENT_QUOTE;
     uint16_t slotProduct=(uint8_t)selectedOwnedUnitSlot*CAMPAIGN_DAMAGE_BYTES;
     CampaignUnitDamage *damage=&ownedUnitDamage[(uint8_t)selectedOwnedUnitSlot];
     uint8_t *damagedComponent=(uint8_t *)damage+selectedUiRecordIndex;
@@ -209,7 +209,7 @@ uint16_t MwOpenMechComponentRepairMenuCallback(void)
         repairWeaponConditionRows[mount].display.y=y;
         MwUiRecord *record=&componentRepairUiRecords[REPAIR_FIRST_WEAPON+mount];
         record->x=REPAIR_WEAPON_MENU_X;record->y=y;
-        record->activateCodeOffset=0x3EE8;
+        record->activateCodeOffset=CAMPAIGN_CALLBACK_REPAIR_MECH_COMPONENT;
         y+=REPAIR_WEAPON_ROW_HEIGHT;
     }
     uint8_t previous=REPAIR_BODY,next=REPAIR_FIRST_WEAPON+1;
@@ -252,7 +252,7 @@ uint16_t MwOpenMechComponentRepairMenuCallback(void)
     componentRepairPanel.lineCount=unitWeaponCounts[kind]+REPAIR_FIRST_WEAPON+3;
     EgaFillDisplayPageRectangle(REPAIR_PANEL_X,REPAIR_PANEL_Y,REPAIR_PANEL_WIDTH,REPAIR_PANEL_HEIGHT,MECH_DETAIL_BACKGROUND);
     MwDrawDescriptorTextPanel(&componentRepairPanel);
-    uiSelectionChangedCodeOffset=0x3DF3;
+    uiSelectionChangedCodeOffset=CAMPAIGN_CALLBACK_REFRESH_COMPONENT_QUOTE;
     uint32_t funds=((uint32_t)campaignFundsHigh<<NATIVE_WORD_BITS)|campaignFundsLow;
     ++numericGroupingEnabled;
     MwDrawSignedDecimalField(funds,REPAIR_FUNDS_X,1,0,REPAIR_CONDITION_HEALTHY_COLOUR,MECH_DETAIL_BACKGROUND,REPAIR_FUNDS_Y);
@@ -461,7 +461,7 @@ uint16_t MwOpenOwnedMechList(void)
     {
         ownedUnitListUiRecords[row].upRecordIndex=previousRow++;
         ownedUnitListUiRecords[row].downRecordIndex=nextRow++;
-        ownedUnitListUiRecords[row].activateCodeOffset=0x3021;
+        ownedUnitListUiRecords[row].activateCodeOffset=CAMPAIGN_CALLBACK_SELECT_OWNED_MECH;
     }
     MwUiRecord *done=&ownedUnitListUiRecords[(uint8_t)ownedUnitCount];
     done->downRecordIndex=0;

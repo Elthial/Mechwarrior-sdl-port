@@ -227,7 +227,7 @@ uint16_t MwSelectTravelDestinationContinuation(uint16_t planetIndex)
  * browser cancellation and marker-boundary paths. */
 uint16_t MwEnterTravelMapMenuContinuation(void)
 {
-    uiSelectionChangedCodeOffset=0x598A;
+    uiSelectionChangedCodeOffset=CAMPAIGN_CALLBACK_SELECT_TRAVEL_MAP_PLANET;
     uint16_t selectionTransfer=MwSelectUiRecordTable(travelMapSelection,&travelMapMenu);
     return selectionTransfer!=0?selectionTransfer:CAMPAIGN_CONTINUE_UI;
 }
@@ -311,7 +311,7 @@ uint16_t MwOpenTravelScreenContinuation(void)
  * because both are shared native continuations, not application return values. */
 uint16_t MwSearchTravelPlanetContinuation(void)
 {
-    uiSelectionChangedCodeOffset=0x598A;
+    uiSelectionChangedCodeOffset=CAMPAIGN_CALLBACK_SELECT_TRAVEL_MAP_PLANET;
     EgaFillDisplayPageRectangle(TRAVEL_SEARCH_X,TRAVEL_SEARCH_Y,
         TRAVEL_SEARCH_WIDTH,TRAVEL_SEARCH_HEIGHT,TRAVEL_SEARCH_BACKGROUND);
     uint16_t transfer=MwReadCampaignTextInput(TRAVEL_SEARCH_X,TRAVEL_SEARCH_Y,
@@ -455,7 +455,7 @@ uint16_t MwConfirmPlanetTravelContinuation(void)
 {
     if (travelDestinationPlanetIndex==currentPlanetIndex)
     {
-        uiSelectionChangedCodeOffset=0x598A;
+        uiSelectionChangedCodeOffset=CAMPAIGN_CALLBACK_SELECT_TRAVEL_MAP_PLANET;
         return 0;
     }
     uint32_t funds=((uint32_t)campaignFundsHigh<<NATIVE_WORD_BITS)|campaignFundsLow;
@@ -468,7 +468,7 @@ uint16_t MwConfirmPlanetTravelContinuation(void)
         MwTextPanelReturn result=MwShowMonospaceTextPanel(0x0010,0x0010,0x0019,6,&message,0);
         if (result.discardReturnWord) abort();
         MwDrawTravelMarker();
-        uiSelectionChangedCodeOffset=0x598A;
+        uiSelectionChangedCodeOffset=CAMPAIGN_CALLBACK_SELECT_TRAVEL_MAP_PLANET;
         return 0;
     }
     funds-=quote;

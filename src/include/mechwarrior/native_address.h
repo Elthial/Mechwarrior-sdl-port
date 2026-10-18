@@ -4,7 +4,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-enum { NATIVE_SEGMENT_BYTE_COUNT = 0x10000, NATIVE_SELECTOR_COUNT = 0x10000 };
+enum { NATIVE_SEGMENT_BYTE_COUNT = 0x10000, NATIVE_SELECTOR_COUNT = 0x10000,
+    NATIVE_WORD_SIGN_BIT = 0x8000 };
 
 /* Zero-copy native BYTE window. Named text storage need not be padded into
  * a second64K data segment merely to preserve a wrapping near cursor. */

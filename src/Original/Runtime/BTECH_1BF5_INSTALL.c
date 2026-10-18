@@ -25,7 +25,7 @@ uint16_t BtechRegisterTimerCallback(BtechTimerCallback callback,uint16_t period)
 uint16_t BtechUnregisterTimerCallback(uint16_t callbackHandle)
 {
     --callbackHandle;
-    if ((uint8_t)callbackHandle&0xF0) return 0;
+    if ((uint8_t)callbackHandle&COMBAT_SCHEDULER_INVALID_SLOT_BITS) return 0;
     if (!btechHostSetInterrupts) abort();
     btechHostSetInterrupts(0);
     schedulerActiveSlots&=(uint16_t)~(1u<<(uint8_t)callbackHandle);
@@ -39,7 +39,7 @@ uint16_t BtechUnregisterTimerCallback(uint16_t callbackHandle)
 void BtechTimerSchedulerInterrupt(void)
 {
     uint16_t remaining=runtimeDelayRemaining-1;
-    runtimeDelayRemaining=remaining^((remaining&0x8000)?UINT16_MAX:0);
+    runtimeDelayRemaining=remaining^((remaining&NATIVE_WORD_SIGN_BIT)?UINT16_MAX:0);
     uint16_t pendingSlots=schedulerActiveSlots;
     for (uint16_t slot=0;pendingSlots;++slot,pendingSlots>>=1)
     {
@@ -72,7 +72,7 @@ void BtechTimerSchedulerInterrupt(void)
 int16_t BtechProbePcjrTandyRomSignatures(void)
 {
     if (!btechHostReadRomByte) abort();
-    if (btechHostReadRomByte(0xF000,0xFFFE)==0xFF && btechHostReadRomByte(0xF000,0xC000)==0x21)
+    if (btechHostReadRomByte(BIOS_ROM_SELECTOR,BIOS_MODEL_OFFSET)==BIOS_PCJR_MODEL_BYTE && btechHostReadRomByte(BIOS_ROM_SELECTOR,TANDY_ROM_SIGNATURE_OFFSET)==TANDY_ROM_SIGNATURE_BYTE)
         pcjrTandyCompatible=1;
     return (int8_t)pcjrTandyCompatible;
 }
@@ -118,8 +118,8 @@ void BtechInstallDivideErrorHandler(void)
 {
     if (!btechHostGetInterruptVector || !btechHostSetInterruptVector || !btechHostSetInterrupts) abort();
     divideErrorHookMarkedActive=1;
-    savedDivideErrorVector=btechHostGetInterruptVector(0);
-    btechHostSetInterrupts(0);btechHostSetInterruptVector(0,0x1BF51F4A);btechHostSetInterrupts(1);
+    savedDivideErrorVector=btechHostGetInterruptVector(DIVIDE_ERROR_INTERRUPT);
+    btechHostSetInterrupts(0);btechHostSetInterruptVector(DIVIDE_ERROR_INTERRUPT,BTECH_DIVIDE_HANDLER_VECTOR);btechHostSetInterrupts(1);
 }
 
 /*1BF5:2540. JG is SIGNED: high-bit periods are accepted. Zero/positive>FF
@@ -131,8 +131,8 @@ void BtechInstallTimerScheduler(uint16_t period)
     schedulerActiveSlots=0;
     BtechProbePcjrTandyRomSignatures();
     if (!btechHostGetInterruptVector) abort();
-    savedTimerVector=btechHostGetInterruptVector(8);
-    if ((int16_t)period>0xFF || !period) return;
+    savedTimerVector=btechHostGetInterruptVector(TIMER_INTERRUPT);
+    if ((int16_t)period>COMBAT_SCHEDULER_MAX_POSITIVE_PERIOD || !period) return;
     schedulerPeriod=period;schedulerCountdown=period;
     pitChannel0DivisorShadow=UINT16_MAX/period;
     if (!btechHostSetInterrupts || !btechHostWritePort || !btechHostSetInterruptVector) abort();
@@ -140,7 +140,7 @@ void BtechInstallTimerScheduler(uint16_t period)
     btechHostWritePort(PIT_CONTROL_PORT,PIT_MODE_3_LOW_HIGH);
     btechHostWritePort(PIT_CHANNEL_ZERO_PORT,(uint8_t)pitChannel0DivisorShadow);
     btechHostWritePort(PIT_CHANNEL_ZERO_PORT,(uint8_t)(pitChannel0DivisorShadow>>8));
-    btechHostWritePort(PIC_MASK_PORT,0x28);
-    btechHostSetInterruptVector(8,0x1BF525E2);
+    btechHostWritePort(PIC_MASK_PORT,COMBAT_PIC_DEVICE_MASK);
+    btechHostSetInterruptVector(TIMER_INTERRUPT,BTECH_TIMER_HANDLER_VECTOR);
     btechHostSetInterrupts(1);runtimeDelayActive=1;
 }

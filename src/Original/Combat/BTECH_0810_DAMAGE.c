@@ -8,9 +8,9 @@
 /*0810:4BB6. Ordered 2d6 roll; failed selection transfers without spending budget. */
 void BtechRollCriticalLosses(BtechMechState *mech,int16_t bodyLocation)
 {
-    uint16_t firstDie=BtechRandomBelowBound(6);
-    uint16_t secondDie=BtechRandomBelowBound(6);
-    int16_t budget=(int16_t)(uint16_t)(firstDie+secondDie+2);
+    uint16_t firstDie=BtechRandomBelowBound(COMBAT_DIE_SIDES);
+    uint16_t secondDie=BtechRandomBelowBound(COMBAT_DIE_SIDES);
+    int16_t budget=(int16_t)(uint16_t)(firstDie+secondDie+COMBAT_CRITICAL_DICE_BASE);
     while (budget>COMBAT_CRITICAL_ATTEMPT_THRESHOLD)
     {
         if (BtechSelectAndApplyCriticalLoss(mech,bodyLocation)) budget-=COMBAT_CRITICAL_SUCCESS_COST;

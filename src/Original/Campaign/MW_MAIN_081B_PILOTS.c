@@ -11,10 +11,10 @@
  *69B8 resumes AFTER class01 event dispatch.6950 POPs the dispatcher word. */
 uint16_t MwEnterBarContinuation(uint16_t entryOffset)
 {
-    if (entryOffset==0x69B8) goto drawMenu;
+    if (entryOffset==CAMPAIGN_CONTINUE_BAR_EVENT_RETURN) goto drawMenu;
     if (entryOffset==CAMPAIGN_CONTINUE_BAR_REFRESH) goto refreshMenu;
     if (entryOffset==CAMPAIGN_CONTINUE_BAR_BACKGROUND) goto drawBackground;
-    if (entryOffset!=0x692E) abort();
+    if (entryOffset!=CAMPAIGN_CONTINUE_BAR) abort();
     if (audioOptionLabelIndex!=AUDIO_LABEL_OFF)
     {
         if (!campaignStartMusic) abort();
@@ -34,8 +34,8 @@ refreshMenu:
     if (barMenuSelectedRow==BAR_FIRST_VISIT)
     {
         barMenuSelectedRow=0;
-        campaignEventDispatchReturnContinuation=0x69B8;
-        uint16_t transfer=MwDispatchCampaignEvents(BAR_INITIAL_EVENT_CLASS,0x6236);
+        campaignEventDispatchReturnContinuation=CAMPAIGN_CONTINUE_BAR_EVENT_RETURN;
+        uint16_t transfer=MwDispatchCampaignEvents(BAR_INITIAL_EVENT_CLASS,CAMPAIGN_CALL_DISPATCH_EVENTS);
         if (transfer) return transfer;
         campaignEventDispatchReturnContinuation=0;
     }
@@ -49,15 +49,15 @@ drawMenu:
  *6A03 is the post6236 continuation; there is no direct drink-price debit. */
 uint16_t MwOrderDrinkContinuation(uint16_t entryOffset)
 {
-    if (entryOffset==0x6A03) return CAMPAIGN_CONTINUE_BAR_BACKGROUND;
-    if (entryOffset!=0x69CA) abort();
+    if (entryOffset==CAMPAIGN_CONTINUE_DRINK_EVENT_RETURN) return CAMPAIGN_CONTINUE_BAR_BACKGROUND;
+    if (entryOffset!=CAMPAIGN_CONTINUE_ORDER_DRINK) abort();
     barMenuSelectedRow=BAR_ROW_DRINK;
     EgaClearDrawPage(BAR_BACKGROUND_COLOUR);
     MwDrawIndexedPicture(0,0,BAR_DRINK_PICTURE);
     EgaCopyDrawPageToDisplay(0,0,EGA_COLUMNS,EGA_ROWS);
     MwAdvanceCampaignTimeAndChargeWages(1);
-    campaignEventDispatchReturnContinuation=0x6A03;
-    uint16_t transfer=MwDispatchCampaignEvents(BAR_DRINK_EVENT_CLASS,0x6236);
+    campaignEventDispatchReturnContinuation=CAMPAIGN_CONTINUE_DRINK_EVENT_RETURN;
+    uint16_t transfer=MwDispatchCampaignEvents(BAR_DRINK_EVENT_CLASS,CAMPAIGN_CALL_DISPATCH_EVENTS);
     if (transfer) return transfer;
     campaignEventDispatchReturnContinuation=0;
     return CAMPAIGN_CONTINUE_BAR_BACKGROUND;
@@ -180,13 +180,13 @@ uint16_t MwRejectSelectedRecruitContinuation(void)
  * Both entries discard the UI callback word and tail089B. */
 uint16_t MwEnterCompanyMenuContinuation(uint16_t entryOffset)
 {
-    if (entryOffset!=0x247A && entryOffset!=0x24B6) abort();
-    if (entryOffset==0x247A) hubSelectedRecordIndex=0;
+    if (entryOffset!=CAMPAIGN_CONTINUE_COMPANY_MENU && entryOffset!=CAMPAIGN_CONTINUE_COMPANY_MENU_WITHOUT_PROFILE) abort();
+    if (entryOffset==CAMPAIGN_CONTINUE_COMPANY_MENU) hubSelectedRecordIndex=0;
     EgaSelectFont(COMPANY_MENU_FONT);
-    if (entryOffset==0x24B6) EgaClearDrawPage(BAR_BACKGROUND_COLOUR);
+    if (entryOffset==CAMPAIGN_CONTINUE_COMPANY_MENU_WITHOUT_PROFILE) EgaClearDrawPage(BAR_BACKGROUND_COLOUR);
     MwDrawIndexedPicture(0,0,(uint16_t)(currentPlanetLandscapeIndex+COMPANY_LANDSCAPE_PICTURE_BASE));
     EgaFlipPages();
-    if (entryOffset==0x247A) MwDrawCommanderProfile();
+    if (entryOffset==CAMPAIGN_CONTINUE_COMPANY_MENU) MwDrawCommanderProfile();
     MwDrawDescriptorTextPanel(&companyMenuPanel);
     MwSelectUiRecordTable(companyMenuSelectedRow,&companyMenu);
     return CAMPAIGN_CONTINUE_UI;

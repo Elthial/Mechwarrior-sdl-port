@@ -15,7 +15,7 @@ uint16_t campaignEventDispatchReturnContinuation;
 uint16_t MwDispatchCampaignEvents(uint16_t eventClass,uint16_t entryOffset)
 {
     if (entryOffset==CAMPAIGN_CONTINUE_NEXT_EVENT) {campaignEventReturnContinuation=0;goto nextEvent;}
-    if (entryOffset!=0x6236) abort();
+    if (entryOffset!=CAMPAIGN_CALL_DISPATCH_EVENTS) abort();
     campaignEventClass=eventClass;
     if (eventDirectoryIndex>=CAMPAIGN_EVENT_LIST_COUNT || !eventLists[eventDirectoryIndex]) abort(); /* Unrepresented native list/DS0000 mapping, not a null-list success. */
     dispatchListCursor=eventLists[eventDirectoryIndex];

@@ -25,7 +25,7 @@ uint16_t MwCampaignUiEventLoop(void)
     {
         if (uiIdleCodeOffset!=0)
         {
-            if (uiIdleCodeOffset==0x35E3) MwAnimateMechServiceIdle();
+            if (uiIdleCodeOffset==CAMPAIGN_CALLBACK_MECH_SERVICE_IDLE) MwAnimateMechServiceIdle();
             else
             {
                 if (!campaignNearCallback) abort();
@@ -53,64 +53,64 @@ uint16_t MwCampaignUiEventLoop(void)
                 switch (codeOffset)
                 {
                 case CAMPAIGN_CONTINUE_CLEANUP:case CAMPAIGN_CONTINUE_AFTER_ACTION:case CAMPAIGN_CONTINUE_VICTORY_EVENT_RETURN:return codeOffset; /* Shared original0002 frame, including victory's suspended6293 CALL. */
-                case 0x247A:case 0x24B6:codeOffset=MwEnterCompanyMenuContinuation(codeOffset);break;
+                case CAMPAIGN_CONTINUE_COMPANY_MENU:case CAMPAIGN_CONTINUE_COMPANY_MENU_WITHOUT_PROFILE:codeOffset=MwEnterCompanyMenuContinuation(codeOffset);break;
                 case CAMPAIGN_CONTINUE_OPTIONS:case CAMPAIGN_CONTINUE_OPTIONS_REDRAW:case CAMPAIGN_CONTINUE_OPTIONS_FROM_SUBMENU:codeOffset=MwEnterOptionsMenuContinuation(codeOffset==CAMPAIGN_CONTINUE_OPTIONS_REDRAW?CAMPAIGN_CONTINUE_OPTIONS_REDRAW:CAMPAIGN_CONTINUE_OPTIONS);break;
-                case 0x6FB9:MwToggleAudioOption();codeOffset=0;break;
-                case 0x6D52:codeOffset=MwSaveCampaignCallback();break;
-                case 0x6EA3:codeOffset=MwShowLoadCampaignCallback();break;
-                case 0x6F4C:codeOffset=MwLoadSelectedCampaignCallback();break;
-                case 0x2C13:codeOffset=MwOpenNewsNetContinuation();break;
-                case 0x2C77:codeOffset=MwNextNewsArticleContinuation();break;
-                case 0x2D16:codeOffset=MwPreviousNewsArticleContinuation();break;
-                case 0x6FFA:MwCycleTerrainDetailOption();codeOffset=0;break;
-                case 0x7047:codeOffset=MwConfirmQuitCampaignContinuation();break;
-                case 0x707F:codeOffset=MwConfirmRestartCampaignContinuation();break;
+                case CAMPAIGN_CALLBACK_TOGGLE_AUDIO:MwToggleAudioOption();codeOffset=0;break;
+                case CAMPAIGN_CALLBACK_SAVE_CAMPAIGN:codeOffset=MwSaveCampaignCallback();break;
+                case CAMPAIGN_CALLBACK_OPEN_LOAD_MENU:codeOffset=MwShowLoadCampaignCallback();break;
+                case CAMPAIGN_CALLBACK_LOAD_SELECTED_CAMPAIGN:codeOffset=MwLoadSelectedCampaignCallback();break;
+                case CAMPAIGN_CONTINUE_NEWSNET:codeOffset=MwOpenNewsNetContinuation();break;
+                case CAMPAIGN_CONTINUE_NEXT_NEWS_ARTICLE:codeOffset=MwNextNewsArticleContinuation();break;
+                case CAMPAIGN_CONTINUE_PREVIOUS_NEWS_ARTICLE:codeOffset=MwPreviousNewsArticleContinuation();break;
+                case CAMPAIGN_CALLBACK_CYCLE_TERRAIN_DETAIL:MwCycleTerrainDetailOption();codeOffset=0;break;
+                case CAMPAIGN_CONTINUE_CONFIRM_QUIT:codeOffset=MwConfirmQuitCampaignContinuation();break;
+                case CAMPAIGN_CONTINUE_CONFIRM_RESTART:codeOffset=MwConfirmRestartCampaignContinuation();break;
                 case CAMPAIGN_CONTINUE_QUIT_FROM_OPTIONS:codeOffset=MwQuitFromOptionsContinuation();break;
                 case CAMPAIGN_CONTINUE_RESTART_FROM_OPTIONS:codeOffset=MwRestartFromOptionsContinuation();break;
                 case CAMPAIGN_CONTINUE_CREW_MENU:codeOffset=MwEnterCrewMenuContinuation();break;
-                case 0x692E:case CAMPAIGN_CONTINUE_BAR_BACKGROUND:case CAMPAIGN_CONTINUE_BAR_REFRESH:case 0x69B8:codeOffset=MwEnterBarContinuation(codeOffset);break;
-                case 0x69CA:case 0x6A03:codeOffset=MwOrderDrinkContinuation(codeOffset);break;
-                case 0x6A06:codeOffset=MwOpenRecruitInterviewContinuation();break;
-                case 0x6B69:codeOffset=MwHireSelectedRecruitContinuation();break;
-                case 0x6BFA:codeOffset=MwRejectSelectedRecruitContinuation();break;
-                case 0x28E7:case 0x28EC:case 0x28F1:case 0x28F6:
-                    codeOffset=MwBeginPilotMechAssignmentContinuation((codeOffset-0x28E7)/5);break;
+                case CAMPAIGN_CONTINUE_BAR:case CAMPAIGN_CONTINUE_BAR_BACKGROUND:case CAMPAIGN_CONTINUE_BAR_REFRESH:case CAMPAIGN_CONTINUE_BAR_EVENT_RETURN:codeOffset=MwEnterBarContinuation(codeOffset);break;
+                case CAMPAIGN_CONTINUE_ORDER_DRINK:case CAMPAIGN_CONTINUE_DRINK_EVENT_RETURN:codeOffset=MwOrderDrinkContinuation(codeOffset);break;
+                case CAMPAIGN_CONTINUE_RECRUIT_INTERVIEW:codeOffset=MwOpenRecruitInterviewContinuation();break;
+                case CAMPAIGN_CONTINUE_HIRE_RECRUIT:codeOffset=MwHireSelectedRecruitContinuation();break;
+                case CAMPAIGN_CONTINUE_REJECT_RECRUIT:codeOffset=MwRejectSelectedRecruitContinuation();break;
+                case CAMPAIGN_CALLBACK_ASSIGN_PILOT_SLOT_ZERO:case CAMPAIGN_CALLBACK_ASSIGN_PILOT_SLOT_ONE:case CAMPAIGN_CALLBACK_ASSIGN_PILOT_SLOT_TWO:case CAMPAIGN_CALLBACK_ASSIGN_PILOT_SLOT_THREE:
+                    codeOffset=MwBeginPilotMechAssignmentContinuation((codeOffset-CAMPAIGN_CALLBACK_ASSIGN_PILOT_SLOT_ZERO)/CAMPAIGN_PILOT_ASSIGNMENT_ENTRY_BYTES);break;
                 case CAMPAIGN_CONTINUE_PILOT_ASSIGNMENT_INPUT:codeOffset=MwPollPilotMechAssignmentContinuation();break;
                 case CAMPAIGN_CONTINUE_CONFIRM_PILOT_ASSIGNMENT:codeOffset=MwConfirmPilotMechAssignmentContinuation();break;
                 case CAMPAIGN_CONTINUE_PLANET_HUB:case CAMPAIGN_CONTINUE_HUB_MENU:codeOffset=MwEnterCampaignPlanetHub(codeOffset);break;
-                case 0x5620:codeOffset=MwOpenTravelScreenContinuation();break;
+                case CAMPAIGN_CONTINUE_OPEN_TRAVEL_SCREEN:codeOffset=MwOpenTravelScreenContinuation();break;
                 case CAMPAIGN_CONTINUE_SELECT_TRAVEL_DESTINATION:codeOffset=MwSelectTravelDestinationContinuation(travelDestinationPlanetIndex);break;
                 case CAMPAIGN_CONTINUE_TRAVEL_MAP:codeOffset=MwEnterTravelMapMenuContinuation();break;
-                case 0x5C5D:codeOffset=MwSearchTravelPlanetContinuation();break;
-                case 0x5CF2:codeOffset=MwOpenTravelHouseBrowserContinuation();break;
-                case 0x5D21:codeOffset=MwCloseTravelHouseBrowserContinuation();break;
-                case 0x5D45:codeOffset=MwOpenSelectedHousePlanetListContinuation();break;
-                case 0x5E26:codeOffset=MwReturnToTravelHouseBrowserContinuation();break;
-                case 0x5E41:codeOffset=MwSelectHousePlanetContinuation();break;
-                case 0x5E5D:codeOffset=MwConfirmPlanetTravelContinuation();break;
+                case CAMPAIGN_CONTINUE_SEARCH_PLANET:codeOffset=MwSearchTravelPlanetContinuation();break;
+                case CAMPAIGN_CONTINUE_OPEN_HOUSE_BROWSER:codeOffset=MwOpenTravelHouseBrowserContinuation();break;
+                case CAMPAIGN_CONTINUE_CLOSE_HOUSE_BROWSER:codeOffset=MwCloseTravelHouseBrowserContinuation();break;
+                case CAMPAIGN_CONTINUE_HOUSE_PLANET_LIST:codeOffset=MwOpenSelectedHousePlanetListContinuation();break;
+                case CAMPAIGN_CONTINUE_RETURN_TO_HOUSE_BROWSER:codeOffset=MwReturnToTravelHouseBrowserContinuation();break;
+                case CAMPAIGN_CONTINUE_SELECT_HOUSE_PLANET:codeOffset=MwSelectHousePlanetContinuation();break;
+                case CAMPAIGN_CONTINUE_CONFIRM_TRAVEL:codeOffset=MwConfirmPlanetTravelContinuation();break;
                 case CAMPAIGN_CONTINUE_PAID_TRAVEL:codeOffset=MwAdvancePaidTravelAndJoinPlanetArrivalContinuation();break;
                 case CAMPAIGN_CONTINUE_PLANET_ARRIVAL:codeOffset=MwFinishPlanetArrivalContinuation();break;
-                case 0x4AA2:case CAMPAIGN_CONTINUE_CONTRACT_OFFICE_REDRAW:case 0x4B43:codeOffset=MwEnterContractOfficeContinuation(codeOffset);break;
-                case 0x4D35:codeOffset=MwRequestMissionOfferContinuation();break;
-                case 0x4DA5:codeOffset=MwNextMissionOfferContinuation();break;
+                case CAMPAIGN_CONTINUE_CONTRACT_OFFICE:case CAMPAIGN_CONTINUE_CONTRACT_OFFICE_REDRAW:case CAMPAIGN_CONTINUE_CONTRACT_OFFICE_MENU:codeOffset=MwEnterContractOfficeContinuation(codeOffset);break;
+                case CAMPAIGN_CONTINUE_REQUEST_MISSION_OFFER:codeOffset=MwRequestMissionOfferContinuation();break;
+                case CAMPAIGN_CONTINUE_NEXT_MISSION_OFFER:codeOffset=MwNextMissionOfferContinuation();break;
                 case CAMPAIGN_CONTINUE_MISSION_BRIEFING:codeOffset=MwDrawMissionContractBriefingContinuation(negotiatingMissionOfferSlot);break;
-                case 0x4EC8:codeOffset=MwEditContractPaymentRequestContinuation();break;
-                case 0x4EE7:codeOffset=MwEditContractSalvageRequestContinuation();break;
-                case 0x4F06:codeOffset=MwEditContractAdvanceRequestContinuation();break;
-                case 0x536A:codeOffset=MwNegotiateAndAcceptContractContinuation();break;
+                case CAMPAIGN_CONTINUE_REQUEST_PAYMENT:codeOffset=MwEditContractPaymentRequestContinuation();break;
+                case CAMPAIGN_CONTINUE_REQUEST_SALVAGE:codeOffset=MwEditContractSalvageRequestContinuation();break;
+                case CAMPAIGN_CONTINUE_REQUEST_ADVANCE:codeOffset=MwEditContractAdvanceRequestContinuation();break;
+                case CAMPAIGN_CONTINUE_NEGOTIATE_CONTRACT:codeOffset=MwNegotiateAndAcceptContractContinuation();break;
                 case CAMPAIGN_CONTINUE_CREDIT_CONTRACT_ADVANCE:codeOffset=MwCreditAcceptedContractAdvanceContinuation();break;
                 case CAMPAIGN_CONTINUE_ADJUST_ENEMY_FORCE:codeOffset=MwAdjustAcceptedContractEnemyForceContinuation();break;
-                case 0x1B55:codeOffset=MwAttemptContractDeployment();break;
-                case 0x1B5A:codeOffset=MwCheckAssignedMechDeploymentReadiness();break;
+                case CAMPAIGN_CONTINUE_ATTEMPT_DEPLOYMENT:codeOffset=MwAttemptContractDeployment();break;
+                case CAMPAIGN_CONTINUE_CHECK_DEPLOYMENT_READINESS:codeOffset=MwCheckAssignedMechDeploymentReadiness();break;
                 case CAMPAIGN_CONTINUE_DEPLOYMENT:codeOffset=MwResolveDeploymentOrExportCombatExchangeContinuation();break;
                 case CAMPAIGN_CONTINUE_CANCEL_CONTRACT:codeOffset=MwCancelContractAfterDeploymentRefusalsContinuation();break;
                 case CAMPAIGN_CONTINUE_EVENT_DEPLOYMENT:
                     codeOffset=MwCheckDeploymentWithoutRefusalPenalty();
                     if (!codeOffset) codeOffset=CAMPAIGN_CONTINUE_EVENT_COMBAT_RETURN; /* Special event inherited RET, then6236 caller ignores CF. */
                     break;
-                case 0x67C5:codeOffset=MwEventFirstChoiceCallback();break;
-                case 0x67F8:codeOffset=MwEventSecondChoiceCallback();break;
-                case 0x6828:codeOffset=MwEventThirdChoiceCallback();break;
+                case CAMPAIGN_CALLBACK_EVENT_FIRST_CHOICE:codeOffset=MwEventFirstChoiceCallback();break;
+                case CAMPAIGN_CALLBACK_EVENT_SECOND_CHOICE:codeOffset=MwEventSecondChoiceCallback();break;
+                case CAMPAIGN_CALLBACK_EVENT_THIRD_CHOICE:codeOffset=MwEventThirdChoiceCallback();break;
                 case CAMPAIGN_CONTINUE_EVENT_QUIT:codeOffset=MwQuitFromEventContinuation();break;
                 case CAMPAIGN_CONTINUE_RESTART:codeOffset=MwRestartCampaignContinuation();break;
                 case CAMPAIGN_CONTINUE_EVENT_COMBAT:codeOffset=MwPrepareEventSpecialCombatContinuation();break;
@@ -128,26 +128,26 @@ uint16_t MwCampaignUiEventLoop(void)
                     }
                     break;
                 case CAMPAIGN_CONTINUE_OWNED_MECH_LIST:codeOffset=MwOpenOwnedMechList();break;
-                case CAMPAIGN_CONTINUE_MECH_COMPLEX:case 0x2DE2:codeOffset=MwEnterMechServiceMenuContinuation(codeOffset);break;
+                case CAMPAIGN_CONTINUE_MECH_COMPLEX:case CAMPAIGN_CONTINUE_MECH_COMPLEX_EVENT_RETURN:codeOffset=MwEnterMechServiceMenuContinuation(codeOffset);break;
                 case CAMPAIGN_CONTINUE_MARKET_MECH_LIST:codeOffset=MwOpenMarketMechList();break;
-                case 0x3314:codeOffset=MwBeginOwnedUnitSaleCallback();break;
-                case 0x3393:codeOffset=MwSaleContinuation();break;
-                case 0x3477:codeOffset=MwCancelOwnedUnitSale();break;
-                case 0x348D:codeOffset=MwQuoteSelectedMechRearm();break;
-                case 0x3560:codeOffset=MwRearmSelectedMech();break;
-                case 0x35C9:codeOffset=MwCancelSelectedMechRearm();break;
-                case 0x407C:codeOffset=MwOpenMarketMechComponentInspectionCallback();break;
-                case 0x4317:codeOffset=MwSelectMarketUnitListRowCallback();break;
-                case 0x4352:case CAMPAIGN_CONTINUE_MARKET_MECH_DETAIL:case 0x4379:case 0x43E0:case 0x43EB:
+                case CAMPAIGN_CALLBACK_BEGIN_MECH_SALE:codeOffset=MwBeginOwnedUnitSaleCallback();break;
+                case CAMPAIGN_CONTINUE_MECH_SALE:codeOffset=MwSaleContinuation();break;
+                case CAMPAIGN_CONTINUE_CANCEL_MECH_SALE:codeOffset=MwCancelOwnedUnitSale();break;
+                case CAMPAIGN_CONTINUE_QUOTE_MECH_REARM:codeOffset=MwQuoteSelectedMechRearm();break;
+                case CAMPAIGN_CONTINUE_REARM_MECH:codeOffset=MwRearmSelectedMech();break;
+                case CAMPAIGN_CONTINUE_CANCEL_MECH_REARM:codeOffset=MwCancelSelectedMechRearm();break;
+                case CAMPAIGN_CALLBACK_INSPECT_MARKET_COMPONENTS:codeOffset=MwOpenMarketMechComponentInspectionCallback();break;
+                case CAMPAIGN_CALLBACK_SELECT_MARKET_MECH:codeOffset=MwSelectMarketUnitListRowCallback();break;
+                case CAMPAIGN_CALLBACK_OPEN_MARKET_MECH_DETAIL:case CAMPAIGN_CONTINUE_MARKET_MECH_DETAIL:case CAMPAIGN_CONTINUE_MARKET_DETAIL_KEEP_BACKGROUND:case CAMPAIGN_CONTINUE_MARKET_COMPONENT_INSPECTION_RETURN:case CAMPAIGN_CONTINUE_MARKET_MECH_STATUS:
                     codeOffset=MwDrawMarketMechDetailContinuation(codeOffset);break;
-                case 0x4674:case 0x475A:codeOffset=MwPurchaseSelectedMarketUnit(codeOffset);break;
-                case 0x3021:codeOffset=MwSelectOwnedUnitListRowCallback();break;
+                case CAMPAIGN_CONTINUE_PURCHASE_MECH:case CAMPAIGN_CONTINUE_MECH_PURCHASE_FINISHED:codeOffset=MwPurchaseSelectedMarketUnit(codeOffset);break;
+                case CAMPAIGN_CALLBACK_SELECT_OWNED_MECH:codeOffset=MwSelectOwnedUnitListRowCallback();break;
                 case CAMPAIGN_CONTINUE_OPEN_OWNED_MECH:codeOffset=MwOpenSelectedMechDetailContinuation();break;
                 case CAMPAIGN_CONTINUE_RETURN_TO_OWNED_MECH:codeOffset=MwReturnToSelectedMechDetailCallback();break;
                 case CAMPAIGN_CONTINUE_OWNED_MECH_DETAIL:case CAMPAIGN_CONTINUE_OWNED_MECH_SERVICE_MENU:codeOffset=MwDrawSelectedMechDetailContinuation(codeOffset);break;
                 case CAMPAIGN_CONTINUE_COMPONENT_REPAIR_MENU:codeOffset=MwOpenMechComponentRepairMenuCallback();break;
-                case 0x3EE8:codeOffset=MwRepairSelectedMechComponentCallback();break;
-                case 0x3802:codeOffset=MwRepairAllSelectedMechComponentsCallback();break;
+                case CAMPAIGN_CALLBACK_REPAIR_MECH_COMPONENT:codeOffset=MwRepairSelectedMechComponentCallback();break;
+                case CAMPAIGN_CALLBACK_REPAIR_ALL_COMPONENTS:codeOffset=MwRepairAllSelectedMechComponentsCallback();break;
                 default:
                     if (!campaignNearCallback) abort();
                     campaignNearCallback(codeOffset); /* A bound ordinary native CALL. */
@@ -177,7 +177,7 @@ uint16_t MwCampaignUiEventLoop(void)
             key==CAMPAIGN_KEY_DOWN?record->downRecordIndex:
             key==CAMPAIGN_KEY_LEFT?record->leftRecordIndex:record->rightRecordIndex;
         if (MwIsUiRecordDisabled(nextIndex)) continue;
-        if ((uint8_t)nextIndex==0xFF) continue; /* After the native enabled read. */
+        if ((uint8_t)nextIndex==UI_NO_NEIGHBOUR) continue; /* After the native enabled read. */
         MwPresentUiRecord(record->x,record->y,record);
         uint16_t selectionTransfer=MwSelectUiRecord(nextIndex);
         if (selectionTransfer==CAMPAIGN_CONTINUE_CLEANUP) return selectionTransfer;
@@ -381,8 +381,8 @@ uint16_t MwSelectUiRecord(uint16_t selectedIndex)
     uint16_t callback = uiSelectionChangedCodeOffset;
     if (callback != 0)
     {
-        if (callback==0x3DF3) MwRefreshSelectedComponentRepairQuote();
-        else if (callback==0x598A) return MwHandleTravelMapSelection();
+        if (callback==CAMPAIGN_CALLBACK_REFRESH_COMPONENT_QUOTE) MwRefreshSelectedComponentRepairQuote();
+        else if (callback==CAMPAIGN_CALLBACK_SELECT_TRAVEL_MAP_PLANET) return MwHandleTravelMapSelection();
         else
         {
             if (campaignNearCallback == NULL) abort();
@@ -432,7 +432,7 @@ MwUiRecord *MwGetSelectedUiRecord(void)
 /* MW_MAIN081B:0960..0979. FF probing precedes the caller's sentinel test. */
 bool MwIsUiRecordDisabled(uint16_t recordIndex)
 {
-    if (recordIndex==0xFF)
+    if (recordIndex==UI_NO_NEIGHBOUR)
     {
         if (uiMenu->sentinelEnabled) return *uiMenu->sentinelEnabled==0;
         if (!uiMenu->sentinelEnabledWord) abort();

@@ -17,7 +17,7 @@ static MwMusicTimerHandler previousTimerHandler;
  * fabricated zero instrument bank or a general DOS memory image. */
 enum { DOS_TONE_ZERO_WINDOW_START=0x1F4A,DOS_TONE_ZERO_WINDOW_BYTES=0x1D4,
     DOS_DEFAULT_IRET_VECTOR=0x0070000E,DOS_TONE_VECTOR_PREFIX=6,
-    NATIVE_DIVIDE_HANDLER_VECTOR=0x1BF51F4A };
+    HOST_REAL_MODE_ADDRESS_MASK=0xFFFFF,HOST_BIOS_MODEL_ADDRESS=0xFFFFE,HOST_BIOS_AT_MODEL=0xFC };
 static const uint32_t dosDefaultDivideVector=UINT32_C(0xF000CA60),dosPrintScreenVector=UINT32_C(0xF000FF54);
 static const uint8_t dosToneZeroWindow[DOS_TONE_ZERO_WINDOW_BYTES]={0};
 static uint8_t ReadToneDosByte(uint16_t offset)
@@ -29,7 +29,7 @@ static uint8_t ReadToneDosByte(uint16_t offset)
         {
             vector=interruptVectors[0];
             if (!vector) vector=dosDefaultDivideVector;
-            else if (vector==NATIVE_DIVIDE_HANDLER_VECTOR)
+            else if (vector==BTECH_DIVIDE_HANDLER_VECTOR)
                 vector+=((uint32_t)(HOST_DOS_COMBAT_CODE_SELECTOR-BTECH_IMAGE_LOAD_SELECTOR)<<16);
             else MwSdlFail("Unrecovered physical divide vector for tone fallback");
         }
@@ -62,8 +62,8 @@ static void WriteBiosByte(uint16_t offset,uint8_t value)
 }
 static uint16_t ReadBiosWord(uint16_t offset)
 {
-    if (offset==0x6C) return (uint16_t)MwSdlBiosTicksValue();
-    if (offset==0x6E) return (uint16_t)(MwSdlBiosTicksValue()>>16);
+    if (offset==BIOS_TIMER_TICKS_LOW) return (uint16_t)MwSdlBiosTicksValue();
+    if (offset==BIOS_TIMER_TICKS_HIGH) return (uint16_t)(MwSdlBiosTicksValue()>>16);
     return ReadBiosByte(offset)|((uint16_t)ReadBiosByte(offset+1)<<8);
 }
 static void WriteBiosWord(uint16_t offset,uint16_t value)
@@ -73,8 +73,8 @@ static void UnmappedTimerInterrupt(void) {MwSdlFail("Unconverted native IRQ0 vec
 static void WriteInterruptVector(uint8_t interrupt,uint32_t vector)
 {
     interruptVectors[interrupt]=vector;
-    if (interrupt==8)
-        MwSdlWriteTimerHandler(vector==0?previousTimerHandler:vector==0x1BF525E2?BtechTimerSchedulerInterrupt:UnmappedTimerInterrupt);
+    if (interrupt==TIMER_INTERRUPT)
+        MwSdlWriteTimerHandler(vector==0?previousTimerHandler:vector==BTECH_TIMER_HANDLER_VECTOR?BtechTimerSchedulerInterrupt:UnmappedTimerInterrupt);
 }
 static void ChainTimerInterrupt(uint32_t vector)
 {
@@ -83,8 +83,8 @@ static void ChainTimerInterrupt(uint32_t vector)
 }
 static uint8_t ReadRomByte(uint16_t selector,uint16_t offset)
 {
-    uint32_t address=(((uint32_t)selector<<4)+offset)&0xFFFFF;
-    return address==0xFFFFE?0xFC:0xFF; /* Configured AT/EGA, not PCjr/Tandy. */
+    uint32_t address=(((uint32_t)selector<<4)+offset)&HOST_REAL_MODE_ADDRESS_MASK;
+    return address==HOST_BIOS_MODEL_ADDRESS?HOST_BIOS_AT_MODEL:UINT8_MAX; /* Configured AT/EGA, not PCjr/Tandy. */
 }
 static uint16_t QueryEgaInfo(void) {return 0;}
 static void ResetMouse(void) {mwCampaignInput.resetMouse();}
@@ -95,7 +95,7 @@ void MwSdlResetCombatHardware(void)
     memset(interruptVectors,0,sizeof(interruptVectors));memset(biosData,0,sizeof(biosData));
     WriteBiosWord(BIOS_KEYBOARD_HEAD,BIOS_KEY_BUFFER_FIRST);WriteBiosWord(BIOS_KEYBOARD_TAIL,BIOS_KEY_BUFFER_FIRST);
     WriteBiosWord(BIOS_KEYBOARD_START,BIOS_KEY_BUFFER_FIRST);WriteBiosWord(BIOS_KEYBOARD_END,BIOS_KEY_BUFFER_END);
-    WriteBiosWord(COMBAT_BIOS_CRTC_PORT,0x3D4);
+    WriteBiosWord(COMBAT_BIOS_CRTC_PORT,COMBAT_COLOUR_CRTC_INDEX_PORT);
 }
 void MwSdlInitializeCombatHardware(void)
 {

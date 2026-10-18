@@ -20,8 +20,8 @@ void MwDrawCampaignFramedBackground(void)
  * AFTER6236. No extra menu loop or repeated time/event charge on resumption. */
 uint16_t MwEnterContractOfficeContinuation(uint16_t entryOffset)
 {
-    if (entryOffset==0x4B43) goto officeMenu;
-    if (entryOffset==0x4AA2) MwAdvanceCampaignTimeAndChargeWages(1);
+    if (entryOffset==CAMPAIGN_CONTINUE_CONTRACT_OFFICE_MENU) goto officeMenu;
+    if (entryOffset==CAMPAIGN_CONTINUE_CONTRACT_OFFICE) MwAdvanceCampaignTimeAndChargeWages(1);
     else if (entryOffset!=CAMPAIGN_CONTINUE_CONTRACT_OFFICE_REDRAW) abort();
     hubSelectedRecordIndex=CONTRACT_OFFICE_HUB_ROW;
     EgaSelectFont(CONTRACT_OFFICE_FONT);
@@ -43,8 +43,8 @@ uint16_t MwEnterContractOfficeContinuation(uint16_t entryOffset)
     }
     MwDrawIndexedPicture(CONTRACT_OFFICE_REGION_X,CONTRACT_OFFICE_EMBLEM_Y,(uint16_t)(regionPicture+groupIndex));
     EgaCopyDrawPageToDisplay(0,0,EGA_COLUMNS,EGA_ROWS);
-    campaignEventDispatchReturnContinuation=0x4B43;
-    uint16_t transfer=MwDispatchCampaignEvents(CONTRACT_OFFICE_EVENT_CLASS,0x6236);
+    campaignEventDispatchReturnContinuation=CAMPAIGN_CONTINUE_CONTRACT_OFFICE_MENU;
+    uint16_t transfer=MwDispatchCampaignEvents(CONTRACT_OFFICE_EVENT_CLASS,CAMPAIGN_CALL_DISPATCH_EVENTS);
     if (transfer) return transfer;
     campaignEventDispatchReturnContinuation=0;
 officeMenu:
