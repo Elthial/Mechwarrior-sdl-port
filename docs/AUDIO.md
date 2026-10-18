@@ -31,6 +31,17 @@ Paths can be absolute or relative to the INI file. These ROMs contain synthesize
 firmware and sample data; they are not MechWarrior game files. You must obtain
 them lawfully yourself. They are not provided or downloaded by this project.
 Missing, invalid or incompatible ROMs produce an error, not a fake MT-32 fallback.
+
+### Supplying your own Roland ROMs
+
+You must supply your own compatible CONTROL and PCM ROM images. This project
+does not bundle, download or provide links to ROM downloads.
+[ScummVM's MT-32 guidance](https://docs.scummvm.org/en/v2.8.0/advanced_topics/understand_audio.html#mt-32-device-emulation)
+is to extract them from your own physical MT-32 module; it also supports ROMs
+from a CM-32L. The ROMs remain copyrighted. Owning the hardware should not be
+treated as blanket permission to download somebody else's dump; check the
+rules applicable where you live before obtaining or extracting ROMs.
+
 Combined MAME-versioned files such as `mt32_ctrl_1_07.rom` and `mt32_pcm.rom`
 also work without renaming: Munt identifies their contents. The two-path config
 expects combined images, not separate even/odd chip dumps. Control v1.07 with

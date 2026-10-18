@@ -47,6 +47,7 @@ uint64_t MwSdlLateAudioFrames(void);
 uint64_t MwSdlAudioUnderrunFrames(void);
 uint64_t MwSdlAudioClockSkippedFrames(void);
 bool MwSdlInitializeVideo(const char *captureDirectory);
+void MwSdlUpdateWindowTitle(void);
 void MwSdlPresentVideo(bool force);
 void MwSdlShutdownVideo(void);
 uint8_t MwSdlGetVideoMode(void);

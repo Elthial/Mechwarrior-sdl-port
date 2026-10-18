@@ -16,6 +16,7 @@
 /ExtractedAssets/
 /local/
 /assets/original-game/*
+# This exclusion covers the complete private installation, regardless of type.
 !/assets/original-game/.gitignore
 # Private original installations, files and native exports must stay local.
 *.GAM

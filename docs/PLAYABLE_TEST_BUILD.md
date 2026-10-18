@@ -15,6 +15,12 @@ Keep the built `mt32emu-2.dll` and `nukedopl.dll` beside it too. Campaign music
 selection and optional user ROM paths go in the existing `MechWarrior.ini`:
 see [sound configuration](AUDIO.md). The default remains speaker.
 
+For the default installation location, put your original game files directly
+inside `assets/original-game`, then omit `-GameDirectory`. That entire folder
+is Git-ignored except for its `.gitignore`; original files must never be committed.
+The window title shows the selected campaign music driver and changes to the
+currently supported PC-speaker driver during combat.
+
 ## Preparing for a mission
 
 The company starts with a damaged Jenner. Visit the Mech Complex to inspect,

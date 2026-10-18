@@ -81,8 +81,9 @@ bool MwSdlInitializeVideo(const char *directory)
     if (!directory) directory=".";
     if (strlen(directory)>=sizeof(captureDirectory)) return false;
     strcpy(captureDirectory,directory);
-    window=SDL_CreateWindow("MechWarrior — EGA / PC speaker",960,600,SDL_WINDOW_RESIZABLE);
+    window=SDL_CreateWindow("MechWarrior — EGA",960,600,SDL_WINDOW_RESIZABLE);
     if (!window) return false;
+    MwSdlUpdateWindowTitle();
     renderer=SDL_CreateRenderer(window,NULL);
     if (!renderer || !SDL_SetRenderLogicalPresentation(renderer,EGA_COLUMNS,EGA_ROWS,SDL_LOGICAL_PRESENTATION_INTEGER_SCALE)) return false;
     texture=SDL_CreateTexture(renderer,SDL_PIXELFORMAT_ARGB8888,SDL_TEXTUREACCESS_STREAMING,EGA_COLUMNS,EGA_ROWS);
@@ -93,6 +94,16 @@ bool MwSdlInitializeVideo(const char *directory)
     MwSdlBindCombatVideo();
     haveFrame=presenting=false;videoMode=3;
     return true;
+}
+void MwSdlUpdateWindowTitle(void)
+{
+    if (!window) return;
+    const char *soundDriver=mwSdlCombatActive?"PC speaker"
+        :mwSdlSoundSystem==MW_SOUND_MT32?"Roland MT-32"
+        :mwSdlSoundSystem==MW_SOUND_ADLIB?"AdLib":"PC speaker";
+    char title[128];
+    SDL_snprintf(title,sizeof(title),"MechWarrior — EGA / %s",soundDriver);
+    if (!SDL_SetWindowTitle(window,title)) MwSdlFail("Update sound driver window title");
 }
 static void Render(void)
 {
