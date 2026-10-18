@@ -82,6 +82,7 @@ enum { MIDI_VOICE_CAPACITY=11, MIDI_CHANNEL_RECORDS=48,
     MIDI_DUMMY_CHANNEL_OFFSET=0x0646, MIDI_INSTRUMENTS_OFFSET=0x064E,
     MIDI_INSTRUMENT_BYTES=0x0C, MIDI_SYSEX_BUFFER_OFFSET=0x07CE,
     MIDI_SPEAKER_BACKEND_OFFSET=0x07FC, MIDI_MPU_BACKEND_OFFSET=0x01EE,
+    MIDI_ADLIB_BACKEND_OFFSET=0x00B0,MIDI_ADLIB_NOTE_COUNT=115,MIDI_INSTRUMENT_COUNT=32,
     MIDI_MPU_QUEUE_CAPACITY=256, MIDI_DRUM_CHANNEL_BIT=0x40,
     MIDI_DRUM_CHANNEL_FIRST=16, MIDI_DRUM_CHANNEL_COUNT=32,
     SPEAKER_SILENT_PERIOD=0x0014, SPEAKER_FIRST_NOTE=14,
@@ -93,6 +94,19 @@ typedef struct MwMidiChannel
     uint16_t instrumentOffset;
 } MwMidiChannel;
 typedef struct MwMidiVoiceLinks {uint16_t nextOffset,previousOffset;} MwMidiVoiceLinks;
+typedef struct MwAdlibVoice
+{
+    uint8_t channelIndex,operatorIndex;
+    uint16_t instrumentOffset,packedFrequency;
+    uint8_t carrierLevel,unidentifiedField;
+} MwAdlibVoice;
+typedef struct MwAdlibInstrument
+{
+    uint8_t modulatorFlags,modulatorLevel,modulatorSustainRelease,modulatorAttackDecay;
+    uint8_t modulatorWaveform,feedbackConnection;
+    uint8_t carrierFlags,carrierLevel,carrierSustainRelease,carrierAttackDecay;
+    uint8_t carrierWaveform,unidentifiedField;
+} MwAdlibInstrument;
 typedef struct MwMidiVoice
 {
     union
@@ -101,8 +115,11 @@ typedef struct MwMidiVoice
         MwMidiChannel channelAlias;
     };
     uint8_t originalNote,translatedNote;
-    uint16_t pitPeriod;
-    uint8_t unidentifiedField7[6];
+    union
+    {
+        struct {uint16_t pitPeriod;uint8_t unidentifiedField7[6];};
+        MwAdlibVoice adlib;
+    };
 } MwMidiVoice;
 typedef union MwMidiListSentinels
 {
@@ -147,6 +164,8 @@ typedef struct MwMidiSysexWorkspace
     uint16_t tonePeriodsAndAdjacentWords[SPEAKER_PERIOD_WORDS];
 } MwMidiSysexWorkspace;
 _Static_assert(sizeof(MwMidiChannel)==0x08,"Native MIDI channel width");
+_Static_assert(sizeof(MwAdlibInstrument)==MIDI_INSTRUMENT_BYTES,"Native AdLib instrument width");
+_Static_assert(sizeof(MwAdlibVoice)==8,"Native AdLib voice overlay");
 _Static_assert(sizeof(MwMidiVoice)==0x12,"Native voice width");
 _Static_assert(offsetof(MwMidiVoice,pitPeriod)==0x0A,"Native speaker overlay");
 _Static_assert(sizeof(MwMidiListSentinels)==6,"Overlapping list sentinels");
@@ -161,6 +180,20 @@ extern MwMidiChannel audioChannels[MIDI_CHANNEL_RECORDS],audioDummyChannel;
 extern MwMidiSysexWorkspace midiSysex;
 extern MwCampaignAudioBackend *selectedAudioBackend;
 extern MwCampaignAudioBackend mpuBackend;
+extern MwCampaignAudioBackend adlibBackend;
+extern MwAdlibInstrument adlibInstruments[MIDI_INSTRUMENT_COUNT];
+extern uint16_t adlibAddressDelayReads,adlibDataDelayReads;
+extern uint8_t adlibRhythmRegister,adlibVoiceRoutes[MIDI_VOICE_CAPACITY][3];
+extern uint16_t adlibPackedNoteFrequencies[MIDI_ADLIB_NOTE_COUNT];
+/* Observable native DX residue: rhythm release can target non-OPL ports. */
+extern uint16_t midiAdlibOutputPort;
+uint16_t MwProbeAdlibAndCalibrateDelays(void);
+void MwInitializeAdlibBackend(void);
+void MwWriteAdlibRegisterPair(uint16_t registerAndValue,uint16_t port);
+void MwStartAdlibVoice(MwMidiVoice *voice,MwMidiChannel *channel,uint16_t velocity);
+void MwStopAdlibVoice(MwMidiVoice *voice);
+void MwInitializeAdlibVoiceRouting(void);
+void MwDecodeAdlibInstrument(const uint8_t *source,MwAdlibInstrument *instrument);
 extern uint8_t mpuTransmitQueue[MIDI_MPU_QUEUE_CAPACITY];
 extern volatile uint16_t mpuQueueWriteIndex,mpuQueueReadIndex,mpuQueueByteCount;
 extern uint32_t mpuPreviousIrq;

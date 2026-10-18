@@ -154,7 +154,7 @@ int MwSdlRunCampaign(void)
 {
     if (!initialized) MwSdlFail("Host not initialized");
     /* Keep MW.EXE's original graphics/audio command-tail selection. */
-    const uint8_t commandTail[]={'1',mwSdlSoundSystem==MW_SOUND_MT32?'R':'S'};
+    const uint8_t commandTail[]={'1',mwSdlSoundSystem==MW_SOUND_MT32?'R':mwSdlSoundSystem==MW_SOUND_ADLIB?'A':'S'};
     MwLauncherCommandLine commandLine={commandTail,sizeof(commandTail)};
     return MwLauncherMain(&commandLine);
 }

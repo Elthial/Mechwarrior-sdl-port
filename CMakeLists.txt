@@ -162,6 +162,7 @@ add_library(mechwarrior_original STATIC
     src/Original/Runtime/MW_MAIN_0F41.c
     src/Original/Runtime/MW_MAIN_0F41_SYNTH.c
     src/Original/Runtime/MW_MAIN_0F41_MPU.c
+    src/Original/Runtime/MW_MAIN_0F41_ADLIB.c
     src/Original/Runtime/MW_MAIN_0800.c
     src/Original/Memory/MW_EGA_0800_STATE.c
     src/Original/Video/MW_EGA_0800.c
@@ -175,6 +176,7 @@ set_target_properties(mechwarrior_original PROPERTIES POSITION_INDEPENDENT_CODE 
 option(MECHWARRIOR_BUILD_SDL "Build the playable SDL3 game" ON)
 if(MECHWARRIOR_BUILD_SDL)
     add_subdirectory(src/MT32)
+    add_subdirectory(src/Adlib)
     set(MECHWARRIOR_SDL_SOURCE_DIR "" CACHE PATH "Optional existing SDL3 source tree; never downloaded")
     if(MECHWARRIOR_SDL_SOURCE_DIR)
         set(SDL_SHARED ON CACHE BOOL "" FORCE)
@@ -192,7 +194,7 @@ if(MECHWARRIOR_BUILD_SDL)
         src/SDL/SDLBackend_Pilot.c src/Support/SupportPilot.c src/Support/SupportPilotObservation.c
         src/SDL/SDLBackend_Video.c src/SDL/SDLBackend_CombatVideo.c src/SDL/SDLBackend_CombatPlatform.c
         src/SDL/SDLBackend_CombatProcess.c src/SDL/SDLBackend_Audio.c)
-    target_link_libraries(mechwarrior_sdl PUBLIC mechwarrior_original SDL3::SDL3 mechwarrior_mt32)
+    target_link_libraries(mechwarrior_sdl PUBLIC mechwarrior_original SDL3::SDL3 mechwarrior_mt32 mechwarrior_adlib)
     if(NOT MSVC)
         target_link_libraries(mechwarrior_sdl PUBLIC m)
     endif()
@@ -204,6 +206,9 @@ if(MECHWARRIOR_BUILD_SDL)
             "$<TARGET_FILE:mt32emu>" "$<TARGET_FILE_DIR:mechwarrior>"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${munt_SOURCE_DIR}/mt32emu/COPYING.LESSER.txt" "$<TARGET_FILE_DIR:mechwarrior>/libmt32emu-LICENSE.txt")
+    add_custom_command(TARGET mechwarrior POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:nukedopl>" "$<TARGET_FILE_DIR:mechwarrior>"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${nukedopl_SOURCE_DIR}/LICENSE" "$<TARGET_FILE_DIR:mechwarrior>/Nuked-OPL3-LICENSE.txt")
     if(TARGET SDL3::SDL3-shared)
         add_custom_command(TARGET mechwarrior POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different

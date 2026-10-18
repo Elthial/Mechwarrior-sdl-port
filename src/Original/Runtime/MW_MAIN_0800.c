@@ -8,19 +8,17 @@
  * converted by this normal-entry projection. Native CBW sign-extends AL. */
 int16_t MwRunCampaignProgram(const MwCampaignLaunch *launch,uint8_t audioCode)
 {
-    /* Original A/a, R/r and T/t select other backends. Do not silently fall
-     * back to PC or claim their probes/side effects have been implemented. */
-    if (audioCode=='A' || audioCode=='a'
-        || audioCode=='T' || audioCode=='t') abort();
+    /* Tandy remains unconverted; do not silently substitute another device. */
+    if (audioCode=='T' || audioCode=='t') abort();
     MwCampaignAudioBackend *backend=&speakerBackend;
     if (audioCode=='R' || audioCode=='r') backend=&mpuBackend;
+    if (audioCode=='A' || audioCode=='a') backend=&adlibBackend;
     MwInstallMusicTimer();
     MwTimerSetCallback(1,MwTickMidiTrack,0);
     MwTimerSetCallback(3,MwTickMidiTrack,0);
     MwTimerSetCallback(5,MwTickMidiTrack,0);
     MwTimerSetCallback(7,MwTickMidiTrack,0);
-    /* Actual PC0EE4 is unconditionally successful; failed other-adapter probe
-     * chains are outside this minimum speaker slice, not success stubs. */
+    /* The selected hardware's original probe must succeed before playback. */
     if (!MwProbeMusicBackend(backend)) abort();
     MwSelectAndInitializeMidiBackend(backend);
     uint8_t campaignResult=MwRunCampaign(launch);

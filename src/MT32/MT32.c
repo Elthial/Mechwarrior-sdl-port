@@ -39,6 +39,9 @@ bool MwMt32Open(const char *controlRom,const char *pcmRom,uint32_t sampleRate,ch
     /* UART transmission is already paced by the hardware adapter and native
      * byte queue. Do not add a second message-length MIDI cable delay. */
     mt32emu_set_midi_delay_mode(synthesizer,MT32EMU_MDM_IMMEDIATE);
+    mt32emu_rom_info roms;mt32emu_get_rom_info(synthesizer,&roms);
+    fprintf(stderr,"MT-32: %s; %s; libmt32emu %s\n",roms.control_rom_description,
+        roms.pcm_rom_description,mt32emu_get_library_version_string());
     return true;
 }
 void MwMt32ReceiveByte(uint8_t value)

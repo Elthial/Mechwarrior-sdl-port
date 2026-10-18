@@ -15,6 +15,8 @@
     <Filter Include="Original\Runtime" />
     <Filter Include="Original\Video" />
     <Filter Include="SDL" />
+    <Filter Include="MT32" />
+    <Filter Include="Adlib" />
     <Filter Include="Support" />
     <Filter Include="src" />
   </ItemGroup>
@@ -294,5 +296,17 @@
     <None Include="MechWarrior.ini"><Filter>Build</Filter></None>
     <None Include="src/Build.ps1"><Filter>Build</Filter></None>
     <None Include="src/Run-MechWarrior.ps1"><Filter>Build</Filter></None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\MT32\MT32.c"><Filter>MT32</Filter></ClCompile>
+    <ClCompile Include="src\MT32\MPU401.c"><Filter>MT32</Filter></ClCompile>
+    <ClCompile Include="src\Adlib\Adlib.c"><Filter>Adlib</Filter></ClCompile>
+    <ClCompile Include="src\Original\Runtime\MW_MAIN_0F41_MPU.c"><Filter>Original\Runtime</Filter></ClCompile>
+    <ClCompile Include="src\Original\Runtime\MW_MAIN_0F41_ADLIB.c"><Filter>Original\Runtime</Filter></ClCompile>
+    <ClCompile Include="src\SDL\SDLBackend_Config.c"><Filter>SDL</Filter></ClCompile>
+    <ClInclude Include="src\include\mechwarrior\audio_devices.h"><Filter>Headers\mechwarrior</Filter></ClInclude>
+    <None Include="src\MT32\CMakeLists.txt"><Filter>MT32</Filter></None>
+    <None Include="src\Adlib\CMakeLists.txt"><Filter>Adlib</Filter></None>
+    <None Include="docs\AUDIO.md"><Filter>Documentation</Filter></None>
   </ItemGroup>
 </Project>

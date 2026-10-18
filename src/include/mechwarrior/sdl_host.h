@@ -11,5 +11,7 @@ bool MwSdlCapture(const char *stem);
 void MwSdlRequestQuit(void);
 /* Observers run after real SDL output, never as alternate game flow. */
 extern void (*mwSdlFrameObserver)(void);
+/* PCM observer count is float samples, not frames: mono speaker or interleaved
+ * stereo card output, at48kHz. It observes production, never drives playback. */
 extern void (*mwSdlAudioObserver)(const float *samples,uint32_t count);
 #endif

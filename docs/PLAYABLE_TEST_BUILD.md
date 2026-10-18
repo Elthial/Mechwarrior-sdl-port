@@ -11,6 +11,9 @@ installation:
 The launcher uses `build-visual-studio/Release`, keeps private saves separately
 and reports the capture/log directory under ignored `local` for the run. SDL3.dll must remain next
 to the executable. Do not set SDL dummy drivers for interactive play.
+Keep the built `mt32emu-2.dll` and `nukedopl.dll` beside it too. Campaign music
+selection and optional user ROM paths go in the existing `MechWarrior.ini`:
+see [sound configuration](AUDIO.md). The default remains speaker.
 
 ## Preparing for a mission
 

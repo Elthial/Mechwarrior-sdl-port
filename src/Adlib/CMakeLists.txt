@@ -1,0 +1,21 @@
+include(FetchContent)
+set(MECHWARRIOR_NUKED_OPL_SOURCE_DIR "" CACHE PATH "Existing Nuked-OPL3 checkout (optional)")
+if(MECHWARRIOR_NUKED_OPL_SOURCE_DIR)
+    set(nukedopl_SOURCE_DIR "${MECHWARRIOR_NUKED_OPL_SOURCE_DIR}")
+else()
+    FetchContent_Declare(nukedopl
+        GIT_REPOSITORY https://github.com/nukeykt/Nuked-OPL3.git
+        GIT_TAG 765ec962e473aeb767e4cba74ffdc8f588ffbfe8)
+    FetchContent_GetProperties(nukedopl)
+    if(NOT nukedopl_POPULATED)
+        FetchContent_Populate(nukedopl)
+    endif()
+endif()
+set(nukedopl_SOURCE_DIR "${nukedopl_SOURCE_DIR}" PARENT_SCOPE)
+# Keep the LGPL core replaceable, separate from the project-authored C17 adapter.
+add_library(nukedopl SHARED "${nukedopl_SOURCE_DIR}/opl3.c")
+set_target_properties(nukedopl PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+target_include_directories(nukedopl PUBLIC "${nukedopl_SOURCE_DIR}")
+add_library(mechwarrior_adlib STATIC Adlib.c)
+target_include_directories(mechwarrior_adlib PUBLIC ../include)
+target_link_libraries(mechwarrior_adlib PUBLIC nukedopl)

@@ -12,6 +12,7 @@ game is granted and no claim of ownership of recovered game material is made.
 | User installations, extracted media and private evidence | Not distributed; ignored local input/output |
 | SDL3 | zlib licence, supplied separately; see [third-party notices](../THIRD_PARTY_NOTICES.md) |
 | Munt libmt32emu | LGPL-2.1-or-later; separate shared library, excluded from MIT |
+| Nuked-OPL3 | LGPL-2.1-or-later; separate shared library, excluded from MIT |
 | Roland synthesizer ROMs | User-provided only; never distributed |
 
 Native-format constants and layout descriptions document interoperability

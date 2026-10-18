@@ -7,6 +7,7 @@
 
 MwHostSoundSystem mwSdlSoundSystem=MW_SOUND_SPEAKER;
 char mwSdlMt32ControlRom[4096],mwSdlMt32PcmRom[4096];
+enum { HOST_MIN_CPU_CYCLES_PER_MS=100,HOST_MAX_CPU_CYCLES_PER_MS=100000 };
 
 /* Parse into temporary configuration: an invalid trailing key must not change
  * the approved CPU rate or partially select an audio device. ROM paths are
@@ -38,13 +39,14 @@ bool MwSdlLoadTimingConfiguration(const char *path,bool optional)
         {
             if (!isdigit((unsigned char)*value)) {valid=false;break;}
             errno=0;unsigned long rate=strtoul(value,&end,10);
-            if (errno || *end || rate<100 || rate>100000) {valid=false;break;}
+            if (errno || *end || rate<HOST_MIN_CPU_CYCLES_PER_MS || rate>HOST_MAX_CPU_CYCLES_PER_MS) {valid=false;break;}
             cycles=(uint32_t)rate;
         }
         else if (!strcmp(key,"sound_system"))
         {
             if (!strcmp(value,"speaker")) soundSystem=MW_SOUND_SPEAKER;
             else if (!strcmp(value,"mt32")) soundSystem=MW_SOUND_MT32;
+            else if (!strcmp(value,"adlib")) soundSystem=MW_SOUND_ADLIB;
             else {valid=false;break;}
         }
         else if (!strcmp(key,"mt32_control_rom") || !strcmp(key,"mt32_pcm_rom"))

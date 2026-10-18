@@ -5,7 +5,7 @@
 #include "mechwarrior/launcher.h"
 #include <SDL3/SDL.h>
 enum { HOST_PIT_CLOCK_HZ=1193182,HOST_AUDIO_SAMPLE_RATE=48000 };
-typedef enum MwHostSoundSystem {MW_SOUND_SPEAKER,MW_SOUND_MT32} MwHostSoundSystem;
+typedef enum MwHostSoundSystem {MW_SOUND_SPEAKER,MW_SOUND_MT32,MW_SOUND_ADLIB} MwHostSoundSystem;
 extern MwHostSoundSystem mwSdlSoundSystem;
 extern char mwSdlMt32ControlRom[4096],mwSdlMt32PcmRom[4096];
 void MwMpuReset(void);

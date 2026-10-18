@@ -10,6 +10,8 @@
 | `src/Original/Memory` | Canonical shared game objects and executable-derived initial state. |
 | `src/Original/Launcher`, `Runtime` | Original transition and runtime behaviour. |
 | `src/SDL` | Host input, files, pacing, sound and presentation. |
+| `src/MT32` | MPU UART transport and libmt32emu synthesizer adapter. |
+| `src/Adlib` | AdLib card timers/register latch and Nuked-OPL3 synthesis adapter. |
 | `src/Support` | Necessary representation bridges and disabled-by-default automation. |
 | `src/include/mechwarrior` | Shared domain records and interfaces. |
 | `src/Build.ps1`, `src/Run-MechWarrior.ps1` | Windows build and launch entry points. |

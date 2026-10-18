@@ -16,6 +16,12 @@ MwMidiChannel audioChannels[MIDI_CHANNEL_RECORDS],audioDummyChannel;
 MwMidiSysexWorkspace midiSysex;
 MwCampaignAudioBackend *selectedAudioBackend;
 MwCampaignAudioBackend mpuBackend;
+MwCampaignAudioBackend adlibBackend;
+MwAdlibInstrument adlibInstruments[MIDI_INSTRUMENT_COUNT];
+uint16_t adlibAddressDelayReads,adlibDataDelayReads;
+uint8_t adlibRhythmRegister,adlibVoiceRoutes[MIDI_VOICE_CAPACITY][3];
+uint16_t adlibPackedNoteFrequencies[MIDI_ADLIB_NOTE_COUNT];
+uint16_t midiAdlibOutputPort;
 uint8_t mpuTransmitQueue[MIDI_MPU_QUEUE_CAPACITY];
 volatile uint16_t mpuQueueWriteIndex,mpuQueueReadIndex,mpuQueueByteCount;
 uint32_t mpuPreviousIrq;
@@ -30,7 +36,15 @@ bool MwImportCampaignMusicData(const uint8_t *data,size_t byteCount)
     uint16_t hostEndian=1;
     if (!data || byteCount<0x0A12 || *(uint8_t *)&hostEndian!=1) return false;
     uint16_t backendOffset=MwReadNativeWord(data,0x03F8);
-    if (backendOffset && backendOffset!=MIDI_SPEAKER_BACKEND_OFFSET && backendOffset!=MIDI_MPU_BACKEND_OFFSET) return false;
+    if (backendOffset && backendOffset!=MIDI_SPEAKER_BACKEND_OFFSET && backendOffset!=MIDI_MPU_BACKEND_OFFSET
+        && backendOffset!=MIDI_ADLIB_BACKEND_OFFSET) return false;
+    for (size_t i=0;i<sizeof(adlibBackend);++i) ((uint8_t *)&adlibBackend)[i]=data[MIDI_ADLIB_BACKEND_OFFSET+i];
+    for (size_t i=0;i<sizeof(adlibInstruments);++i) ((uint8_t *)adlibInstruments)[i]=data[MIDI_INSTRUMENTS_OFFSET+i];
+    adlibAddressDelayReads=MwReadNativeWord(data,0x00E0);
+    adlibDataDelayReads=MwReadNativeWord(data,0x00E2);
+    adlibRhythmRegister=data[0x00E4];
+    for (size_t i=0;i<MIDI_ADLIB_NOTE_COUNT;++i) adlibPackedNoteFrequencies[i]=MwReadNativeWord(data,(uint16_t)(0x00E6+i*2));
+    for (size_t i=0;i<sizeof(adlibVoiceRoutes);++i) ((uint8_t *)adlibVoiceRoutes)[i]=data[0x01CC+i];
     for (size_t i=0;i<sizeof(musicRuntimeHeader);++i) musicRuntimeHeader[i]=data[i];
     for (size_t i=0;i<sizeof(mpuBackend);++i) ((uint8_t *)&mpuBackend)[i]=data[MIDI_MPU_BACKEND_OFFSET+i];
     for (size_t i=0;i<sizeof(mpuTransmitQueue);++i) mpuTransmitQueue[i]=data[0x0224+i];
@@ -69,6 +83,7 @@ bool MwImportCampaignMusicData(const uint8_t *data,size_t byteCount)
     for (size_t i=0;i<sizeof(audioChannels);++i) ((uint8_t *)audioChannels)[i]=data[0x04C6+i];
     for (size_t i=0;i<sizeof(audioDummyChannel);++i) ((uint8_t *)&audioDummyChannel)[i]=data[0x0646+i];
     for (size_t i=0;i<sizeof(midiSysex);++i) ((uint8_t *)&midiSysex)[i]=data[0x07CE+i];
-    selectedAudioBackend=backendOffset==MIDI_MPU_BACKEND_OFFSET?&mpuBackend:backendOffset?&speakerBackend:NULL;
+    selectedAudioBackend=backendOffset==MIDI_MPU_BACKEND_OFFSET?&mpuBackend
+        :backendOffset==MIDI_ADLIB_BACKEND_OFFSET?&adlibBackend:backendOffset?&speakerBackend:NULL;
     return true;
 }

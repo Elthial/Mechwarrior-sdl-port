@@ -1,18 +1,13 @@
 #include "SDLBackend.h"
+#include "mechwarrior/audio_devices.h"
 #include "mechwarrior/campaign_input.h"
 #include "mechwarrior/combat_sound.h"
 #include "mechwarrior/combat_startup.h"
 #include <time.h>
-#include <ctype.h>
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 /* User-approved playable budget; see the human speed review in CPU_TIMING_PROFILE.md.
  * Keep standalone startup consistent with the supplied MechWarrior.ini. */
-enum { HOST_DEFAULT_CPU_CYCLES_PER_MS=2500,HOST_MIN_CPU_CYCLES_PER_MS=100,
-    HOST_MAX_CPU_CYCLES_PER_MS=100000,HOST_IDLE_WAIT_NS=100000,
+enum { HOST_DEFAULT_CPU_CYCLES_PER_MS=2500,HOST_IDLE_WAIT_NS=100000,
     HOST_NS_PER_MILLISECOND=1000000,HOST_NS_PER_SECOND=1000000000,
     HOST_MS_PER_SECOND=1000,HOST_SECONDS_PER_MINUTE=60,HOST_SECONDS_PER_HOUR=3600 };
 uint32_t mwSdlCpuCyclesPerMillisecond=HOST_DEFAULT_CPU_CYCLES_PER_MS;
@@ -104,7 +99,15 @@ void MwSdlWriteDevicePort(uint16_t port,uint8_t value)
         if (mwSdlSoundSystem==MW_SOUND_MT32 && !mwSdlCombatActive) MwMpuWritePort(port,value);
         return;
     }
-    if (port==ADLIB_INDEX_PORT || port==ADLIB_DATA_PORT || port==GAME_PORT) return;
+    if (port==ADLIB_INDEX_PORT || port==ADLIB_DATA_PORT)
+    {
+        if (mwSdlSoundSystem==MW_SOUND_ADLIB && !mwSdlCombatActive)
+            MwAdlibWritePort(port==ADLIB_DATA_PORT,value,hardwareTime*1000000.0/HOST_PIT_CLOCK_HZ);
+        return;
+    }
+    /* Native rhythm note-off can retain DX=0 from the VLQ reader. Those writes
+     * reach unused DMA channel 0 ports, not the OPL card; never redirect them. */
+    if (port==0 || port==1 || port==GAME_PORT) return;
     if (port==PIT_CONTROL_PORT && !(value&PIT_CONTROL_LATCH_TEST_MASK))
     {
         uint64_t cycles=(uint64_t)((double)(SDL_GetTicksNS()-counterLoadNanoseconds)*HOST_PIT_CLOCK_HZ/(double)HOST_NS_PER_SECOND);
@@ -130,7 +133,11 @@ uint8_t MwSdlReadDevicePort(uint16_t port)
     if (port==PIC_MASK_PORT) return picMask;
     if (port==MPU_DATA_PORT || port==MPU_STATUS_COMMAND_PORT)
         return mwSdlSoundSystem==MW_SOUND_MT32 && !mwSdlCombatActive?MwMpuReadPort(port):UINT8_MAX;
-    if (port==ADLIB_INDEX_PORT || port==GAME_PORT) return UINT8_MAX;
+    if (port==ADLIB_INDEX_PORT)
+        return mwSdlSoundSystem==MW_SOUND_ADLIB && !mwSdlCombatActive
+            ?MwAdlibReadStatus(hardwareTime*1000000.0/HOST_PIT_CLOCK_HZ):UINT8_MAX;
+    if (port==0 || port==1) return 0; /* Only ignored calibrated-delay reads here. */
+    if (port==GAME_PORT) return UINT8_MAX;
     if (port==PIT_CHANNEL0_PORT)
     {uint8_t value=counterReadHigh?(uint8_t)(latchedCounter>>8):(uint8_t)latchedCounter;counterReadHigh=!counterReadHigh;return value;}
     if (port!=SPEAKER_CONTROL_PORT) MwSdlFail("Unsupported hardware read");
@@ -173,16 +180,22 @@ void MwSdlPumpTimer(void)
         /* BTECH's installed scheduler must service every elapsed PIT edge,
          * independently of presentation/poll frequency. Keep each original
          * callback and its timestamp; do not batch its game-state writes.
-         * Campaign1610 instead waits for exact tick equality, so retain one
-         * edge per caller observation for that separate timer handler. */
+         * Campaign1610 waits for exact tick equality, so retain one BIOS tick
+         * per caller observation while catching up intervening fast edges. */
         bool combatScheduler=irq0==BtechTimerSchedulerInterrupt;
+        bool campaignScheduler=irq0==MwCampaignTimerInterrupt;
+        MwMusicTimerHandler dispatchedHandler=irq0;
+        uint32_t biosTicksBefore=biosTicks;
         hardwareTime=nextIrq;nextIrq+=channel0Divisor;
         MwSdlAdvanceAudio(hardwareTime);
         bool previousInInterrupt=inInterrupt;
         inInterrupt=true;bool savedInterrupts=interruptsEnabled;interruptsEnabled=false;
         if (!irq0) MwSdlFail("Unmapped IRQ0 handler");
         irq0();interruptsEnabled=savedInterrupts;inInterrupt=previousInInterrupt;
-        if (!combatScheduler || irq0!=BtechTimerSchedulerInterrupt) return;
+        /* MPU slot8 runs much faster than the speaker. Catch up those hardware
+         * edges, but expose at most one BIOS tick to campaign1610's equality
+         * wait. Stopping after every fast edge would slow MIDI with poll rate. */
+        if (irq0!=dispatchedHandler || (!combatScheduler && (!campaignScheduler || biosTicks!=biosTicksBefore))) return;
     }
     if (nextIrq>target)
     {

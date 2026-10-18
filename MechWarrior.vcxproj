@@ -318,4 +318,16 @@ MECHWARRIOR_TIMING_CONFIG=$(ProjectDir)MechWarrior.ini</LocalDebuggerEnvironment
     <None Include="src/Run-MechWarrior.ps1" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ItemGroup>
+    <ClCompile Include="src\MT32\MT32.c" />
+    <ClCompile Include="src\MT32\MPU401.c" />
+    <ClCompile Include="src\Adlib\Adlib.c" />
+    <ClCompile Include="src\Original\Runtime\MW_MAIN_0F41_MPU.c" />
+    <ClCompile Include="src\Original\Runtime\MW_MAIN_0F41_ADLIB.c" />
+    <ClCompile Include="src\SDL\SDLBackend_Config.c" />
+    <ClInclude Include="src\include\mechwarrior\audio_devices.h" />
+    <None Include="src\MT32\CMakeLists.txt" />
+    <None Include="src\Adlib\CMakeLists.txt" />
+    <None Include="docs\AUDIO.md" />
+  </ItemGroup>
 </Project>

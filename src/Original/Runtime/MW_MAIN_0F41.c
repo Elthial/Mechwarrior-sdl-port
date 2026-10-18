@@ -164,6 +164,9 @@ uint32_t MwReadMidiVariableLengthQuantity(uint16_t resourceSelector,uint16_t *st
         encoded=stream[(*streamOffset)++];
         quantity=((quantity<<7)|(encoded&0x7F))&0x7FFFFFFF;
     } while (encoded&MIDI_STATUS_BYTE);
+    /* Native DX is the high WORD of the returned quantity. The AdLib rhythm
+     * release callback observably inherits it before another port selection. */
+    midiAdlibOutputPort=(uint16_t)(quantity>>16);
     return quantity;
 }
 

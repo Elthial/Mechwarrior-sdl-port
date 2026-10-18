@@ -9,19 +9,21 @@
 uint16_t MwProbeMusicBackend(MwCampaignAudioBackend *backend)
 {
     if (!backend) abort();
+    if (backend->probeOffset==0x06B9) return MwProbeAdlibAndCalibrateDelays();
     if (backend->probeOffset==0x0912) return MwProbeMpuBackend();
     if (backend->probeOffset!=0x0EE4) abort();
     return MwProbeSpeakerBackend();
 }
 
-/* MW_MAIN0F41:0B46..0B7F. Pending timer arguments precede initialization.
- * Speaker preserves BX. MPU's different BX residue is NOT generalized here. */
+/* MW_MAIN0F41:0B46..0B7F. Pending timer arguments precede initialization;
+ * MPU's different BX residue is retained rather than repaired. */
 void MwSelectAndInitializeMidiBackend(MwCampaignAudioBackend *backend)
 {
     if (selectedAudioBackend)
     {
         if (selectedAudioBackend->shutdownOffset==0x098A) MwDrainAndShutdownMpuBackend();
         else if (selectedAudioBackend->shutdownOffset==0x0F01) MwShutdownSpeakerBackend();
+        else if (selectedAudioBackend->shutdownOffset==0x0736) {} /* Native RET. */
         else abort();
     }
     selectedAudioBackend=backend;
@@ -40,13 +42,15 @@ void MwSelectAndInitializeMidiBackend(MwCampaignAudioBackend *backend)
     }
     else
     {
-        if (backend->initializeOffset!=0x0EE8) abort();
-        MwInitializeSpeakerBackend();
+        if (backend->initializeOffset==0x0712) MwInitializeAdlibBackend();
+        else if (backend->initializeOffset==0x0EE8) MwInitializeSpeakerBackend();
+        else abort();
         backend->selectedVoiceCount=backend->voiceCapacity;
     }
     MwResetMidiParserState(MIDI_RESET_PARSER_ENTRY);
     if (timerTarget==0x09D0) MwTimerSetCallback(MUSIC_TIMER_FAST_SLOT,MwTickMpuTransmitQueue,timerRate);
     else if (timerTarget==0x0F73) MwTimerSetCallback(MUSIC_TIMER_FAST_SLOT,MwTickSpeakerVoices,timerRate);
+    else if (!timerTarget) MwTimerSetCallback(MUSIC_TIMER_FAST_SLOT,NULL,timerRate);
     else abort();
 }
 
@@ -57,6 +61,7 @@ void MwShutdownMusicBackend(void)
     {
         if (selectedAudioBackend->shutdownOffset==0x098A) MwDrainAndShutdownMpuBackend();
         else if (selectedAudioBackend->shutdownOffset==0x0F01) MwShutdownSpeakerBackend();
+        else if (selectedAudioBackend->shutdownOffset==0x0736) {} /* Native RET. */
         else abort();
     }
     selectedAudioBackend=NULL;
@@ -67,6 +72,7 @@ void MwShutdownMusicBackend(void)
 uint16_t MwSendMidiByteToSelectedBackend(uint16_t midiWord)
 {
     if (selectedAudioBackend && selectedAudioBackend->rawByteOffset==0x09A4) return MwQueueMpuByte(midiWord);
+    if (selectedAudioBackend && selectedAudioBackend->rawByteOffset==0x0737) return 0;
     if (!selectedAudioBackend || selectedAudioBackend->rawByteOffset!=0x0F0A) abort();
     return MwIgnoreSpeakerRawMidiByte();
 }
@@ -103,8 +109,10 @@ uint16_t MwReleaseCampaignMidiVoice(uint16_t channelIndex,uint16_t note)
         voice->links.previousOffset=MIDI_LIST_HEAD_OFFSET;
         audioVoiceListHead=voiceOffset;
         MwResolveMidiVoiceLinks(next)->previousOffset=voiceOffset;
-        if (!selectedAudioBackend || selectedAudioBackend->noteOffOffset!=0x0F2D) abort();
-        MwStopSpeakerVoice(voice);
+        if (!selectedAudioBackend) abort();
+        if (selectedAudioBackend->noteOffOffset==0x0841) MwStopAdlibVoice(voice);
+        else if (selectedAudioBackend->noteOffOffset==0x0F2D) MwStopSpeakerVoice(voice);
+        else abort();
         return 1;
     }
 }
@@ -113,7 +121,6 @@ uint16_t MwReleaseCampaignMidiVoice(uint16_t channelIndex,uint16_t note)
  * priorities are inserted BEFORE existing equals. Reservation balances wrap. */
 uint16_t MwAllocateCampaignMidiVoice(uint16_t channelIndex,uint16_t note,uint16_t velocity)
 {
-    (void)velocity; /* Native speaker hook does not consume velocity AX. */
     uint16_t channelOffset=MIDI_CHANNELS_OFFSET+channelIndex*sizeof(MwMidiChannel);
     MwMidiChannel *channel=MwResolveMidiChannel(channelOffset);
     uint8_t eligibility=channel->backendEligibilityMask;
@@ -160,8 +167,10 @@ uint16_t MwAllocateCampaignMidiVoice(uint16_t channelIndex,uint16_t note,uint16_
     MwResolveMidiVoiceLinks(next)->previousOffset=voiceOffset;
     voice->originalNote=(uint8_t)note;
     voice->translatedNote=(uint8_t)(note+channel->transposeOrDrumBase);
-    if (!selectedAudioBackend || selectedAudioBackend->noteOnOffset!=0x0F0D) abort();
-    MwStartSpeakerVoice(voice);
+    if (!selectedAudioBackend) abort();
+    if (selectedAudioBackend->noteOnOffset==0x073A) MwStartAdlibVoice(voice,channel,velocity);
+    else if (selectedAudioBackend->noteOnOffset==0x0F0D) MwStartSpeakerVoice(voice);
+    else abort();
     return 1;
 }
 
@@ -176,8 +185,10 @@ void MwSilenceCampaignMidiVoices(void)
         MwMidiVoice *voice=MwResolveMidiVoice(voiceOffset);
         if (!voice->activePriority) continue;
         voice->activePriority=0;
-        if (!selectedAudioBackend || selectedAudioBackend->noteOffOffset!=0x0F2D) abort();
-        MwStopSpeakerVoice(voice);
+        if (!selectedAudioBackend) abort();
+        if (selectedAudioBackend->noteOffOffset==0x0841) MwStopAdlibVoice(voice);
+        else if (selectedAudioBackend->noteOffOffset==0x0F2D) MwStopSpeakerVoice(voice);
+        else abort();
     }
 }
 
@@ -367,11 +378,16 @@ void MwApplySysexChannelConfiguration(const MwMidiChannelConfiguration *configur
     writer->transposeOrDrumBase=transpose;
 }
 
-/* MW_MAIN0F41:0E57..0E72. PC0F72 is a genuine RET-only decoder. Native
- * source advancement/DI arithmetic have no caller-visible PC synthesis use. */
+/* MW_MAIN0F41:0E57..0E72. Decode the selected backend's instrument record;
+ * speaker's actual decoder is a RET, not a synthesized instrument conversion. */
 void MwApplySysexInstrument(const uint8_t *source)
 {
-    (void)*source;
+    if (selectedAudioBackend && selectedAudioBackend->decodeInstrumentOffset==0x0890)
+    {
+        uint8_t index=*source++;
+        if (index>=MIDI_INSTRUMENT_COUNT) abort();
+        MwDecodeAdlibInstrument(source,&adlibInstruments[index]);return;
+    }
     if (!selectedAudioBackend || selectedAudioBackend->decodeInstrumentOffset!=0x0F72) abort();
     MwIgnoreSpeakerInstrument();
 }
@@ -416,6 +432,7 @@ void MwResetMidiParserState(uint16_t entryOffset)
     selectedAudioBackend->voicePoolOffset=MIDI_VOICES_OFFSET;
     if (selectedAudioBackend->initializeVoicesOffset==0x09CB) (void)MwQueueMpuByte(0xFF);
     else if (selectedAudioBackend->initializeVoicesOffset==0x0F4F) MwInitializeSpeakerVoiceRouting();
+    else if (selectedAudioBackend->initializeVoicesOffset==0x0869) MwInitializeAdlibVoiceRouting();
     else abort();
 }
 

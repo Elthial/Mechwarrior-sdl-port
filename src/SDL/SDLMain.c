@@ -78,7 +78,7 @@ int main(int argc,char **argv)
     {pilotDirectory=argv[argc-1];argc-=2;}
     else if(argc>=2 && !strcmp(argv[argc-1],"--no-support-pilot"))--argc;
     if (argc<2 || argc>3)
-    {fprintf(stderr,"Usage: mechwarrior <private game directory> [existing capture directory] [--support-pilot DIRECTORY | --no-support-pilot]\nEGA / PC speaker; arrows and Enter; Ctrl+Escape quits; F12 captures; F11 stops Support pilot.\n");return 2;}
+    {fprintf(stderr,"Usage: mechwarrior <private game directory> [existing capture directory] [--support-pilot DIRECTORY | --no-support-pilot]\nEGA; sound device from MechWarrior.ini; arrows and Enter; Ctrl+Escape quits; F12 captures; F11 stops Support pilot.\n");return 2;}
     SDL_SetMainReady();
     if(!MwSdlConfigureSupportPilot(pilotDirectory))
     {fprintf(stderr,"Cannot open Support pilot directory.\n");return 2;}
