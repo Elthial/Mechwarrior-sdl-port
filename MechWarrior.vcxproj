@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64"><Configuration>Debug</Configuration><Platform>x64</Platform></ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64"><Configuration>Release</Configuration><Platform>x64</Platform></ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{9377BC36-013B-4CAB-A13C-F08622B26DCB}</ProjectGuid>
+    <Keyword>MakeFileProj</Keyword>
+    <RootNamespace>MechWarrior</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup>
+    <OutDir>$(ProjectDir)build-visual-studio\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)build-visual-studio\ide\$(Configuration)\</IntDir>
+    <NMakeBuildCommandLine>powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)src\Build.ps1" -Configuration $(Configuration)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)src\Build.ps1" -Configuration $(Configuration) -Action Rebuild</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)src\Build.ps1" -Configuration $(Configuration) -Action Clean</NMakeCleanCommandLine>
+    <NMakeOutput>$(OutDir)mechwarrior.exe</NMakeOutput>
+    <NMakeIncludeSearchPath>$(ProjectDir)src\include;$(ProjectDir)src\SDL;$(MECHWARRIOR_SDL_SOURCE_DIR)\include;$(SDL3_DIR)\include;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakePreprocessorDefinitions>_WIN32;_WIN64;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeAdditionalOptions>/std:c17 $(NMakeAdditionalOptions)</NMakeAdditionalOptions>
+    <LocalDebuggerCommand>$(NMakeOutput)</LocalDebuggerCommand>
+    <LocalDebuggerWorkingDirectory>$(ProjectDir)</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerCommandArguments>"$(ProjectDir)assets\original-game" "$(ProjectDir)local\visual-studio\captures"</LocalDebuggerCommandArguments>
+    <LocalDebuggerEnvironment>MECHWARRIOR_SAVE_DIRECTORY=$(ProjectDir)local\visual-studio\saves
+MECHWARRIOR_TIMING_CONFIG=$(ProjectDir)MechWarrior.ini</LocalDebuggerEnvironment>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <NMakePreprocessorDefinitions>_DEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <NMakePreprocessorDefinitions>NDEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="src\Build.ps1" />
+    <ClInclude Include="src\include\mechwarrior\campaign_continuations.h" />
+    <ClInclude Include="src\include\mechwarrior\campaign_contracts.h" />
+    <ClInclude Include="src\include\mechwarrior\campaign_economy.h" />
+    <ClInclude Include="src\include\mechwarrior\campaign_events.h" />
+    <ClInclude Include="src\include\mechwarrior\campaign_exchange.h" />
+    <ClInclude Include="src\include\mechwarrior\campaign_graphics.h" />
+    <ClInclude Include="src\include\mechwarrior\campaign_handoff.h" />
+    <ClInclude Include="src\include\mechwarrior\campaign_input.h" />
+    <ClInclude Include="src\include\mechwarrior\campaign_market.h" />
+    <ClInclude Include="src\include\mechwarrior\campaign_mechanics.h" />
+    <ClInclude Include="src\include\mechwarrior\campaign_music.h" />
+    <ClInclude Include="src\include\mechwarrior\campaign_options.h" />
+    <ClInclude Include="src\include\mechwarrior\campaign_pilots.h" />
+    <ClInclude Include="src\include\mechwarrior\campaign_runtime.h" />
+    <ClInclude Include="src\include\mechwarrior\campaign_service.h" />
+    <ClInclude Include="src\include\mechwarrior\campaign_startup.h" />
+    <ClInclude Include="src\include\mechwarrior\campaign_state.h" />
+    <ClInclude Include="src\include\mechwarrior\campaign_travel.h" />
+    <ClInclude Include="src\include\mechwarrior\campaign_ui.h" />
+    <ClInclude Include="src\include\mechwarrior\campaign.h" />
+    <ClInclude Include="src\include\mechwarrior\combat_ballistics.h" />
+    <ClInclude Include="src\include\mechwarrior\combat_cockpit.h" />
+    <ClInclude Include="src\include\mechwarrior\combat_damage.h" />
+    <ClInclude Include="src\include\mechwarrior\combat_effects.h" />
+    <ClInclude Include="src\include\mechwarrior\combat_import.h" />
+    <ClInclude Include="src\include\mechwarrior\combat_input.h" />
+    <ClInclude Include="src\include\mechwarrior\combat_installation.h" />
+    <ClInclude Include="src\include\mechwarrior\combat_mechs.h" />
+    <ClInclude Include="src\include\mechwarrior\combat_movement.h" />
+    <ClInclude Include="src\include\mechwarrior\combat_navigation.h" />
+    <ClInclude Include="src\include\mechwarrior\combat_orders.h" />
+    <ClInclude Include="src\include\mechwarrior\combat_platform.h" />
+    <ClInclude Include="src\include\mechwarrior\combat_polygons.h" />
+    <ClInclude Include="src\include\mechwarrior\combat_pose.h" />
+    <ClInclude Include="src\include\mechwarrior\combat_projectiles.h" />
+    <ClInclude Include="src\include\mechwarrior\combat_render.h" />
+    <ClInclude Include="src\include\mechwarrior\combat_resources.h" />
+    <ClInclude Include="src\include\mechwarrior\combat_runtime.h" />
+    <ClInclude Include="src\include\mechwarrior\combat_scene.h" />
+    <ClInclude Include="src\include\mechwarrior\combat_sound.h" />
+    <ClInclude Include="src\include\mechwarrior\combat_startup.h" />
+    <ClInclude Include="src\include\mechwarrior\combat_surface.h" />
+    <ClInclude Include="src\include\mechwarrior\combat_tactics.h" />
+    <ClInclude Include="src\include\mechwarrior\combat_video.h" />
+    <ClInclude Include="src\include\mechwarrior\combat_world.h" />
+    <ClInclude Include="src\include\mechwarrior\dos_files.h" />
+    <ClInclude Include="src\include\mechwarrior\ega_campaign.h" />
+    <ClInclude Include="src\include\mechwarrior\hardware_ports.h" />
+    <ClInclude Include="src\include\mechwarrior\input_hardware.h" />
+    <ClInclude Include="src\include\mechwarrior\launcher.h" />
+    <ClInclude Include="src\include\mechwarrior\native_address.h" />
+    <ClInclude Include="src\include\mechwarrior\original_data.h" />
+    <ClInclude Include="src\include\mechwarrior\sdl_host.h" />
+    <ClInclude Include="src\include\mechwarrior\support_pilot.h" />
+    <ClCompile Include="src\Original\Audio\BTECH_0810_SOUND.c" />
+    <ClCompile Include="src\Original\Audio\BTECH_1ADF_INSTALL.c" />
+    <ClCompile Include="src\Original\Audio\BTECH_1ADF.c" />
+    <ClCompile Include="src\Original\Audio\BTECH_2134.c" />
+    <ClCompile Include="src\Original\Audio\BTECH_229C.c" />
+    <ClCompile Include="src\Original\campaign_graphics.c" />
+    <ClCompile Include="src\Original\Campaign\MW_MAIN_081B_CONTRACTS.c" />
+    <ClCompile Include="src\Original\Campaign\MW_MAIN_081B_DEPLOYMENT.c" />
+    <ClCompile Include="src\Original\Campaign\MW_MAIN_081B_DISK.c" />
+    <ClCompile Include="src\Original\Campaign\MW_MAIN_081B_ECONOMY.c" />
+    <ClCompile Include="src\Original\Campaign\MW_MAIN_081B_EVENT_UI.c" />
+    <ClCompile Include="src\Original\Campaign\MW_MAIN_081B_EVENTS.c" />
+    <ClCompile Include="src\Original\Campaign\MW_MAIN_081B_INPUT.c" />
+    <ClCompile Include="src\Original\Campaign\MW_MAIN_081B_MARKET.c" />
+    <ClCompile Include="src\Original\Campaign\MW_MAIN_081B_NEWS.c" />
+    <ClCompile Include="src\Original\Campaign\MW_MAIN_081B_OPTIONS.c" />
+    <ClCompile Include="src\Original\Campaign\MW_MAIN_081B_PILOTS.c" />
+    <ClCompile Include="src\Original\Campaign\MW_MAIN_081B_PLANET.c" />
+    <ClCompile Include="src\Original\Campaign\MW_MAIN_081B_REPAIR.c" />
+    <ClCompile Include="src\Original\Campaign\MW_MAIN_081B_RESOURCES.c" />
+    <ClCompile Include="src\Original\Campaign\MW_MAIN_081B_SAVE.c" />
+    <ClCompile Include="src\Original\Campaign\MW_MAIN_081B_SERVICE.c" />
+    <ClCompile Include="src\Original\Campaign\MW_MAIN_081B_STARTUP.c" />
+    <ClCompile Include="src\Original\Campaign\MW_MAIN_081B_TEXT.c" />
+    <ClCompile Include="src\Original\Campaign\MW_MAIN_081B_TRAVEL.c" />
+    <ClCompile Include="src\Original\Campaign\MW_MAIN_081B_UI.c" />
+    <ClCompile Include="src\Original\Campaign\MW_MAIN_081B.c" />
+    <ClCompile Include="src\Original\Campaign\MW_MAIN_SAVE_FORMAT.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_AI_MOTION.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_AI_WEAPONS.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_AI.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_ANIMATION.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_BRIEFING.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_COCKPIT.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_CONTROLS.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_DAMAGE.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_DIALOGS.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_EFFECTS.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_GAUGES.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_GEOMETRY.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_HUD_TEXT.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_HUD.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_IMPORT.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_INPUT.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_INSPECTION.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_MAIN.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_MECH_TICK.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_MOVEMENT.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_NAVIGATION.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_ORDERING.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_PLATFORM.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_PLAYER_CONTROLS.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_POSE.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_PROJECTILES.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_RADAR.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_RENDER.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_RESOURCES.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_RESULTS.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_SCENE.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_STAGE_RECOVERY.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_STARTUP.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_SURFACE.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_TACTICAL_NAVIGATION.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_TACTICS.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_TARGET_HUD.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_WEAPON_GEOMETRY.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_WEAPON_HUD.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_WEAPONS.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810_WORLD.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_0810.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_17FB_DAMAGE.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_17FB_HUD.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_17FB_MAP.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_17FB_ORDERING.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_17FB_ORDERS.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_17FB_PANELS.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_17FB_RADAR.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_17FB_SCREEN.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_17FB_STATE.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_17FB_TACTICS.c" />
+    <ClCompile Include="src\Original\Combat\BTECH_CAMPAIGN_TRANSFER.c" />
+    <ClCompile Include="src\Original\Geometry\BTECH_22B6_CAMERA.c" />
+    <ClCompile Include="src\Original\Geometry\BTECH_22B6_COMPOSITION.c" />
+    <ClCompile Include="src\Original\Geometry\BTECH_22B6_DIVISION.c" />
+    <ClCompile Include="src\Original\Geometry\BTECH_22B6_HORIZON.c" />
+    <ClCompile Include="src\Original\Geometry\BTECH_22B6_POLYGON_COLOURS.c" />
+    <ClCompile Include="src\Original\Geometry\BTECH_22B6_PROJECTION.c" />
+    <ClCompile Include="src\Original\Geometry\BTECH_22B6_RESOURCE_RENDER.c" />
+    <ClCompile Include="src\Original\Geometry\BTECH_22B6_RESOURCES.c" />
+    <ClCompile Include="src\Original\Geometry\BTECH_22B6_STARTUP.c" />
+    <ClCompile Include="src\Original\Geometry\BTECH_22B6_VERTEX_CACHE.c" />
+    <ClCompile Include="src\Original\Geometry\BTECH_22B6_WIDE_CLIP.c" />
+    <ClCompile Include="src\Original\Geometry\BTECH_22B6_WIDE_POLYGONS.c" />
+    <ClCompile Include="src\Original\Geometry\BTECH_22B6_WORD_POLYGONS.c" />
+    <ClCompile Include="src\Original\Geometry\BTECH_22B6_WORLD.c" />
+    <ClCompile Include="src\Original\Launcher\MW_0806.c" />
+    <ClCompile Include="src\Original\Memory\BTECH_0810_STATE.c" />
+    <ClCompile Include="src\Original\Memory\BTECH_1ADF_STATE.c" />
+    <ClCompile Include="src\Original\Memory\BTECH_1BF5_STATE.c" />
+    <ClCompile Include="src\Original\Memory\BTECH_22B6_DATA.c" />
+    <ClCompile Include="src\Original\Memory\BTECH_2FEB.c" />
+    <ClCompile Include="src\Original\Memory\BTECH_304E_COCKPIT.c" />
+    <ClCompile Include="src\Original\Memory\BTECH_304E_ORDERS.c" />
+    <ClCompile Include="src\Original\Memory\BTECH_304E_POLYGONS.c" />
+    <ClCompile Include="src\Original\Memory\BTECH_304E_POSE.c" />
+    <ClCompile Include="src\Original\Memory\BTECH_304E_RENDER.c" />
+    <ClCompile Include="src\Original\Memory\BTECH_304E_RUNTIME.c" />
+    <ClCompile Include="src\Original\Memory\BTECH_304E_SCENE.c" />
+    <ClCompile Include="src\Original\Memory\BTECH_304E_SOUND.c" />
+    <ClCompile Include="src\Original\Memory\BTECH_304E_STARTUP.c" />
+    <ClCompile Include="src\Original\Memory\BTECH_304E_VIDEO.c" />
+    <ClCompile Include="src\Original\Memory\BTECH_304E_WORLD.c" />
+    <ClCompile Include="src\Original\Memory\BTECH_304E.c" />
+    <ClCompile Include="src\Original\Memory\MW_0806_STATE.c" />
+    <ClCompile Include="src\Original\Memory\MW_EGA_0800_STATE.c" />
+    <ClCompile Include="src\Original\Memory\MW_MAIN_0F41_STATE.c" />
+    <ClCompile Include="src\Original\Memory\MW_MAIN_1090_EVENTS.c" />
+    <ClCompile Include="src\Original\Memory\MW_MAIN_1090_OPTIONS.c" />
+    <ClCompile Include="src\Original\Memory\MW_MAIN_1090.c" />
+    <ClCompile Include="src\Original\Memory\MW_MAIN_1AA5.c" />
+    <ClCompile Include="src\Original\Memory\MW_MAIN_28BE.c" />
+    <ClCompile Include="src\Original\Runtime\BTECH_0810_DIVISION.c" />
+    <ClCompile Include="src\Original\Runtime\BTECH_0810_EXIT.c" />
+    <ClCompile Include="src\Original\Runtime\BTECH_0810_STREAMS.c" />
+    <ClCompile Include="src\Original\Runtime\BTECH_1BF5_ARCHIVE.c" />
+    <ClCompile Include="src\Original\Runtime\BTECH_1BF5_CLEANUP.c" />
+    <ClCompile Include="src\Original\Runtime\BTECH_1BF5_DIVIDE.c" />
+    <ClCompile Include="src\Original\Runtime\BTECH_1BF5_INPUT.c" />
+    <ClCompile Include="src\Original\Runtime\BTECH_1BF5_INSTALL.c" />
+    <ClCompile Include="src\Original\Runtime\BTECH_1BF5_KEYBOARD.c" />
+    <ClCompile Include="src\Original\Runtime\BTECH_1BF5_PLATFORM.c" />
+    <ClCompile Include="src\Original\Runtime\BTECH_1BF5_TAGS.c" />
+    <ClCompile Include="src\Original\Runtime\MW_MAIN_0800.c" />
+    <ClCompile Include="src\Original\Runtime\MW_MAIN_0F41_SYNTH.c" />
+    <ClCompile Include="src\Original\Runtime\MW_MAIN_0F41.c" />
+    <ClCompile Include="src\Original\Video\BTECH_1BF5_BITMAPS.c" />
+    <ClCompile Include="src\Original\Video\BTECH_1BF5_ELLIPSE.c" />
+    <ClCompile Include="src\Original\Video\BTECH_1BF5_LINES.c" />
+    <ClCompile Include="src\Original\Video\BTECH_1BF5_PIXELS.c" />
+    <ClCompile Include="src\Original\Video\BTECH_1BF5_POLYGON_CLIP.c" />
+    <ClCompile Include="src\Original\Video\BTECH_1BF5_POLYGON_EDGES.c" />
+    <ClCompile Include="src\Original\Video\BTECH_1BF5_POLYGONS.c" />
+    <ClCompile Include="src\Original\Video\BTECH_1BF5_SCREENS.c" />
+    <ClCompile Include="src\Original\Video\BTECH_1BF5_SHAPES.c" />
+    <ClCompile Include="src\Original\Video\BTECH_1BF5.c" />
+    <ClCompile Include="src\Original\Video\BTECH_2A36_BITMAPS.c" />
+    <ClCompile Include="src\Original\Video\BTECH_2A36_BLIT.c" />
+    <ClCompile Include="src\Original\Video\BTECH_2A36_CAPTURE.c" />
+    <ClCompile Include="src\Original\Video\BTECH_2A36_LINES.c" />
+    <ClCompile Include="src\Original\Video\BTECH_2A36_PIXELS.c" />
+    <ClCompile Include="src\Original\Video\BTECH_2A36_POLYGONS.c" />
+    <ClCompile Include="src\Original\Video\BTECH_2A36_PRESENT.c" />
+    <ClCompile Include="src\Original\Video\BTECH_2A36_SCREENS.c" />
+    <ClCompile Include="src\Original\Video\BTECH_2A36_SPANS.c" />
+    <ClCompile Include="src\Original\Video\BTECH_2A36.c" />
+    <ClCompile Include="src\Original\Video\MW_EGA_0800.c" />
+    <None Include="src\Run-MechWarrior.ps1" />
+    <ClCompile Include="src\SDL\SDLBackend_Audio.c" />
+    <ClCompile Include="src\SDL\SDLBackend_CombatPlatform.c" />
+    <ClCompile Include="src\SDL\SDLBackend_CombatProcess.c" />
+    <ClCompile Include="src\SDL\SDLBackend_CombatVideo.c" />
+    <ClCompile Include="src\SDL\SDLBackend_DebugControl.c" />
+    <ClCompile Include="src\SDL\SDLBackend_Files.c" />
+    <ClCompile Include="src\SDL\SDLBackend_Input.c" />
+    <ClCompile Include="src\SDL\SDLBackend_Main.c" />
+    <ClCompile Include="src\SDL\SDLBackend_Pilot.c" />
+    <ClCompile Include="src\SDL\SDLBackend_Time.c" />
+    <ClCompile Include="src\SDL\SDLBackend_Video.c" />
+    <ClInclude Include="src\SDL\SDLBackend.h" />
+    <ClCompile Include="src\SDL\SDLMain.c" />
+    <ClCompile Include="src\Support\CombatInstallation.c" />
+    <ClCompile Include="src\Support\CombatPlatform.c" />
+    <ClCompile Include="src\Support\MidiAddress.c" />
+    <ClCompile Include="src\Support\NativeAddress.c" />
+    <ClCompile Include="src\Support\SupportPilot.c" />
+    <ClCompile Include="src\Support\SupportPilotObservation.c" />
+    <None Include="docs\BUILDING.md" />
+    <None Include="docs\CAMPAIGN_GUIDE.md" />
+    <None Include="docs\CHANGELOG.md" />
+    <None Include="docs\CODE_GUIDE.md" />
+    <None Include="docs\CODE_STYLE.md" />
+    <None Include="docs\COMBAT_GUIDE.md" />
+    <None Include="docs\CONTRIBUTING.md" />
+    <None Include="docs\CPU_TIMING_PROFILE.md" />
+    <None Include="docs\DOCUMENTATION_POLICY.md" />
+    <None Include="docs\GAME_DATA.md" />
+    <None Include="docs\gameplay\CAMPAIGN_PLANET_SCHEMA.md" />
+    <None Include="docs\gameplay\CAMPAIGN_REPAIR_MECHANICS.md" />
+    <None Include="docs\gameplay\FILE_FORMATS.md" />
+    <None Include="docs\gameplay\MAP_AND_MODEL_FORMATS.md" />
+    <None Include="docs\gameplay\MECH_CONDITION_LOADOUT.md" />
+    <None Include="docs\gameplay\MECH_ROSTER_AND_DEVELOPMENT_REMNANTS.md" />
+    <None Include="docs\gameplay\MECH_WEAPON_SCHEMAS.md" />
+    <None Include="docs\gameplay\MODEL_BANK_REMNANTS.md" />
+    <None Include="docs\gameplay\PICTURE_BANK_FORMAT.md" />
+    <None Include="docs\gameplay\PILOT_SCHEMAS.md" />
+    <None Include="docs\gameplay\README.md" />
+    <None Include="docs\gameplay\SCENARIO_UNIT_SCHEMAS.md" />
+    <None Include="docs\images\PROVENANCE.json" />
+    <None Include="docs\LICENSES\README.md" />
+    <None Include="docs\NOTICE.md" />
+    <None Include="docs\ORIGINAL_GAME.md" />
+    <None Include="docs\PLAYABLE_TEST_BUILD.md" />
+    <None Include="docs\PRESERVATION_PLAN.md" />
+    <None Include="docs\READABLE_SOURCE_NAMES.md" />
+    <None Include="docs\README.md" />
+    <None Include="docs\RECONSTRUCTION_PLAN.md" />
+    <None Include="docs\RUNTIME_STATUS.md" />
+    <None Include="docs\SCREENSHOTS.md" />
+    <None Include="docs\SOURCE_LAYOUT.md" />
+    <None Include="docs\SUPPORT_PILOT.md" />
+    <None Include="docs\SUPPORTED_VERSIONS.md" />
+    <None Include="docs\THIRD_PARTY_NOTICES.md" />
+    <None Include="docs\VISUAL_ACCEPTANCE.md" />
+    <None Include="AGENTS.md" />
+    <None Include="README.md" />
+    <None Include="CMakeLists.txt" />
+    <None Include="MechWarrior.ini" />
+    <None Include="src/Build.ps1" />
+    <None Include="src/Run-MechWarrior.ps1" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

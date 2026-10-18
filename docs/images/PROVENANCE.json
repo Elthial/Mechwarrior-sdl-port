@@ -1,0 +1,64 @@
+{
+  "images": [
+    {
+      "file": "docs/images/planet-hub.png",
+      "description": "Actual SDL campaign hub readback, 2026-10-15.",
+      "sha256": "cbf0b542c3b8d0f6c56e46c3f23dd65afb3e50f05fabe5352f43bd9a114b4d8f",
+      "sourceSha256": "cbf0b542c3b8d0f6c56e46c3f23dd65afb3e50f05fabe5352f43bd9a114b4d8f",
+      "pixels": [
+        960,
+        600
+      ],
+      "processing": "Lossless RGB PNG encoding only; no resizing, compositing, retouching or reference substitution.",
+      "rights": "Contains original game artwork; excluded from project MIT licence. Documentation only."
+    },
+    {
+      "file": "docs/images/mech-repair.png",
+      "description": "Actual SDL Mech service/damaged Jenner readback, 2026-10-15.",
+      "sha256": "6fba3122f6fd718fe81899406ad1005894033dfefdf4021469662f5a7bfc26aa",
+      "sourceSha256": "6fba3122f6fd718fe81899406ad1005894033dfefdf4021469662f5a7bfc26aa",
+      "pixels": [
+        960,
+        600
+      ],
+      "processing": "Lossless RGB PNG encoding only; no resizing, compositing, retouching or reference substitution.",
+      "rights": "Contains original game artwork; excluded from project MIT licence. Documentation only."
+    },
+    {
+      "file": "docs/images/bar.png",
+      "description": "Actual SDL Bar/recruitment run, 2026-10-15.",
+      "sha256": "11fe91b8948860ffe5d40fe0536b4eecdb9ea829104e49a658bf73d3819bfb8b",
+      "sourceSha256": "11fe91b8948860ffe5d40fe0536b4eecdb9ea829104e49a658bf73d3819bfb8b",
+      "pixels": [
+        960,
+        600
+      ],
+      "processing": "Lossless RGB PNG encoding only; no resizing, compositing, retouching or reference substitution.",
+      "rights": "Contains original game artwork; excluded from project MIT licence. Documentation only."
+    },
+    {
+      "file": "docs/images/contract.png",
+      "description": "Actual SDL contract briefing readback, 2026-10-15.",
+      "sha256": "293bbaf89b133aaf54508876dd19cf8e66c48f812bdfad87cd781bacb8415501",
+      "sourceSha256": "293bbaf89b133aaf54508876dd19cf8e66c48f812bdfad87cd781bacb8415501",
+      "pixels": [
+        960,
+        600
+      ],
+      "processing": "Lossless RGB PNG encoding only; no resizing, compositing, retouching or reference substitution.",
+      "rights": "Contains original game artwork; excluded from project MIT licence. Documentation only."
+    },
+    {
+      "file": "docs/images/gameplay.png",
+      "description": "Actual SDL combat cockpit readback, 2026-10-18, Support-pilot testing run. Not a matched DOS replay.",
+      "sha256": "ed58be2fba87b88745328826bc782bd733640d6f7dc44115fcb0a676e03cd381",
+      "sourceSha256": "c9fa19fe301ca7b22af4472f1d4245a700f3f483a44f5fea951146ef477ef260",
+      "pixels": [
+        960,
+        600
+      ],
+      "processing": "Lossless RGB PNG encoding only; no resizing, compositing, retouching or reference substitution.",
+      "rights": "Contains original game artwork; excluded from project MIT licence. Documentation only."
+    }
+  ]
+}
