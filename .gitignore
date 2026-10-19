@@ -3,6 +3,7 @@
 **/obj/
 **/__pycache__/
 /.vs/
+/AGENTS.md
 *.user
 *.suo
 *.exe
