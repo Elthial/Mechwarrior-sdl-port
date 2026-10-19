@@ -30,8 +30,8 @@ typedef struct MwCampaignPlatformCalls
     void (*displayDosString)(const char *text);
 } MwCampaignPlatformCalls;
 extern MwCampaignPlatformCalls mwCampaignPlatform;
-/* Explicit temporary dependency bindings, never successful no-op defaults.
- * These are transport for the unconverted native continuation/music body. */
+/* Original FAR music calls across the campaign/runtime boundary. Host bindings
+ * forward to the converted sequencer; they do not choose cues or play files. */
 extern void (*campaignStopMusic)(void);
 extern void (*campaignStartMusic)(uint16_t selector,uint16_t offset);
 extern uint16_t campaignMusicBufferSelector, graphicsOverlaySelector;

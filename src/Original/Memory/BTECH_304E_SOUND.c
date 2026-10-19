@@ -1,6 +1,9 @@
 #include "mechwarrior/combat_sound.h"
 #include "mechwarrior/native_address.h"
 #include "mechwarrior/combat_runtime.h"
+#include "mechwarrior/combat_adlib.h"
+#include "mechwarrior/combat_mpu.h"
+#include <stdlib.h>
 
 BtechRuntimeStream runtimeStreams[COMBAT_STREAM_SLOTS];
 uint16_t lastStreamOffset,streamSetupCounter;
@@ -10,6 +13,9 @@ uint16_t selectedAudioBackendMask,activeSoundBankIndex,soundAllocationError;
 BtechResourceAllocation soundAllocationOverride;
 uint16_t timerSoundEventIndex,savedSoundTimerDivisor;
 uint8_t soundTimerInstalled;
+uint8_t musicTimerInstalled;
+uint16_t savedMusicTimerDivisor;
+uint32_t savedMusicTimerVector;
 uint8_t adlibProbeInitialStatus;
 uint8_t soundEffectsEnableMask;
 void (*audioTickCallback)(void);
@@ -32,8 +38,13 @@ uint16_t *samplePriorityOwner;
 /* Child-image IO only. Do not call this to reset an already-running child. */
 bool BtechImportSoundInitialData(const uint8_t *data,size_t bytes)
 {
-    if (!data || bytes<0x10000 || !BtechImportRuntimeInitialData(data,bytes)) return false;
-    for (uint16_t bank=0;bank<COMBAT_AUDIO_BANK_ROOTS;++bank) soundBanks[bank]=(BtechSoundBank){0};
+    if (!data || bytes<0x10000 || !BtechImportRuntimeInitialData(data,bytes)
+        || !BtechImportAdlibInitialData(data,bytes) || !BtechImportMpuInitialData(data,bytes)) return false;
+    for (uint16_t bank=0;bank<COMBAT_AUDIO_BANK_ROOTS;++bank)
+    {
+        free(soundBanks[bank].events);
+        soundBanks[bank]=(BtechSoundBank){0};
+    }
     for (uint16_t stream=0;stream<COMBAT_TAGGED_STREAMS;++stream) taggedStreams[stream]=(BtechTaggedStream){0};
     taggedStreamBackup=(BtechTaggedStream){0};soundAllocationOverride=(BtechResourceAllocation){0};
     lastStreamOffset=MwReadNativeWord(data,0x4CD8);
@@ -41,11 +52,15 @@ bool BtechImportSoundInitialData(const uint8_t *data,size_t bytes)
     for (uint16_t slot=0;slot<COMBAT_STREAM_SLOTS;++slot)
     {
         runtimeStreams[slot].file=NULL;
+        runtimeStreams[slot].buffer=NULL;
         runtimeStreams[slot].flags=data[COMBAT_STREAM_TABLE+slot*COMBAT_STREAM_STRIDE+6];
         runtimeStreams[slot].dosHandle=data[COMBAT_STREAM_TABLE+slot*COMBAT_STREAM_STRIDE+7];
     }
     streamSetupCounter=MwReadNativeWord(data,0x4DEA);
     selectedAudioBackendMask=MwReadNativeWord(data,0x28D4);
+    savedMusicTimerDivisor=MwReadNativeWord(data,0x28D6);
+    savedMusicTimerVector=MwReadNativeWord(data,0x28D8)|((uint32_t)MwReadNativeWord(data,0x28DA)<<16);
+    musicTimerInstalled=data[0x28DC];musicTimerCallback=BtechAudioTimerNoOp;
     soundEffectsEnableMask=data[0x28DD];
     /* These are the actual authored pairs, not a replacement empty tick. */
     if (MwReadNativeWord(data,0x2C9B)!=0x0020 || MwReadNativeWord(data,0x2C9D)!=0x229C

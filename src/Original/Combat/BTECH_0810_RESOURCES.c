@@ -1,3 +1,4 @@
+#include "mechwarrior/combat_runtime.h"
 #include "mechwarrior/combat_resources.h"
 #include "mechwarrior/native_address.h"
 #include <stdlib.h>
@@ -13,7 +14,7 @@ uint32_t BtechGetDecodedResourceLength(const char *filename)
     int16_t archive=BtechOpenCompressedArchive(UINT16_MAX,stream,"r",physicalBytes);
     if (archive==-1) abort();
     uint32_t decodedBytes=BtechGetArchiveDecodedLength((uint16_t)archive);
-    BtechFlushAndCloseCompressedArchive((uint16_t)archive);fclose(stream);
+    BtechFlushAndCloseCompressedArchive((uint16_t)archive);BtechCloseStreamFile(stream);
     return decodedBytes;
 }
 
@@ -38,7 +39,7 @@ void BtechDecodeResourceIntoAllocation(const char *filename,BtechResourceAllocat
         memcpy(allocation.bytes+total,decodedChunk,decodedBytes);total+=decodedBytes;
     }
     if (total!=allocation.byteCount) abort(); /* Native fatal resource-length mismatch. */
-    BtechFlushAndCloseCompressedArchive((uint16_t)archive);fclose(stream);
+    BtechFlushAndCloseCompressedArchive((uint16_t)archive);BtechCloseStreamFile(stream);
 }
 
 /*0810:DDF2. Resource bytes are read only after successful paragraph allocation. */

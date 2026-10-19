@@ -1,4 +1,7 @@
+#include "mechwarrior/combat_runtime.h"
+#include "mechwarrior/combat_sound.h"
 #include "mechwarrior/combat_resources.h"
+#include "mechwarrior/combat_heap.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -28,7 +31,7 @@ uint16_t BtechArchiveModeContainsRead(const char *mode)
 /*1BF5:3E26. Ordinary runtime allocation release is the low-level boundary. */
 void BtechReleaseNearArchiveBlockIfNonzero(void *allocation)
 {
-    if (allocation) free(allocation);
+    if (allocation) BtechReleaseNearBlockAndProbeAllocation(allocation);
 }
 
 /*1BF5:3E49. State then owned DOS workspace then descriptor; borrowed FILE
@@ -57,7 +60,7 @@ int16_t BtechAllocateArchiveDescriptor(const char *ignoredMode)
     uint16_t handle=0;
     while (handle<RESOURCE_ARCHIVE_SLOTS && archiveDescriptors[handle]) ++handle;
     if (handle==RESOURCE_ARCHIVE_SLOTS) return -1;
-    selectedArchive=calloc(1,sizeof(*selectedArchive));
+    selectedArchive=BtechAllocateZeroedNearElements(1,BTECH_NEAR_ARCHIVE_BYTES,sizeof(*selectedArchive),BTECH_NEAR_ARCHIVE);
     if (!selectedArchive) return -1;
     archiveDescriptors[handle]=selectedArchive;
     return (int16_t)handle;
@@ -69,7 +72,7 @@ uint16_t BtechAllocateArchiveMethodState(int16_t method,const char *mode)
 {
     if (method>RESOURCE_METHOD_LZW) return UINT16_MAX;
     if (method<RESOURCE_METHOD_RAW || !BtechArchiveModeContainsRead(mode)) abort();
-    selectedArchive->state=calloc(0x80,1);
+    selectedArchive->state=BtechAllocateZeroedNearElements(BTECH_NEAR_ARCHIVE_STATE_BYTES,1,BTECH_NEAR_ARCHIVE_STATE_BYTES,BTECH_NEAR_BYTES);
     if (!selectedArchive->state) return UINT16_MAX;
     if (method==RESOURCE_METHOD_LZW)
     {
@@ -77,6 +80,11 @@ uint16_t BtechAllocateArchiveMethodState(int16_t method,const char *mode)
         if (!selectedArchive->workspace)
             selectedArchive->workspace=(BtechLzwReaderWorkspace *)BtechAllocateDosMemoryBlock(0x3AB3).bytes;
         if (!selectedArchive->workspace) return UINT16_MAX;
+        if (selectedArchive->workspace!=borrowedArchiveWorkspace)
+        {
+            if (!btechHostDosAllocationSelector) abort();
+            selectedArchive->workspaceSelector=btechHostDosAllocationSelector((const uint8_t *)selectedArchive->workspace);
+        }
     }
     selectedArchive->methodAndFlags=(uint8_t)method;
     return (uint16_t)method; /* Only FFFF/non-FFFF is consumed; native incidental AH is not host ABI. */
@@ -89,10 +97,13 @@ int16_t BtechOpenCompressedArchive(uint16_t method,FILE *stream,const char *mode
     if (handle==-1) return -1;
     BtechArchiveDescriptor *archive=selectedArchive;
     archive->stream=stream;
+    for (uint16_t slot=0;slot<COMBAT_STREAM_SLOTS;++slot)
+        if (runtimeStreams[slot].file==stream)
+        {archive->streamIdentity=COMBAT_STREAM_TABLE+slot*COMBAT_STREAM_STRIDE;break;}
     archive->initialStreamPosition=(uint32_t)ftell(stream);
     archive->compressedPosition=5;
     if (!BtechArchiveModeContainsRead(mode)) abort(); /* Unconverted writer. */
-    method=(uint8_t)fgetc(stream);
+    method=(uint8_t)BtechReadStreamByte(stream);
     archive->methodAndFlags=(uint8_t)method;
     if (BtechAllocateArchiveMethodState((int16_t)method,mode)==UINT16_MAX)
     {
@@ -101,7 +112,7 @@ int16_t BtechOpenCompressedArchive(uint16_t method,FILE *stream,const char *mode
     }
     archive->compressedBytes=physicalBytes;
     uint8_t lengthBytes[4]={0};
-    fread(lengthBytes,1,4,stream);
+    BtechReadStreamElements(lengthBytes,1,4,stream);
     archive->decodedBytes=(uint32_t)lengthBytes[0]|((uint32_t)lengthBytes[1]<<8)
         |((uint32_t)lengthBytes[2]<<16)|((uint32_t)lengthBytes[3]<<24);
     if (method==RESOURCE_METHOD_LZW) BtechInitializeLzwReader();
@@ -134,7 +145,7 @@ uint16_t BtechReadArchiveSourceBytes(uint8_t *destination,uint16_t bytes)
     if (remaining<bytes) bytes=(uint16_t)remaining;
     if (!remaining) return 0;
     archive->compressedPosition+=bytes; /* BEFORE the possibly short read. */
-    uint16_t read=(uint16_t)fread(destination,1,bytes,archive->stream);
+    uint16_t read=(uint16_t)BtechReadStreamElements(destination,1,bytes,archive->stream);
     return read;
 }
 
@@ -211,7 +222,7 @@ uint16_t BtechReadArchiveSourceByte(void)
     BtechArchiveDescriptor *archive=selectedArchive;
     if (archive->compressedPosition==archive->compressedBytes) return UINT16_MAX;
     ++archive->compressedPosition;
-    return (uint16_t)fgetc(archive->stream);
+    return (uint16_t)BtechReadStreamByte(archive->stream);
 }
 
 /*1BF5:38BC. Read and buffer one extra byte after satisfying the request. */
@@ -253,7 +264,7 @@ void BtechCopyArchiveStreamBytes(uint8_t *destination,uint16_t bytes)
     while (bytes && read>0)
     {
         uint16_t request=bytes<sizeof(archiveStreamScratch)?bytes:(uint16_t)sizeof(archiveStreamScratch);
-        read=(int16_t)fread(archiveStreamScratch,1,request,selectedArchive->stream);
+        read=(int16_t)BtechReadStreamElements(archiveStreamScratch,1,request,selectedArchive->stream);
         bytes-=(uint16_t)read;
         memcpy(destination,archiveStreamScratch,(uint16_t)read);
         destination+=(uint16_t)read;

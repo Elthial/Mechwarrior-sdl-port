@@ -1,3 +1,4 @@
+#include "mechwarrior/combat_runtime.h"
 #include "mechwarrior/combat_video.h"
 #include "mechwarrior/combat_startup.h"
 #include "mechwarrior/combat_polygons.h"
@@ -160,7 +161,7 @@ uint16_t BtechLoadFontSlot(const char *filename,BtechRuntimeStream *stream)
         stream=BtechOpenTaggedResourceStream((char *)scratch.bytes);openedHere=1;
     }
     if (BtechFindResourceTagPosition(stream,"FNT:",0)==UINT32_MAX
-        || fread(scratch.bytes,1,sizeof(scratch.metrics),stream->file)!=sizeof(scratch.metrics)) slot=0;
+        || BtechReadStreamElements(scratch.bytes,1,sizeof(scratch.metrics),stream->file)!=sizeof(scratch.metrics)) slot=0;
     else
     {
         fontAdvanceWidths[slot]=scratch.metrics.advancePixels;

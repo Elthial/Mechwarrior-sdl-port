@@ -7,9 +7,9 @@
 /* Hardware PCM only: PIT channel2 speaker plus the selected external card.
  * MIDI scheduling, allocation, instruments and rotation remain Original code;
  * the host never plays an SMF itself. Speaker Fourier integration suppresses
- * ultrasonic native period0014 rather
- * than aliasing its59kHz fundamental into the audible48kHz output. This is a
- * bounded32-harmonic digital speaker model, not verified analogue acoustics. */
+ * the native period 0x0014 (about 59 kHz) rather than aliasing it into the
+ * audible 48 kHz output. This is a bounded 32-harmonic digital speaker model,
+ * not verified analogue acoustics. */
 static SDL_AudioStream *audioStream;
 static SDL_Mutex *audioQueueMutex;
 enum { AUDIO_QUEUE_FRAMES=0x4000,AUDIO_START_LEAD_FRAMES=0x0800 };
@@ -73,6 +73,7 @@ static void SDLCALL FeedAudio(void *unused,SDL_AudioStream *stream,int additiona
 
 bool MwSdlInitializeAudio(void)
 {
+    if (audioStream || audioQueueMutex) return SDL_SetError("Audio is already initialized");
     outputChannels=mwSdlSoundSystem==MW_SOUND_SPEAKER?1:2;
     if (mwSdlSoundSystem==MW_SOUND_ADLIB) MwAdlibReset(HOST_AUDIO_SAMPLE_RATE);
     if (mwSdlSoundSystem==MW_SOUND_MT32)
@@ -83,26 +84,37 @@ bool MwSdlInitializeAudio(void)
     }
     SDL_AudioSpec format={SDL_AUDIO_F32,(int)outputChannels,HOST_AUDIO_SAMPLE_RATE};
     audioQueueMutex=SDL_CreateMutex();
-    if (!audioQueueMutex) return false;
+    if (!audioQueueMutex) goto failed;
     generatedFrames=playbackFrames=lateFrames=underrunFrames=clockSkippedFrames=0;leadFrames=AUDIO_START_LEAD_FRAMES;
     audioStream=SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,&format,FeedAudio,NULL);
-    if (!audioStream) return false;
+    if (!audioStream) goto failed;
     SDL_AudioSpec deviceFormat;int deviceFrames;
-    if (!SDL_GetAudioDeviceFormat(SDL_GetAudioStreamDevice(audioStream),&deviceFormat,&deviceFrames)) return false;
+    if (!SDL_GetAudioDeviceFormat(SDL_GetAudioStreamDevice(audioStream),&deviceFormat,&deviceFrames)) goto failed;
     uint64_t deviceLead=(uint64_t)deviceFrames*HOST_AUDIO_SAMPLE_RATE*2/deviceFormat.freq;
-    if (deviceLead>=AUDIO_QUEUE_FRAMES) return SDL_SetError("Audio device buffer exceeds bounded PCM capacity");
+    if (deviceLead>=AUDIO_QUEUE_FRAMES)
+    {SDL_SetError("Audio device buffer exceeds bounded PCM capacity");goto failed;}
     if (deviceLead>leadFrames) leadFrames=(uint32_t)deviceLead;
     playbackLeadFrames = leadFrames;
     audioStartedNanoseconds = SDL_GetTicksNS();
-    if (!SDL_ResumeAudioStreamDevice(audioStream)) return false;
+    if (!SDL_ResumeAudioStreamDevice(audioStream)) goto failed;
     if (getenv("MECHWARRIOR_DIAGNOSTICS"))
     {
-        fprintf(stderr,"Audio device: %d Hz, %d channels, %d frames (%.2f ms)\n",
+        printf("Audio device: %d Hz, %d channels, %d frames (%.2f ms)\n",
             deviceFormat.freq,deviceFormat.channels,deviceFrames,1000.0*deviceFrames/deviceFormat.freq);
+        fflush(stdout);
     }
     audioTime=speakerPhase=sampleCycles=sampleIntegral=0;queuedCount=0;
     speakerControl=0;speakerDivisor=0x10000;highByteNext=counting=false;
     return true;
+failed:
+    {
+        /* A failed device open owns the synth and mutex too. Preserve SDL's
+         * cause while releasing partial host resources; original game state
+         * and the hardware timeline are not reset here. */
+        char error[1024];SDL_snprintf(error,sizeof(error),"%s",SDL_GetError());
+        MwSdlShutdownAudio();
+        return SDL_SetError("%s",error);
+    }
 }
 void MwSdlAdvanceAudio(double pitTime)
 {

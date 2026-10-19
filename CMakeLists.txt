@@ -92,11 +92,16 @@ add_library(mechwarrior_original STATIC
     src/Original/Audio/BTECH_1ADF.c
     src/Original/Audio/BTECH_1ADF_INSTALL.c
     src/Original/Audio/BTECH_229C.c
+    src/Original/Audio/BTECH_21CA.c
+    src/Original/Audio/BTECH_2176.c
+    src/Original/Memory/BTECH_304E_ADLIB.c
+    src/Original/Memory/BTECH_304E_MPU.c
     src/Original/Audio/BTECH_0810_SOUND.c
     src/Original/Audio/BTECH_2134.c
     src/Original/Runtime/BTECH_0810_STREAMS.c
     src/Original/Runtime/BTECH_0810_DIVISION.c
     src/Original/Runtime/BTECH_0810_EXIT.c
+    src/Original/Runtime/BTECH_0810_HEAP.c
     src/Original/Runtime/BTECH_1BF5_TAGS.c
     src/Original/Runtime/BTECH_1BF5_CLEANUP.c
     src/Original/Runtime/BTECH_1BF5_INSTALL.c
@@ -155,6 +160,7 @@ add_library(mechwarrior_original STATIC
     src/Original/Memory/BTECH_22B6_DATA.c
     src/Support/CombatPlatform.c
     src/Support/CombatInstallation.c
+    src/Support/CombatNearHeap.c
     src/Original/Memory/MW_MAIN_1090_EVENTS.c
     src/Original/Memory/MW_MAIN_1AA5.c
     src/Original/Memory/MW_MAIN_28BE.c

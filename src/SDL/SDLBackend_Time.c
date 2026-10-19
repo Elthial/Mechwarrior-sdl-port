@@ -3,6 +3,8 @@
 #include "mechwarrior/campaign_input.h"
 #include "mechwarrior/combat_sound.h"
 #include "mechwarrior/combat_startup.h"
+#include "mechwarrior/combat_mpu.h"
+#include <float.h>
 #include <time.h>
 
 /* User-approved playable budget; see the human speed review in CPU_TIMING_PROFILE.md.
@@ -72,6 +74,7 @@ static void BiosTimerInterrupt(void)
     if (campaignInterruptsInstalled) MwCampaignTimerTick();
 }
 void MwSdlSetInterrupts(bool enabled) {interruptsEnabled=enabled;}
+uint8_t MwSdlReadInterrupts(void) {return interruptsEnabled;}
 MwMusicTimerHandler MwSdlReadTimerHandler(void) {return irq0;}
 void MwSdlWriteTimerHandler(MwMusicTimerHandler handler) {irq0=handler;}
 uint32_t MwSdlBiosTicksValue(void) {return biosTicks;}
@@ -96,12 +99,12 @@ void MwSdlWriteDevicePort(uint16_t port,uint8_t value)
     if (port==PIC_MASK_PORT) {picMask=value;return;}
     if (port==MPU_DATA_PORT || port==MPU_STATUS_COMMAND_PORT)
     {
-        if (mwSdlSoundSystem==MW_SOUND_MT32 && !mwSdlCombatActive) MwMpuWritePort(port,value);
+        if (mwSdlSoundSystem==MW_SOUND_MT32) MwMpuWritePort(port,value);
         return;
     }
     if (port==ADLIB_INDEX_PORT || port==ADLIB_DATA_PORT)
     {
-        if (mwSdlSoundSystem==MW_SOUND_ADLIB && !mwSdlCombatActive)
+        if (mwSdlSoundSystem==MW_SOUND_ADLIB)
             MwAdlibWritePort(port==ADLIB_DATA_PORT,value,hardwareTime*1000000.0/HOST_PIT_CLOCK_HZ);
         return;
     }
@@ -132,9 +135,9 @@ uint8_t MwSdlReadDevicePort(uint16_t port)
     if (port==KEYBOARD_DATA_PORT) return MwSdlReadKeyboardScanByte();
     if (port==PIC_MASK_PORT) return picMask;
     if (port==MPU_DATA_PORT || port==MPU_STATUS_COMMAND_PORT)
-        return mwSdlSoundSystem==MW_SOUND_MT32 && !mwSdlCombatActive?MwMpuReadPort(port):UINT8_MAX;
+        return mwSdlSoundSystem==MW_SOUND_MT32?MwMpuReadPort(port):UINT8_MAX;
     if (port==ADLIB_INDEX_PORT)
-        return mwSdlSoundSystem==MW_SOUND_ADLIB && !mwSdlCombatActive
+        return mwSdlSoundSystem==MW_SOUND_ADLIB
             ?MwAdlibReadStatus(hardwareTime*1000000.0/HOST_PIT_CLOCK_HZ):UINT8_MAX;
     if (port==0 || port==1) return 0; /* Only ignored calibrated-delay reads here. */
     if (port==GAME_PORT) return UINT8_MAX;
@@ -168,6 +171,13 @@ void MwSdlInitializeTimer(void)
 void MwSdlPumpTimer(void)
 {
     if (inInterrupt && !interruptsEnabled) return;
+    if (!inInterrupt && interruptsEnabled && mwSdlCombatActive && mwSdlSoundSystem==MW_SOUND_MT32
+        && !(picMask&BTECH_MPU_IRQ_MASK) && !(MwMpuReadPort(MPU_STATUS_COMMAND_PORT)&BTECH_MPU_INPUT_EMPTY))
+    {
+        inInterrupt=true;interruptsEnabled=false;
+        MwSdlDeliverCombatMpuInterrupt();
+        interruptsEnabled=true;inInterrupt=false;
+    }
     if (!inInterrupt && interruptsEnabled && !(picMask&PIC_KEYBOARD_IRQ_MASK) && MwSdlCombatKeyboardPending())
     {
         inInterrupt=true;interruptsEnabled=false;
@@ -175,8 +185,21 @@ void MwSdlPumpTimer(void)
         interruptsEnabled=true;inInterrupt=false;
     }
     double target=(double)(SDL_GetTicksNS()-startNanoseconds)*HOST_PIT_CLOCK_HZ/(double)HOST_NS_PER_SECOND;
-    while (interruptsEnabled && !(picMask&PIC_TIMER_IRQ_MASK) && nextIrq<=target)
+    while (interruptsEnabled)
     {
+        double mpuEvent=mwSdlCombatActive && mwSdlSoundSystem==MW_SOUND_MT32?MwMpuNextEventTime():DBL_MAX;
+        double timerEvent=(picMask&PIC_TIMER_IRQ_MASK)?DBL_MAX:nextIrq;
+        if (mpuEvent<=target && mpuEvent<timerEvent)
+        {
+            hardwareTime=mpuEvent;MwSdlAdvanceAudio(hardwareTime);MwMpuAdvance(hardwareTime);
+            if (!(picMask&BTECH_MPU_IRQ_MASK) && !(MwMpuReadPort(MPU_STATUS_COMMAND_PORT)&BTECH_MPU_INPUT_EMPTY))
+            {
+                bool previousInInterrupt=inInterrupt;inInterrupt=true;interruptsEnabled=false;
+                MwSdlDeliverCombatMpuInterrupt();interruptsEnabled=true;inInterrupt=previousInInterrupt;
+            }
+            continue;
+        }
+        if (timerEvent>target) break;
         /* BTECH's installed scheduler must service every elapsed PIT edge,
          * independently of presentation/poll frequency. Keep each original
          * callback and its timestamp; do not batch its game-state writes.

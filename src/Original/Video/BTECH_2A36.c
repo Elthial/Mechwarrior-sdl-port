@@ -1,3 +1,4 @@
+#include "mechwarrior/combat_runtime.h"
 #include "mechwarrior/combat_video.h"
 #include "mechwarrior/combat_startup.h"
 #include <stdlib.h>
@@ -240,7 +241,7 @@ uint16_t BtechEgaLoadFont(BtechRuntimeStream *stream,uint16_t slot,uint8_t *scra
     uint16_t cursor=0;
     do
     {
-        size_t read=fread(scratch,COMBAT_FONT_READ_BYTES,1,stream->file);
+        size_t read=BtechReadStreamElements(scratch,COMBAT_FONT_READ_BYTES,1,stream->file);
         if (!cursor && read!=1) abort(); // First short block can expose unknown inherited stack bytes.
         if ((uint32_t)cursor+COMBAT_FONT_READ_BYTES>fonts[slot].byteCount) abort();
         memcpy(egaFontBuffer+cursor,scratch,COMBAT_FONT_READ_BYTES);
@@ -249,7 +250,7 @@ uint16_t BtechEgaLoadFont(BtechRuntimeStream *stream,uint16_t slot,uint8_t *scra
             |(uint8_t)(egaFontChunkCounter-1));
     } while ((uint8_t)egaFontChunkCounter);
     uint16_t tail=egaFontChunkCounter>>8;
-    fread(scratch,tail,1,stream->file); // Native ignores short counts; retains previous staging bytes.
+    BtechReadStreamElements(scratch,tail,1,stream->file); // Native ignores short counts; retains previous staging bytes.
     if ((uint32_t)cursor+tail>fonts[slot].byteCount) abort();
     memcpy(egaFontBuffer+cursor,scratch,tail);
     return slot;
@@ -262,7 +263,7 @@ uint16_t BtechEgaLoadPalette(BtechRuntimeStream *stream,uint16_t slot)
 {
     if (slot>=COMBAT_PALETTE_SLOTS || !stream) abort();
     uint8_t encoded[COMBAT_PALETTE_FILE_BYTES];
-    if (fread(encoded,1,sizeof(encoded),stream->file)!=sizeof(encoded)) abort();
+    if (BtechReadStreamElements(encoded,1,sizeof(encoded),stream->file)!=sizeof(encoded)) abort();
     uint16_t cursor=0;
     for (uint16_t colour=0;colour<COMBAT_PALETTE_WORDS;++colour,cursor+=2)
         palettePrimarySlots[slot][colour]=(encoded[cursor]&0x0F)|((uint16_t)(encoded[cursor+1]>>4)<<8);

@@ -4,8 +4,10 @@ The Windows x64 EGA/PC-speaker build is experimentally playable, not a completed
 campaign release. The approved default remains `cpu_cycles_per_ms=2500`.
 Campaign music can also use MT-32 (Munt, user-supplied ROMs) or AdLib (Nuked-OPL3).
 Both follow the original sequencing and have offline full-cue and dummy-SDL
-integration checks. Combat retains speaker effects: the separate native Roland
-intelligent-mode and AdLib combat drivers remain unconverted. See [audio setup](AUDIO.md).
+integration checks, including the real campaign debrief/death/ending branches
+with controlled combat-return results. Combat installs its native Roland or AdLib driver through
+the same libraries; the shipped combat sound bank supplies speaker effects only.
+No alternate MIDI/FM weapon sounds or combat score are invented. See [audio setup](AUDIO.md).
 
 ## Connected gameplay
 

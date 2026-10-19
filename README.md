@@ -20,7 +20,8 @@ are connected. A local Support-pilot defence victory was recorded; that does not
 certify the full campaign, all scenarios, adapters or audiovisual fidelity.
 The approved default speed remains **2500 reference CPU cycles/ms**.
 Campaign music also supports [MT-32 and AdLib](docs/AUDIO.md), with user-provided
-ROMs required for MT-32. Combat currently retains speaker effects.
+ROMs required for MT-32. Combat initializes the selected card but retains the
+original speaker effects supplied by its sound bank.
 
 See [runtime status](docs/RUNTIME_STATUS.md) for current gameplay limits.
 Research tooling and verification suites are maintained separately in the

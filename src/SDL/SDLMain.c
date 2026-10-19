@@ -93,7 +93,8 @@ int main(int argc,char **argv)
     }
     if (!MwSdlLoadTimingConfiguration(timingPath,optionalTiming))
     {fprintf(stderr,"Invalid MechWarrior configuration: %s (CPU rate, sound system or ROM path).\n",timingPath);return 2;}
-    fprintf(stderr,"Reference CPU budget: %u cycles/ms; PIT/audio retain hardware rate.\n",mwSdlCpuCyclesPerMillisecond);
+    printf("Reference CPU budget: %u cycles/ms; PIT/audio retain hardware rate.\n",mwSdlCpuCyclesPerMillisecond);
+    fflush(stdout); /* Keep startup information live when the launcher logs it. */
     if (!MwSdlInitialize(argv[1],argc==3?argv[2]:"."))
     {fprintf(stderr,"Cannot initialize the private installation/SDL: %s\n",SDL_GetError());return 1;}
     if (getenv("MECHWARRIOR_DIAGNOSTICS") && argc==3)

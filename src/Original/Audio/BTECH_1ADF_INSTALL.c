@@ -1,5 +1,7 @@
 #include "mechwarrior/combat_sound.h"
 #include "mechwarrior/combat_startup.h"
+#include "mechwarrior/combat_adlib.h"
+#include "mechwarrior/combat_mpu.h"
 #include <stdlib.h>
 
 enum { MPU_WRITE_BUSY=0x40,MPU_INPUT_EMPTY=0x80,MPU_ACK=0xFE,
@@ -15,9 +17,11 @@ uint16_t BtechSelectAndInstallAudioBackends(uint16_t requestedBackendMask)
     requestedBackendMask&=BtechProbeAudioBackendMask();
     if (requestedBackendMask&(COMBAT_SOUND_SPEAKER|COMBAT_SOUND_TANDY))
         audioMusicCallback=BtechDispatchToneMidiMessage;
-    if (requestedBackendMask&COMBAT_SOUND_ADLIB) abort(); /*21CA:000E installation remains unconverted. */
+    if ((requestedBackendMask&COMBAT_SOUND_ADLIB) && BtechInitializeAdlibMusicBackend())
+        audioMusicCallback=BtechDispatchAdlibMidiMessage;
     audioTickCallback=BtechTickSoftwareMusic;
-    if (requestedBackendMask&COMBAT_SOUND_MPU) abort(); /*1ADF:0464 installation remains unconverted. */
+    if ((requestedBackendMask&COMBAT_SOUND_MPU) && BtechInitializeRolandMpuBackend())
+    {audioMusicCallback=BtechAudioMusicNoOp;audioTickCallback=BtechAudioTimerNoOp;}
     selectedAudioBackendMask=requestedBackendMask;
     return requestedBackendMask;
 }

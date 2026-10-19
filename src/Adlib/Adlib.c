@@ -5,7 +5,7 @@ enum { OPL_TIMER_ONE=2,OPL_TIMER_TWO=3,OPL_TIMER_CONTROL=4,
     OPL_TIMER_IRQ_RESET=0x80,OPL_TIMER_ONE_MASK=0x40,OPL_TIMER_TWO_MASK=0x20,
     OPL_TIMER_ONE_START=1,OPL_TIMER_TWO_START=2,OPL_TIMER_IRQ=0x80,
     OPL_TIMER_ONE_OVERFLOW=0x40,OPL_TIMER_TWO_OVERFLOW=0x20,
-    OPL_TIMER_ONE_PERIOD_US=80,OPL_TIMER_TWO_PERIOD_US=320 };
+    OPL_TIMER_ONE_PERIOD_US=80,OPL_TIMER_TWO_PERIOD_US=320,OPL2_FIXED_STATUS_BITS=6 };
 static opl3_chip chip;
 static uint8_t address,timerValue[2],timerControl,timerOverflow;
 static double busTime,timerDeadline[2];
@@ -49,7 +49,9 @@ uint8_t MwAdlibReadStatus(double microseconds)
      * to the card timers; it never accelerates gameplay or the PIT timeline. */
     AdvanceTimers(microseconds);busTime+=1;AdvanceTimers(busTime);
     uint8_t status=timerOverflow&~timerControl&(OPL_TIMER_ONE_OVERFLOW|OPL_TIMER_TWO_OVERFLOW);
-    return status?(status|OPL_TIMER_IRQ):0;
+    /* YM3812 leaves bits 1/2 high. Combat returns this status from its OPL
+     * initializer and tests the complete AX; an OPL3-style zero rejects it. */
+    return (status?(status|OPL_TIMER_IRQ):0)|OPL2_FIXED_STATUS_BITS;
 }
 void MwAdlibRender(float *stereo,uint32_t frames)
 {

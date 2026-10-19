@@ -116,13 +116,13 @@ scanFromCurrent:
                 fseek(stream->file,(int32_t)taggedStream->payloadPosition,SEEK_SET);
                 continue;
             }
-            if (fread(taggedStream->tagPath+taggedStream->tagDepth,1,4,stream->file)!=4) goto restoreBackup;
+            if (BtechReadStreamElements(taggedStream->tagPath+taggedStream->tagDepth,1,4,stream->file)!=4) goto restoreBackup;
             taggedStream->tagDepth+=4;
             if ((int16_t)taggedStream->tagDepth>=0x18) goto restoreBackup;
             taggedStream->tagPath[taggedStream->tagDepth]=0;
             taggedStream->payloadPosition+=8;
             uint8_t lengthBytes[4];
-            if (fread(lengthBytes,4,1,stream->file)!=1) goto restoreBackup;
+            if (BtechReadStreamElements(lengthBytes,4,1,stream->file)!=1) goto restoreBackup;
             taggedStream->payloadBytes=(uint32_t)MwReadNativeWord(lengthBytes,0)|((uint32_t)MwReadNativeWord(lengthBytes,2)<<16);
             taggedStream->branchEnds[taggedStream->tagDepth/4]=taggedStream->payloadPosition+taggedStream->payloadBytes;
             taggedStream->payloadBytes&=0x7FFFFFFF;

@@ -3,6 +3,9 @@
 #include "mechwarrior/combat_startup.h"
 #include "mechwarrior/combat_video.h"
 #include "mechwarrior/native_address.h"
+#include "mechwarrior/combat_mpu.h"
+#include "mechwarrior/combat_adlib.h"
+#include "mechwarrior/combat_heap.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -25,6 +28,13 @@ BtechAudioTick BtechSelectSpeakerAdlibOrMpuCallback(void)
 /*1ADF:0F38. Actual one-byte RETF target, not a replacement music scheduler. */
 void BtechAudioTimerNoOp(void)
 {
+}
+
+/* Same 1ADF:0F38 RETF, viewed through its register-message call contract.
+ * This preserves AX and target identity separately from 229C:0020. */
+uint16_t BtechAudioMusicNoOp(uint16_t statusDisplacement,uint16_t channel,uint16_t packedData)
+{
+    (void)statusDisplacement;(void)channel;return packedData;
 }
 
 /*1ADF:01CE. Music root0 aliases sound root10. The sequence comparison is
@@ -109,6 +119,68 @@ void BtechRestoreSoundTimerInterrupt(void)
     btechHostSetInterruptVector(8,savedSampleIrqVector);
 }
 
+/*1ADF:0F39. The native private IRQ stack becomes the C call frame. There is
+ * no STI or previous-handler chain, and a faulting callback never sends EOI. */
+void BtechMusicTimerInterrupt(void)
+{
+    if (!musicTimerCallback || !btechHostWritePort) abort();
+    musicTimerCallback();
+    btechHostWritePort(PIC_COMMAND_PORT,PIC_END_OF_INTERRUPT);
+}
+
+/*1ADF:0F76. Reinstallation changes the callback/divisor, not the saved vector.
+ * STI deliberately precedes the shadow store and the two PIT writes. */
+void BtechInstallMusicTimerCallback(BtechAudioTick callback,uint16_t divisor)
+{
+    if (!btechHostGetInterruptVector || !btechHostSetInterruptVector
+        || !btechHostSetInterrupts || !btechHostWritePort) abort();
+    if (!musicTimerInstalled)
+    {
+        musicTimerInstalled=1;
+        savedMusicTimerVector=btechHostGetInterruptVector(TIMER_INTERRUPT);
+        btechHostSetInterruptVector(TIMER_INTERRUPT,BTECH_MUSIC_TIMER_VECTOR);
+        savedMusicTimerDivisor=pitChannel0DivisorShadow;
+    }
+    btechHostSetInterrupts(0);musicTimerCallback=callback;btechHostSetInterrupts(1);
+    pitChannel0DivisorShadow=divisor;
+    btechHostWritePort(PIT_CHANNEL_ZERO_PORT,(uint8_t)divisor);
+    btechHostWritePort(PIT_CHANNEL_ZERO_PORT,(uint8_t)(divisor>>8));
+}
+
+/*1ADF:0FC9. No CLI/STI or control-port write. The saved divisor returns to
+ * the PIT, but the native shadow and callback deliberately remain unchanged. */
+void BtechRestoreMusicTimerInterrupt(void)
+{
+    if (!musicTimerInstalled) return;
+    if (!btechHostWritePort || !btechHostSetInterruptVector) abort();
+    btechHostWritePort(PIT_CHANNEL_ZERO_PORT,(uint8_t)savedMusicTimerDivisor);
+    btechHostWritePort(PIT_CHANNEL_ZERO_PORT,(uint8_t)(savedMusicTimerDivisor>>8));
+    musicTimerInstalled=0;
+    btechHostSetInterruptVector(TIMER_INTERRUPT,savedMusicTimerVector);
+}
+
+/*1ADF:0290. Timer restoration can change the priority owner; select the final
+ * tick callback only after clearing matching tone activity. */
+uint16_t BtechStopAllAudioChannels(void)
+{
+    BtechRestoreSoundTimerInterrupt();
+    if (!samplePriorityOwner) abort();
+    *samplePriorityOwner=0;
+    BtechStopMatchingToneChannels(0,3);
+    BtechSelectTandyOrFallbackAudioCallback()();
+    return 1;
+}
+
+/*1ADF:00F2. Preserve the four native cleanup calls in this order. Normal and
+ * fatal program exits do not call this library entry in the reviewed image. */
+uint16_t BtechShutdownAudioBackends(void)
+{
+    BtechRestoreMusicTimerInterrupt();
+    BtechStopMusicStreams();
+    BtechRestoreMpuInterruptHandler();
+    return BtechStopAllAudioChannels();
+}
+
 /*1ADF:02F8. Stream-local WORD survives close and is the stack alias read by
  *0810:2C40. Do NOT derive it from FILE*, a DOS handle or the tagged-record slot. */
 uint16_t BtechLoadSoundBank(const char *filename,BtechRuntimeStream *stream,uint16_t *inheritedStreamIdentity)
@@ -128,9 +200,9 @@ uint16_t BtechLoadSoundBank(const char *filename,BtechRuntimeStream *stream,uint
         /* Partial reads store into the root; the ignored local is never used. */
         eventCount[0]=(uint8_t)bank->eventCount;eventCount[1]=(uint8_t)(bank->eventCount>>8);
         unknown[0]=(uint8_t)bank->unidentifiedField9;unknown[1]=(uint8_t)(bank->unidentifiedField9>>8);
-        fread(ignoredHeader,2,1,stream->file);
-        fread(eventCount,2,1,stream->file);bank->eventCount=MwReadNativeWord(eventCount,0);
-        fread(unknown,2,1,stream->file);bank->unidentifiedField9=MwReadNativeWord(unknown,0);
+        BtechReadStreamElements(ignoredHeader,2,1,stream->file);
+        BtechReadStreamElements(eventCount,2,1,stream->file);bank->eventCount=MwReadNativeWord(eventCount,0);
+        BtechReadStreamElements(unknown,2,1,stream->file);bank->unidentifiedField9=MwReadNativeWord(unknown,0);
         failed=1;
         if (selectedAudioBackendMask&COMBAT_SOUND_SPEAKER)
             failed&=BtechMergeSoundBackendDirectory(bank,stream,"SND:IBM:")==0;
@@ -170,7 +242,8 @@ uint16_t BtechMergeSoundBackendDirectory(BtechSoundBank *bank,BtechRuntimeStream
         uint32_t eventOffset=(uint32_t)paragraph*0x10+offset;
         if (eventOffset>=node->allocation.byteCount) abort();
         uint32_t paragraphBase=(uint32_t)paragraph*0x10;
-        bank->events[event]=(BtechSoundEvent){{node->allocation.bytes+paragraphBase,0,node->allocation.byteCount-paragraphBase},offset};
+        bank->events[event]=(BtechSoundEvent){{node->allocation.bytes+paragraphBase,0,node->allocation.byteCount-paragraphBase},
+            offset,(uint16_t)(node->allocationSelector+paragraph)};
     }
     return 1;
 }
@@ -181,9 +254,9 @@ uint16_t BtechMergeSoundBackendDirectory(BtechSoundBank *bank,BtechRuntimeStream
 BtechSoundAllocationNode *BtechLoadTaggedSoundAllocation(BtechSoundBank *bank,BtechRuntimeStream *stream,const char *tag)
 {
     if (BtechFindResourceTagPosition(stream,tag,0)&0x80000000) return NULL;
-    fgetc(stream->file);
+    BtechReadStreamByte(stream->file);
     uint8_t lengthBytes[4];
-    if (fread(lengthBytes,4,1,stream->file)!=1) abort();
+    if (BtechReadStreamElements(lengthBytes,4,1,stream->file)!=1) abort();
     uint32_t remaining=(uint32_t)MwReadNativeWord(lengthBytes,0)|((uint32_t)MwReadNativeWord(lengthBytes,2)<<16);
     fseek(stream->file,-5,SEEK_CUR);
     BtechResourceAllocation allocation=soundAllocationOverride;
@@ -214,12 +287,20 @@ BtechSoundAllocationNode *BtechLoadTaggedSoundAllocation(BtechSoundBank *bank,Bt
         node=&bank->root;
         if (node->allocation.bytes)
         {
-            while (node->next) node=node->next;
-            node->next=malloc(sizeof(*node));
+            while (node->next)
+            {
+                node=BtechHostResolveReleasedSoundNode(node->next);
+            }
+            BtechSoundAllocationNode *next=BtechAllocateNearBytes(BTECH_NEAR_SOUND_NODE_BYTES,sizeof(*node),BTECH_NEAR_SOUND_NODE);
+            if (node==&bank->root) node->next=next;
+            else BtechHostStoreSoundAllocationNext(node,next);
             if (node->next) {node=node->next;node->next=NULL;}
             else {soundAllocationError=2;failed=2;}
         }
         node->allocation=allocation;
+        if (!btechHostDosAllocationSelector) abort();
+        node->allocationSelector=btechHostDosAllocationSelector(allocation.bytes);
+        node->allocationOffset=0;
         if (strlen(tag)>=sizeof(node->chunkTag)) abort();
         strcpy(node->chunkTag,tag);
     }
@@ -240,6 +321,154 @@ uint16_t BtechSelectActiveSoundBank(uint16_t bankHandle)
     if (!soundBanks[bankHandle].root.allocation.bytes) return 0;
     activeSoundBankIndex=bankHandle;
     return 1;
+}
+
+/*1ADF:075E. A music bank chooses one backend directory, unlike the sound
+ * bank's merges. The shipped AdLib branch also requests MUS:ROL:, not ADL. */
+uint16_t BtechLoadMusicBank(const char *filename,BtechRuntimeStream *stream)
+{
+    enum { MUSIC_INFORMATION_MAGIC=0x59D9 };
+    uint16_t bankIndex=0;
+    while (bankIndex<COMBAT_MUSIC_LOAD_ROOTS && soundBanks[COMBAT_MUSIC_FIRST_ROOT+bankIndex].root.allocation.bytes) ++bankIndex;
+    if (bankIndex==COMBAT_MUSIC_LOAD_ROOTS) return 0;
+    bool openedHere=!stream || !BtechIsRegisteredTaggedStream(stream);
+    if (openedHere) stream=BtechOpenTaggedResourceStream(filename);
+    if (!stream)
+    {
+        if (openedHere) BtechCloseTaggedResourceStream(stream);
+        return 0; /* Unwritten count is tested, but failure remains set on this path. */
+    }
+    /* Missing/partial INF leaves stack WORDs unwritten in the executable.
+     * Do not fabricate zeros or reinterpret that residue as a valid bank. */
+    if (BtechFindResourceTagPosition(stream,"MUS:INF:",0)&0x80000000) abort();
+    uint8_t header[2];
+    if (BtechReadStreamElements(header,1,2,stream->file)!=2) abort();
+    if (MwReadNativeWord(header,0)!=MUSIC_INFORMATION_MAGIC) abort(); /* Count is still stack residue. */
+    if (BtechReadStreamElements(header,1,2,stream->file)!=2) abort();
+    uint16_t trackCount=MwReadNativeWord(header,0);
+    for (int16_t track=0;track<(int16_t)trackCount;++track)
+    {
+        uint16_t sequenceWord=(uint16_t)(bankIndex*COMBAT_MUSIC_SEQUENCE_WORDS+track);
+        if (sequenceWord>=COMBAT_MUSIC_SEQUENCE_ROWS*COMBAT_MUSIC_SEQUENCE_WORDS) abort();
+        /* Native unchecked counts can spill into the next represented row. */
+        int16_t *next=&musicSequences[sequenceWord/COMBAT_MUSIC_SEQUENCE_WORDS][sequenceWord%COMBAT_MUSIC_SEQUENCE_WORDS];
+        header[0]=(uint8_t)*next;header[1]=(uint8_t)((uint16_t)*next>>8);
+        BtechReadStreamElements(header,1,2,stream->file); /* Native partial reads preserve unwritten destination bytes. */
+        *next=(int16_t)MwReadNativeWord(header,0);
+    }
+    BtechSoundBank *bank=&soundBanks[COMBAT_MUSIC_FIRST_ROOT+bankIndex];
+    bank->eventCount=trackCount;bank->unidentifiedField9=trackCount;
+    uint16_t failed=0;
+    if (trackCount)
+    {
+        failed=1;
+        const char *tag=NULL;
+        if (selectedAudioBackendMask&COMBAT_SOUND_MPU) tag="MUS:ROL:";
+        else if (selectedAudioBackendMask&COMBAT_SOUND_ADLIB) tag="MUS:ROL:";
+        else if (selectedAudioBackendMask&COMBAT_SOUND_TANDY) tag="MUS:TAN:";
+        else if (selectedAudioBackendMask&COMBAT_SOUND_SPEAKER) tag="MUS:IBM:";
+        if (tag) failed&=BtechMergeSoundBackendDirectory(bank,stream,tag)<1;
+    }
+    if (openedHere) BtechCloseTaggedResourceStream(stream);
+    return failed?0:bankIndex+1;
+}
+
+/*1ADF:0D08. Selection alone does not stop playback. Native signed bounds admit
+ * cross-owner negative indices and slot15; those aliases remain explicit gates. */
+uint16_t BtechSelectActiveMusicBank(uint16_t bankHandle)
+{
+    --bankHandle;
+    if ((int16_t)bankHandle>COMBAT_MUSIC_BANKS-1) bankHandle=UINT16_MAX;
+    else
+    {
+        if (bankHandle>=COMBAT_MUSIC_LOAD_ROOTS) abort();
+        if (!soundBanks[COMBAT_MUSIC_FIRST_ROOT+bankHandle].root.allocation.bytes) bankHandle=UINT16_MAX;
+    }
+    activeMusicBankIndex=bankHandle;
+    ++bankHandle;
+    return (int16_t)bankHandle>0?bankHandle:0;
+}
+
+/*1ADF:024C. Clear the selector before the cursor; MPU stops short-circuit both
+ * AdLib note-count cleanup and speaker music-channel cleanup. */
+void BtechStopMusicStreams(void)
+{
+    midiStreamSelectorPresent=false;combatMidiStreamOffset=0;
+    if (selectedAudioBackendMask&COMBAT_SOUND_MPU) {BtechStopMpuMusicTrack();return;}
+    if (selectedAudioBackendMask&COMBAT_SOUND_ADLIB) BtechClearAdlibNoteReferenceCounts();
+    if (selectedAudioBackendMask&COMBAT_SOUND_SPEAKER) BtechStopMatchingToneChannels(0,2);
+}
+
+/*1ADF:013C. Stop first, then reload the selected bank. A zero track count
+ * deliberately wraps the unsigned DEC comparison rather than rejecting all. */
+uint16_t BtechStartSelectedMusicBankTrack(uint16_t trackIndex,uint16_t priority)
+{
+    if ((int16_t)activeMusicBankIndex<0) return 0;
+    if (activeMusicBankIndex>=COMBAT_MUSIC_LOAD_ROOTS) abort();
+    if ((uint16_t)(soundBanks[COMBAT_MUSIC_FIRST_ROOT+activeMusicBankIndex].eventCount-1)<trackIndex) return 0;
+    BtechStopMusicStreams();
+    if (activeMusicBankIndex>=COMBAT_MUSIC_LOAD_ROOTS) abort();
+    BtechSoundBank *bank=&soundBanks[COMBAT_MUSIC_FIRST_ROOT+activeMusicBankIndex];
+    if (!bank->root.allocation.bytes || !bank->events || trackIndex>=bank->eventReferenceCapacity) abort();
+    BtechSoundEvent track=bank->events[trackIndex];
+    BtechStartSoftwareMusicTrack(track.data,track.offset,track.selector!=0);
+    if (selectedAudioBackendMask&COMBAT_SOUND_MPU) BtechStartMpuMusicTrack(track.data,track.offset);
+    else if (!(selectedAudioBackendMask&COMBAT_SOUND_ADLIB)) BtechSetToneMusicPriorityAndTranslation(priority);
+    musicSequenceIndex=trackIndex;
+    return 1;
+}
+
+/*1ADF:0C8A. The embedded root's next link and tag survive release. E96E marks
+ * a near-heap header free; CDD9's FFFF probe reaches FAAD->FB7B, changing heap
+ * metadata, not the node payload. Retain typed near nodes until child reset so
+ * the subsequent native next-field read is valid C, never a use-after-free. */
+uint16_t BtechFreeSoundAllocationChain(BtechSoundBank *bank)
+{
+    BtechSoundAllocationNode *node=&bank->root;
+    if (!node->allocation.bytes) return 0;
+    if (!soundAllocationOverride.bytes)
+    {
+        if (!btechHostFreeDosSelector) abort();
+        btechHostFreeDosSelector(node->allocationSelector);
+    }
+    node->allocationSelector=0;node->allocationOffset=0;node->allocation=(BtechResourceAllocation){0};
+    while ((node=node->next)!=NULL)
+    {
+        node=BtechHostResolveReleasedSoundNode(node);
+        if (!soundAllocationOverride.bytes && (node->allocationOffset|node->allocationSelector))
+        {
+            if (!btechHostFreeDosSelector) abort();
+            btechHostFreeDosSelector(node->allocationSelector);
+        }
+        BtechReleaseNearBlockAndProbeAllocation(node);
+    }
+    /* Decoded directory metadata has no native allocation identity. */
+    free(bank->events);bank->events=NULL;bank->eventReferenceCapacity=0;
+    return 1;
+}
+
+/*1ADF:0106. Active comparison precedes bounds and does not clear selection. */
+uint16_t BtechUnloadMusicBank(uint16_t bankHandle)
+{
+    --bankHandle;
+    if (activeMusicBankIndex==bankHandle) BtechStopMusicStreams();
+    if ((int16_t)bankHandle<0 || (int16_t)bankHandle>COMBAT_MUSIC_BANKS-1) return 0;
+    if (bankHandle>=COMBAT_MUSIC_LOAD_ROOTS) abort();
+    return BtechFreeSoundAllocationChain(&soundBanks[COMBAT_MUSIC_FIRST_ROOT+bankHandle]);
+}
+
+/*1ADF:0C52. Sound-bank bounds precede the active comparison, unlike music.
+ * Invalidate the active sound bank before stop-all can invoke a callback. */
+uint16_t BtechUnloadSoundBank(uint16_t bankHandle)
+{
+    --bankHandle;
+    if ((int16_t)bankHandle<0 || (int16_t)bankHandle>=COMBAT_SOUND_BANKS) return 0;
+    if (activeSoundBankIndex==bankHandle)
+    {
+        activeSoundBankIndex=UINT16_MAX;
+        BtechStopAllAudioChannels();
+    }
+    return BtechFreeSoundAllocationChain(&soundBanks[bankHandle]);
 }
 
 /*1ADF:0AAC. Native minimum-priority search excludes the last channel. The
@@ -291,8 +520,8 @@ uint16_t BtechAllocateToneEventChannels(BtechSoundEvent event,uint16_t priority,
     return 1;
 }
 
-/*1ADF:091A. Speaker/Tandy tone records and genuine no-op/reject cases.
- * Sample/DAC/MPU output is explicitly unsupported here, never reported played. */
+/*1ADF:091A. Tone records, native MPU terminal-byte output and real no-op cases.
+ * Sample/DAC output retains explicit gates rather than invented playback. */
 uint16_t BtechDispatchSoundBankEvent(int16_t soundEventIndex,uint16_t priority)
 {
     if ((int16_t)activeSoundBankIndex<0) return 0;
@@ -314,7 +543,19 @@ uint16_t BtechDispatchSoundBankEvent(int16_t soundEventIndex,uint16_t priority)
         abort(); /* Tandy SL/TL DAC path. */
     case 0x0B:
         if (!(selectedAudioBackendMask&COMBAT_SOUND_MPU)) return 1;
-        abort(); /* MPU terminal-byte transport. */
+        if (!BtechSendMpuCommandStack(0xDF)) return 1;
+        {
+            /* 1ADF:09DA..0A15 advances to the terminal BYTE, not a payload
+             * transmit loop. Do not turn it into a plausible SysEx upload. */
+            uint16_t index=0;
+            while (MwReadNativeViewWord(&event.data,(uint16_t)(event.offset+2))>index) ++index;
+            uint32_t payload=(uint32_t)event.offset+10;
+            /* Only the first addition carries into the selector. The later
+             * payload/index addition wraps its offset without another carry. */
+            uint32_t terminal=(payload&0x10000)+(uint16_t)((uint16_t)payload+index);
+            if (!event.data.bytes || event.data.nativeBase || terminal>=event.data.byteCount) abort();
+            MpuWriteDataByte(event.data.bytes[terminal]);return 1;
+        }
     default:return 0;
     }
 }

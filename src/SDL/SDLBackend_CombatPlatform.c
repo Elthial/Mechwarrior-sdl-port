@@ -3,6 +3,7 @@
 #include "mechwarrior/combat_video.h"
 #include "mechwarrior/campaign_input.h"
 #include "mechwarrior/combat_installation.h"
+#include "mechwarrior/combat_mpu.h"
 #include <string.h>
 
 /* Physical BIOS/interrupt transport, not another game state or replacement
@@ -43,7 +44,8 @@ static uint8_t ReadToneDosByte(uint16_t offset)
     if (offset>=DOS_TONE_ZERO_WINDOW_START
         && (uint16_t)(offset-DOS_TONE_ZERO_WINDOW_START)<sizeof(dosToneZeroWindow))
         return dosToneZeroWindow[offset-DOS_TONE_ZERO_WINDOW_START];
-    MwSdlFail("Tone fallback read outside recovered physical DOS owners");
+    char error[128];SDL_snprintf(error,sizeof(error),"Tone fallback read at 0000:%04X outside recovered physical DOS owners",offset);
+    MwSdlFail(error);
 }
 static MwNativeByteView BorrowToneDosMemory(uint16_t selector)
 {
@@ -69,17 +71,30 @@ static uint16_t ReadBiosWord(uint16_t offset)
 static void WriteBiosWord(uint16_t offset,uint16_t value)
 {WriteBiosByte(offset,(uint8_t)value);WriteBiosByte(offset+1,(uint8_t)(value>>8));}
 static uint32_t ReadInterruptVector(uint8_t interrupt) {return interruptVectors[interrupt];}
+void MwSdlDeliverCombatMpuInterrupt(void)
+{
+    uint32_t vector=interruptVectors[BTECH_MPU_VECTOR];
+    if (vector==BTECH_MPU_PROBE_VECTOR) BtechMpuProbeInterrupt();
+    else if (vector==BTECH_MPU_HANDLER_VECTOR) BtechMpuInterrupt();
+    else MwSdlFail("Unmapped combat MPU interrupt vector");
+}
 static void UnmappedTimerInterrupt(void) {MwSdlFail("Unconverted native IRQ0 vector");}
 static void WriteInterruptVector(uint8_t interrupt,uint32_t vector)
 {
     interruptVectors[interrupt]=vector;
     if (interrupt==TIMER_INTERRUPT)
-        MwSdlWriteTimerHandler(vector==0?previousTimerHandler:vector==BTECH_TIMER_HANDLER_VECTOR?BtechTimerSchedulerInterrupt:UnmappedTimerInterrupt);
+        MwSdlWriteTimerHandler(vector==0?previousTimerHandler:
+            vector==BTECH_TIMER_HANDLER_VECTOR?BtechTimerSchedulerInterrupt:
+            vector==BTECH_MUSIC_TIMER_VECTOR?BtechMusicTimerInterrupt:UnmappedTimerInterrupt);
 }
 static void ChainTimerInterrupt(uint32_t vector)
 {
-    if (vector || !previousTimerHandler) MwSdlFail("Unmapped saved native timer vector");
-    previousTimerHandler();
+    if (vector==BTECH_MUSIC_TIMER_VECTOR) BtechMusicTimerInterrupt();
+    else
+    {
+        if (vector || !previousTimerHandler) MwSdlFail("Unmapped saved native timer vector");
+        previousTimerHandler();
+    }
 }
 static uint8_t ReadRomByte(uint16_t selector,uint16_t offset)
 {
@@ -104,6 +119,7 @@ void MwSdlInitializeCombatHardware(void)
     btechHostGetInterruptVector=ReadInterruptVector;btechHostSetInterruptVector=WriteInterruptVector;
     btechHostBorrowDosMemory=BorrowToneDosMemory;
     btechHostSetInterrupts=MwSdlExchangeInterrupts;btechHostChainTimerInterrupt=ChainTimerInterrupt;
+    btechHostReadInterrupts=MwSdlReadInterrupts;
     btechHostReadRomByte=ReadRomByte;btechHostQueryEgaInfo=QueryEgaInfo;btechHostSetVideoMode=MwSdlSetVideoMode;
     btechHostDelayLoops=MwSdlDelayCpuLoops;btechHostPollInterrupts=MwSdlPump;btechHostResetMouse=ResetMouse;
     btechHostPaceCombatCpu=MwSdlPaceCombatCpu;

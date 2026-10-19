@@ -1,4 +1,5 @@
 #include "mechwarrior/combat_resources.h"
+#include "mechwarrior/combat_heap.h"
 #include "mechwarrior/native_address.h"
 #include "mechwarrior/combat_video.h"
 #include "mechwarrior/combat_installation.h"
@@ -192,7 +193,8 @@ void BtechAllocateShapeBankRegistry(uint16_t count)
     BtechHostRetainDetachedShapeRegistry(); /* Host ownership of the native orphan, no early free. */
     shapeResourceBankCount=count;
     if (!count || (uint32_t)count*6>UINT16_MAX) abort();
-    shapeResourceBanks=malloc((size_t)count*sizeof(*shapeResourceBanks));
+    enum { NATIVE_SHAPE_BANK_BYTES=6 };
+    shapeResourceBanks=BtechAllocateNearBytes((uint16_t)(count*NATIVE_SHAPE_BANK_BYTES),(size_t)count*sizeof(*shapeResourceBanks),BTECH_NEAR_SHAPE_BANKS);
     if (!shapeResourceBanks) abort();
     shapeResourceBanks[0]=initialShapeResourceBank;
     for (uint16_t slot=1;slot<count;++slot) shapeResourceBanks[slot]=(BtechResourceBank){0};

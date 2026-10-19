@@ -1,4 +1,6 @@
+#include "mechwarrior/combat_runtime.h"
 #include "mechwarrior/combat_video.h"
+#include "mechwarrior/combat_heap.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -19,24 +21,24 @@ BtechBitmapList *BtechLoadBitmapList(const char *filename,BtechRuntimeStream *st
     {stream=BtechOpenTaggedResourceStream(filename);openedHere=1;}
     if (BtechFindResourceTagPosition(stream,"BMP:INF:",0)==UINT32_MAX) goto cleanup;
     uint8_t countBytes[2];
-    if (fread(countBytes,2,1,stream->file)!=1) goto cleanup;
+    if (BtechReadStreamElements(countBytes,2,1,stream->file)!=1) goto cleanup;
     int16_t count=(int16_t)(countBytes[0]|((uint16_t)countBytes[1]<<8));
     if (count<=0 || (uint32_t)(uint16_t)count*0x0A>UINT16_MAX) abort(); // Native wrapped/zero near allocations are not host arrays.
-    list=malloc(sizeof(*list));
+    list=BtechAllocateNearBytes((uint16_t)(((uint16_t)count+1)*BTECH_NEAR_POINTER_BYTES),sizeof(*list),BTECH_NEAR_BITMAP_LIST);
     if (!list) goto cleanup;
     list->imageCount=(uint16_t)count;list->pixels=(BtechResourceAllocation){0};
-    list->images=malloc((size_t)count*sizeof(*list->images));
+    list->images=BtechAllocateNearBytes((uint16_t)((uint16_t)count*BTECH_NEAR_BITMAP_ENTRY_BYTES),(size_t)count*sizeof(*list->images),BTECH_NEAR_BITMAP_IMAGES);
     if (!list->images) goto cleanup;
     for (uint16_t image=0;image<(uint16_t)count;++image)
     {
         uint8_t width[2];
-        if (fread(width,2,1,stream->file)!=1) goto cleanup;
+        if (BtechReadStreamElements(width,2,1,stream->file)!=1) goto cleanup;
         list->images[image].widthPixels=width[0]|((uint16_t)width[1]<<8);
     }
     for (uint16_t image=0;image<(uint16_t)count;++image)
     {
         uint8_t height[2];
-        if (fread(height,2,1,stream->file)!=1) goto cleanup;
+        if (BtechReadStreamElements(height,2,1,stream->file)!=1) goto cleanup;
         list->images[image].heightPixels=height[0]|((uint16_t)height[1]<<8);
     }
     if (!graphicsBitmapStorageSize) abort();
@@ -44,7 +46,7 @@ BtechBitmapList *BtechLoadBitmapList(const char *filename,BtechRuntimeStream *st
     primary.bytes=BtechAllocateDosMemoryBlock(primary.byteCount).bytes;
     if (!primary.bytes) goto cleanup;
     if (auxiliaryBytes) abort(); // EGA1EB0 writes zero; other backend allocation/preparation is not converted.
-    scratch=malloc(COMBAT_BITMAP_WORKSPACE_BYTES);
+    scratch=BtechAllocateNearBytes(COMBAT_BITMAP_WORKSPACE_BYTES,COMBAT_BITMAP_WORKSPACE_BYTES,BTECH_NEAR_BYTES);
     if (scratch)
     {
         borrowedArchiveWorkspace=(BtechLzwReaderWorkspace *)scratch;
@@ -83,7 +85,7 @@ BtechBitmapList *BtechLoadBitmapList(const char *filename,BtechRuntimeStream *st
 cleanup:
     if (scratch)
     {
-        free(scratch);
+        BtechReleaseNearBlockAndProbeAllocation(scratch);
         borrowedArchiveWorkspace=NULL;
     }
     if (!loaded)
@@ -101,8 +103,8 @@ cleanup:
 void BtechReleaseBitmapListNearBlocks(BtechBitmapList *list)
 {
     if (!list) abort(); // Null native near-address alias is not a nullable host list.
-    if (list->images) free(list->images);
-    free(list);
+    if (list->images) BtechReleaseNearBlockAndProbeAllocation(list->images);
+    BtechReleaseNearBlockAndProbeAllocation(list);
 }
 
 /*1BF5:135E. Registry removal precedes DOS release and the two near frees. */

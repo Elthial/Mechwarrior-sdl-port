@@ -60,8 +60,11 @@
     <ClInclude Include="src\include\mechwarrior\combat_render.h"><Filter>Headers\mechwarrior</Filter></ClInclude>
     <ClInclude Include="src\include\mechwarrior\combat_resources.h"><Filter>Headers\mechwarrior</Filter></ClInclude>
     <ClInclude Include="src\include\mechwarrior\combat_runtime.h"><Filter>Headers\mechwarrior</Filter></ClInclude>
+    <ClInclude Include="src\include\mechwarrior\combat_heap.h"><Filter>Headers\mechwarrior</Filter></ClInclude>
     <ClInclude Include="src\include\mechwarrior\combat_scene.h"><Filter>Headers\mechwarrior</Filter></ClInclude>
     <ClInclude Include="src\include\mechwarrior\combat_sound.h"><Filter>Headers\mechwarrior</Filter></ClInclude>
+    <ClInclude Include="src\include\mechwarrior\combat_adlib.h"><Filter>Headers\mechwarrior</Filter></ClInclude>
+    <ClInclude Include="src\include\mechwarrior\combat_mpu.h"><Filter>Headers\mechwarrior</Filter></ClInclude>
     <ClInclude Include="src\include\mechwarrior\combat_startup.h"><Filter>Headers\mechwarrior</Filter></ClInclude>
     <ClInclude Include="src\include\mechwarrior\combat_surface.h"><Filter>Headers\mechwarrior</Filter></ClInclude>
     <ClInclude Include="src\include\mechwarrior\combat_tactics.h"><Filter>Headers\mechwarrior</Filter></ClInclude>
@@ -81,6 +84,10 @@
     <ClCompile Include="src\Original\Audio\BTECH_1ADF.c"><Filter>Original\Audio</Filter></ClCompile>
     <ClCompile Include="src\Original\Audio\BTECH_2134.c"><Filter>Original\Audio</Filter></ClCompile>
     <ClCompile Include="src\Original\Audio\BTECH_229C.c"><Filter>Original\Audio</Filter></ClCompile>
+    <ClCompile Include="src\Original\Audio\BTECH_21CA.c"><Filter>Original\Audio</Filter></ClCompile>
+    <ClCompile Include="src\Original\Audio\BTECH_2176.c"><Filter>Original\Audio</Filter></ClCompile>
+    <ClCompile Include="src\Original\Memory\BTECH_304E_ADLIB.c"><Filter>Original\Memory</Filter></ClCompile>
+    <ClCompile Include="src\Original\Memory\BTECH_304E_MPU.c"><Filter>Original\Memory</Filter></ClCompile>
     <ClCompile Include="src\Original\campaign_graphics.c"><Filter>Original</Filter></ClCompile>
     <ClCompile Include="src\Original\Campaign\MW_MAIN_081B_CONTRACTS.c"><Filter>Original\Campaign</Filter></ClCompile>
     <ClCompile Include="src\Original\Campaign\MW_MAIN_081B_DEPLOYMENT.c"><Filter>Original\Campaign</Filter></ClCompile>
@@ -199,6 +206,8 @@
     <ClCompile Include="src\Original\Memory\MW_MAIN_28BE.c"><Filter>Original\Memory</Filter></ClCompile>
     <ClCompile Include="src\Original\Runtime\BTECH_0810_DIVISION.c"><Filter>Original\Runtime</Filter></ClCompile>
     <ClCompile Include="src\Original\Runtime\BTECH_0810_EXIT.c"><Filter>Original\Runtime</Filter></ClCompile>
+    <ClCompile Include="src\Original\Runtime\BTECH_0810_HEAP.c"><Filter>Original\Runtime</Filter></ClCompile>
+    <ClCompile Include="src\Support\CombatNearHeap.c"><Filter>Support</Filter></ClCompile>
     <ClCompile Include="src\Original\Runtime\BTECH_0810_STREAMS.c"><Filter>Original\Runtime</Filter></ClCompile>
     <ClCompile Include="src\Original\Runtime\BTECH_1BF5_ARCHIVE.c"><Filter>Original\Runtime</Filter></ClCompile>
     <ClCompile Include="src\Original\Runtime\BTECH_1BF5_CLEANUP.c"><Filter>Original\Runtime</Filter></ClCompile>

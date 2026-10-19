@@ -75,6 +75,14 @@ static uint8_t *AllocateParagraphs(uint16_t paragraphs,uint16_t *largestFreePara
     *largestFreeParagraphs=paragraphs; /* Successful DOS AH48 leaves caller BX. */
     return allocation->bytes;
 }
+static uint16_t DosAllocationSelector(const uint8_t *bytes)
+{
+    if (!bytes) return 0;
+    for (const DosAllocation *block=allocations;block;block=block->next)
+        if (block->bytes==bytes) return block->controlBlockSegment+DOS_MCB_PARAGRAPHS;
+    MwSdlFail("Unknown BTECH DOS allocation identity");
+    return 0;
+}
 static void FreeDosAllocation(uint8_t *bytes)
 {
     /* Native AH49 selector0 fails without freeing anything.1F10 discards CF;
@@ -100,6 +108,13 @@ static void ReleaseChildDosAllocations(void)
 {
     while (allocations)
     {DosAllocation *block=allocations;allocations=block->next;free(block->bytes);free(block);}
+}
+static void FreeDosSelector(uint16_t selector)
+{
+    for (DosAllocation *block=allocations;block;block=block->next)
+        if (block->bytes && (uint16_t)(block->controlBlockSegment+DOS_MCB_PARAGRAPHS)==selector)
+        {FreeDosAllocation(block->bytes);return;}
+    /* DOS AH49 failure, including already-free selectors, is ignored by1F10. */
 }
 uint16_t MwSdlCombatDosAllocationCount(void)
 {
@@ -220,6 +235,8 @@ bool MwSdlInitializeCombatProcess(const char *directory)
     strcpy(gameDirectory,directory);
     btechHostOpenStream=OpenStream;btechHostAllocateParagraphs=AllocateParagraphs;
     btechHostFreeDosAllocation=FreeDosAllocation;btechHostReleaseChildDosAllocations=ReleaseChildDosAllocations;
+    btechHostDosAllocationSelector=DosAllocationSelector;
+    btechHostFreeDosSelector=FreeDosSelector;
     btechHostResolveWrappedResourcePriority=ResolveWrappedResourcePriority;
     btechHostCloseHandle=CloseHandle;btechHostWriteHandle=WriteHandle;btechHostTerminateChild=TerminateChild;
     return true;

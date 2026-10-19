@@ -1,3 +1,4 @@
+#include "mechwarrior/combat_runtime.h"
 #include "mechwarrior/combat_import.h"
 #include "mechwarrior/combat_world.h"
 #include "mechwarrior/combat_startup.h"
@@ -159,6 +160,6 @@ void BtechExportCombatResultsAndTransition(uint16_t resultCode)
     resourceDiskPromptNumber=1;
     /*CC6F's existing host stdio representation: E206 read-stream close is
      * collapsed here at IO, not an invented game helper or numeric FILE cast. */
-    fclose(BtechOpenStreamWithRetry("mw.exe","rb"));
+    BtechCloseStreamFile(BtechOpenStreamWithRetry("mw.exe","rb"));
     BtechTerminateToLauncher(0);
 }

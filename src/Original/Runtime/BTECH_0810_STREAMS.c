@@ -1,5 +1,6 @@
 #include "mechwarrior/combat_sound.h"
 #include "mechwarrior/combat_runtime.h"
+#include "mechwarrior/combat_heap.h"
 #include <stdlib.h>
 
 /*0810:F948. Last slot is inclusive. Native resets buffer cursor/base/count;
@@ -11,7 +12,7 @@ BtechRuntimeStream *BtechRuntimeStreamFindFreeSlot(void)
         BtechRuntimeStream *stream=&runtimeStreams[slot];
         if (!(stream->flags&COMBAT_STREAM_ACTIVE_MASK))
         {
-            stream->flags=0;stream->dosHandle=0xFF;
+            stream->flags=0;stream->dosHandle=0xFF;stream->buffer=NULL;
             return stream;
         }
         if (COMBAT_STREAM_TABLE+slot*COMBAT_STREAM_STRIDE==lastStreamOffset) return NULL;
@@ -25,7 +26,7 @@ BtechRuntimeStream *BtechRuntimeStreamOpen(const char *filename,const char *mode
 {
     BtechRuntimeStream *stream=BtechRuntimeStreamFindFreeSlot();
     if (!stream) return NULL;
-    if (mode[0]!='r' || mode[1]!='b' || mode[2]) abort();
+    if ((mode[0]!='r' && mode[0]!='w') || mode[1]!='b' || mode[2]) abort();
     uint16_t handle=0;
     while (handle<runtimeHandleLimit && (runtimeHandleFlags[handle]&1)) ++handle;
     if (handle>=runtimeHandleLimit) return NULL;
@@ -34,7 +35,7 @@ BtechRuntimeStream *BtechRuntimeStreamOpen(const char *filename,const char *mode
     if (!stream->file) return NULL;
     runtimeHandleFlags[handle]=1;
     stream->dosHandle=(uint8_t)handle;
-    stream->flags=COMBAT_STREAM_READ;
+    stream->flags=mode[0]=='r'?COMBAT_STREAM_READ:COMBAT_STREAM_WRITE;
     ++streamSetupCounter;
     return stream;
 }
@@ -50,6 +51,7 @@ int16_t BtechRuntimeStreamClose(BtechRuntimeStream *stream)
         size_t slot=(size_t)(stream-runtimeStreams);
         if (slot>=COMBAT_STREAM_SLOTS || runtimeTemporaryFileIds[slot]) abort();
         closeStatus=BtechRuntimeStreamFlush(stream);
+        BtechRuntimeStreamReleaseBuffer(stream);
         int16_t closed;
         if (stream->file) {closed=fclose(stream->file)?-1:0;stream->file=NULL;}
         else
@@ -66,6 +68,47 @@ int16_t BtechRuntimeStreamClose(BtechRuntimeStream *stream)
     }
     stream->flags=0;
     return closeStatus;
+}
+
+/*F776. A failed512-byte allocation sets the original unbuffered flag. Host
+ * stdio performs the actual IO; its opaque buffer is not a second game owner. */
+void BtechRuntimeStreamAllocateBuffer(BtechRuntimeStream *stream)
+{
+    stream->buffer=BtechAllocateNearBytes(BTECH_NEAR_STREAM_BUFFER_BYTES,BTECH_NEAR_STREAM_BUFFER_BYTES,BTECH_NEAR_STREAM_BUFFER);
+    stream->flags|=stream->buffer?COMBAT_STREAM_OWNS_BUFFER:COMBAT_STREAM_UNBUFFERED;
+}
+/*F748. Stream close uses plain E96E, NOT CDD9's search-reset probe. */
+void BtechRuntimeStreamReleaseBuffer(BtechRuntimeStream *stream)
+{
+    if ((stream->flags&COMBAT_STREAM_ACTIVE_MASK) && (stream->flags&COMBAT_STREAM_OWNS_BUFFER))
+    {
+        BtechReleaseNearHeapBlock(stream->buffer);stream->buffer=NULL;
+        stream->flags&=(uint8_t)~COMBAT_STREAM_OWNS_BUFFER;
+    }
+}
+/*CD16 and getc's E502 refill boundary. Reserve buffering at the first read,
+ * not at fopen: this allocation order is observable to the shared near heap. */
+size_t BtechReadStreamElements(void *destination,size_t size,size_t count,FILE *file)
+{
+    if (size && count)
+        for (uint16_t slot=0;slot<COMBAT_STREAM_SLOTS;++slot)
+            if (runtimeStreams[slot].file==file)
+            {
+                if (!(runtimeStreams[slot].flags&(COMBAT_STREAM_OWNS_BUFFER|COMBAT_STREAM_UNBUFFERED)))
+                    BtechRuntimeStreamAllocateBuffer(&runtimeStreams[slot]);
+                break;
+            }
+    return fread(destination,size,count,file);
+}
+int BtechReadStreamByte(FILE *file)
+{
+    uint8_t value;return BtechReadStreamElements(&value,1,1,file)==1?value:EOF;
+}
+int BtechCloseStreamFile(FILE *file)
+{
+    for (uint16_t slot=0;slot<COMBAT_STREAM_SLOTS;++slot)
+        if (runtimeStreams[slot].file==file) return BtechRuntimeStreamClose(&runtimeStreams[slot]);
+    return fclose(file); /* External FILE supplied by an isolated runtime caller. */
 }
 
 /*0810:F8DA. Host stdio collapses the read-buffer cursor/count reset. Binary

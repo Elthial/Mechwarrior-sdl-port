@@ -1,4 +1,5 @@
 #include "mechwarrior/combat_runtime.h"
+#include "mechwarrior/combat_heap.h"
 #include "mechwarrior/native_address.h"
 #include <string.h>
 
@@ -11,11 +12,15 @@ uint16_t runtimeHandleLimit;
 uint8_t runtimeHandleFlags[COMBAT_DOS_HANDLES];
 uint16_t runtimeTemporaryFileIds[COMBAT_STREAM_SLOTS];
 uint8_t runtimeStreamAuxiliaryFlags[COMBAT_STREAM_SLOTS];
+uint16_t nearHeapFirstHeader,nearHeapSearchHeader,nearHeapEnd;
+uint16_t nearHeapProgramBreak=BTECH_NEAR_INITIAL_BREAK;
+uint16_t nearHeapGrowthAlignment=BTECH_NEAR_GROWTH_ALIGNMENT;
 BtechRuntimeMessage runtimeMessages[COMBAT_RUNTIME_MESSAGES];
 
 bool BtechImportRuntimeInitialData(const uint8_t *data,size_t bytes)
 {
     if (!data || bytes<0x4EDC) return false;
+    BtechHostDiscardNearHeap();
     uint16_t callback=MwReadNativeWord(data,0x4DFA);
     if (callback!=0 && callback!=0xFE80) return false;
     if (MwReadNativeWord(data,0x4BA8) || MwReadNativeWord(data,0x4DF0)) return false;

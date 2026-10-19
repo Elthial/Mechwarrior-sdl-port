@@ -90,6 +90,9 @@ typedef struct BtechLzwReaderWorkspace {
 extern BtechLzwReaderWorkspace *borrowedArchiveWorkspace;
 extern uint8_t archiveStreamScratch[0x32];
 typedef struct BtechArchiveDescriptor {
+    uint16_t workspaceSelector; /* Identity survives DOS workspace release. */
+    uint16_t streamIdentity; /* Native FILE slot survives fclose and host FILE reuse. */
+    uint16_t sourceSelector; /* Memory-source selector; remains calloc zero for FILE archives. */
     uint8_t *state;
     BtechLzwReaderWorkspace *workspace;
     FILE *stream;

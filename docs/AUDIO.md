@@ -16,8 +16,85 @@ selects the original Roland campaign music backend, synthesized by libmt32emu.
 in OPL2-compatible mode, and requires no external ROM files.
 AdLib retains a mono card output, mirrored to the stereo host stream; it does
 not gain artificial stereo from the OPL3 core's two-output sample staggering.
-Combat currently retains speaker effects: its separate intelligent-mode Roland
-driver is not implemented. This setting does not claim Roland combat support.
+Combat now runs its own native Roland or AdLib card installation through the
+same libraries. The installed `BTECHSND.SND` contains only PC-speaker effects,
+so walking, weapons and impacts still use the speaker alongside the selected
+card. The port does not substitute invented MIDI or FM effects for them.
+The combat AdLib note/instrument driver and Roland request-driven MIDI path
+are separate from campaign music. This is not a claim that the original game
+contains a combat soundtrack, nor full general-purpose MPU-401 emulation.
+AdLib retains the original instrument selection, volume, pitch-bend and
+channel-stop behavior, including its unusual channel indexing. Roland direct
+messages retain per-track running status and correctly framed system messages.
+Neither path changes movement speed or supplies missing original resources.
+The original game retains music-bank ownership, instrument uploads and cleanup
+ordering. Those driver capabilities do not add a combat score to files that
+contain none. Shared resource allocation preserves the original 16-bit limits
+and reuse where playback depends on them, rather than granting unlimited host
+memory or inventing missing instrument data.
+
+## Listening and playtesting
+
+MT-32 and AdLib are ready for listening/playtesting, not declared release-qualified.
+Both use the same game speed: keep `cpu_cycles_per_ms=2500` while comparing them.
+Set `sound_system=adlib` in your INI to test without ROMs, or use `mt32` and your
+own ROM paths. Select the INI with the existing launcher option:
+
+```powershell
+.\src\Run-MechWarrior.ps1 -TimingConfiguration .\MechWarrior.ini
+```
+
+Restart the game after changing cards. The window title identifies the selected
+sound system; the launcher prints the exact configuration and runtime-log paths.
+Do not expect MT-32 and AdLib to sound identical: they use the game's respective
+instrument/sequencer paths and different hardware emulators, not a shared arranger.
+
+For a useful first test:
+
+1. Let the title music play, then visit a Bar and listen to the change of cue.
+2. Repair and rearm, accept a contract, and enter combat. Walk, turn, fire and
+   listen for footfalls, weapon reports and impacts. These remain PC-speaker
+   effects in the supplied original sound bank even with a card selected.
+3. Return from the mission and revisit the Bar. Check that music resumes without
+   stuck notes, growing delay or effects continuing from the previous mission.
+4. Repeat with the other card using the same CPU setting and company save.
+
+### Campaign music cues
+
+| File | When to listen |
+| --- | --- |
+| `MECH.MUS` | Intro/title sequence |
+| `MECHBAR.MUS` | Entering the Bar |
+| `LAUNCH.MUS` | Successful contract debrief, despite its filename; not mission launch |
+| `DEATH.MUS` | Lost lancemates during debrief, or the commander's death/restart event |
+| `VICTORY.MUS` | Dark Wing story ending, not an ordinary contract victory |
+
+A failed contract with the commander and lancemates surviving does not itself
+start Death. Deployments resolved without combat do not start the successful
+contract cue. Returning to the planet hub stops music, so dismissing a debrief
+quickly can cut its cue short. These are original campaign decisions, not
+sound-card differences. Leave the results screen open to hear its music.
+
+The automated smoke check runs campaign → combat → Bar with one continuously
+open SDL audio device for both cards, including the original fifteen effects.
+It checks that output is present and that the audio queue stays bounded. It is
+not a completed-mission or subjective listening acceptance test. Report any
+audible issue with the selected card, screen/action and launcher runtime log.
+
+### Supported scope and remaining limits
+
+The five campaign music files, their debrief/death/ending triggers and the
+fifteen installed combat effects have automated playback coverage. Trigger
+checks enter the real campaign with controlled combat-return results; they
+do not amount to a complete campaign playthrough.
+
+Tandy PSG/DAC and sampled-speaker library paths are not supported playback
+options. The MPU adapter implements the original game's required command
+paths, not a general-purpose MPU-401 emulator. Arbitrary replacement banks,
+malformed data and unknown stale-memory references are not guaranteed to work.
+Speaker output is a digital approximation, not an analogue hardware recording.
+The existing libraries can differ from physical hardware in acoustics and
+headroom; these limits do not imply missing songs or alternative weapon effects.
 
 For Roland campaign music, supply a compatible MT-32 CONTROL and PCM ROM pair:
 

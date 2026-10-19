@@ -1,4 +1,5 @@
 #include "mechwarrior/combat_cockpit.h"
+#include "mechwarrior/combat_heap.h"
 #include <stdlib.h>
 
 /*1BF5:045D. Genuine FAR tail, one native retrace WORD forwarded unchanged. */
@@ -49,9 +50,8 @@ void BtechPresentScreenRectangle(int16_t x,int16_t y,uint16_t width,uint16_t hei
 }
 
 /*1BF5:14BE. Real SCR:BIN: archive reads; ignored read counts retain stale tail.
- * Host malloc/free replace the CRT near heap only. CDD9's trailing FFFF probe
- * fails at FAAD INC CX/JZ before heap traversal on this initialized path.
- * Near-heap addresses/residue and arbitrary physical aliases are not emulated. */
+ * Near allocation uses the shared CRT heap. CDD9's trailing FFFF probe resets
+ * its search cursor without coalescing. Arbitrary physical aliases stay gated. */
 uint16_t BtechLoadScreenImage(const char *filename,BtechRuntimeStream *stream)
 {
     uint16_t openedHere=0,succeeded=0,bufferBytes=COMBAT_SCREEN_BUFFER_BYTES;
@@ -64,7 +64,7 @@ uint16_t BtechLoadScreenImage(const char *filename,BtechRuntimeStream *stream)
     if (archive<0) goto streamCleanup;
     do
     {
-        buffer.bytes=malloc(bufferBytes);
+        buffer.bytes=BtechAllocateNearBytes(bufferBytes,bufferBytes,BTECH_NEAR_BYTES);
         if (buffer.bytes) break;
         bufferBytes>>=1;
     } while (bufferBytes);
@@ -94,7 +94,7 @@ uint16_t BtechLoadScreenImage(const char *filename,BtechRuntimeStream *stream)
             }
         }
     }
-    free(buffer.bytes);
+    BtechReleaseNearBlockAndProbeAllocation(buffer.bytes);
     succeeded=1;
 archiveCleanup:
     /* Stale first handle or negative second-open result is intentional. */

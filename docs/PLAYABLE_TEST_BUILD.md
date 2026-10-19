@@ -18,8 +18,8 @@ see [sound configuration](AUDIO.md). The default remains speaker.
 For the default installation location, put your original game files directly
 inside `assets/original-game`, then omit `-GameDirectory`. That entire folder
 is Git-ignored except for its `.gitignore`; original files must never be committed.
-The window title shows the selected campaign music driver and changes to the
-currently supported PC-speaker driver during combat.
+The window title shows the selected card in campaign and combat. Combat also
+uses the native PC-speaker effects bank.
 
 ## Preparing for a mission
 

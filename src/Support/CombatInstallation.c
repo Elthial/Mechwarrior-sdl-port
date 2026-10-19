@@ -2,6 +2,7 @@
 #include "mechwarrior/combat_startup.h"
 #include "mechwarrior/combat_import.h"
 #include "mechwarrior/combat_sound.h"
+#include "mechwarrior/combat_heap.h"
 #include "mechwarrior/combat_video.h"
 #include "mechwarrior/combat_orders.h"
 #include "mechwarrior/combat_cockpit.h"
@@ -90,7 +91,7 @@ void BtechHostDiscardChildData(void)
             paragraphs|=list->pixels.bytes!=NULL;
             for (uint16_t alias=slot;alias<COMBAT_BITMAP_LISTS;++alias)
                 if (bitmapRegistryLists[alias]==list) bitmapRegistryLists[alias]=NULL;
-            free(list->images);free(list);
+            /* Near owners are retained until the whole child heap is disposed. */
         }
     promptBitmaps=NULL;
     pointPictures=NULL;smallMechPictures=NULL;strutPictures=NULL;
@@ -111,15 +112,11 @@ void BtechHostDiscardChildData(void)
         {fclose(runtimeStreams[slot].file);runtimeStreams[slot].file=NULL;}
     for (uint16_t slot=0;slot<COMBAT_WORLD_OBJECTS;++slot)
         if (heapWorldObjectOwned[slot])
-        {free(worldObjects[slot]);worldObjects[slot]=NULL;heapWorldObjectOwned[slot]=0;}
+        {worldObjects[slot]=NULL;heapWorldObjectOwned[slot]=0;}
     for (uint16_t bank=0;bank<COMBAT_AUDIO_BANK_ROOTS;++bank)
     {
-        BtechSoundAllocationNode *node=soundBanks[bank].root.next;
-        while (node)
-        {
-            BtechSoundAllocationNode *next=node->next;
-            paragraphs|=node->allocation.bytes!=NULL;free(node);node=next;
-        }
+        /* DOS and near allocator owners include detached/reused nodes. Process
+         * disposal must not follow a game's stale or cyclic next chain. */
         paragraphs|=soundBanks[bank].root.allocation.bytes!=NULL;
         free(soundBanks[bank].events);soundBanks[bank]=(BtechSoundBank){0};
     }
@@ -136,11 +133,10 @@ void BtechHostDiscardChildData(void)
         paragraphs|=bank->allocation.bytes!=NULL;
         BtechHostDiscardDecodedShapeBank(bank);
     }
-    if (shapeResourceBanks!=&initialShapeResourceBank) free(shapeResourceBanks);
     while (retiredShapeRegistries)
     {
         RetiredShapeRegistry *retired=retiredShapeRegistries;retiredShapeRegistries=retired->next;
-        free(retired->banks);free(retired);
+        free(retired); /* Bank arrays belong to the shared child near heap. */
     }
     paragraphs|=surfaceResourceBank.allocation.bytes!=NULL;
     BtechHostDiscardDecodedSurfaceBank(&surfaceResourceBank);
@@ -152,6 +148,7 @@ void BtechHostDiscardChildData(void)
     if (btechHostReleaseChildDosAllocations) btechHostReleaseChildDosAllocations();
     for (uint16_t slot=0;slot<COMBAT_FONT_SLOTS;++slot) fonts[slot]=(BtechFont){0};
     egaFontBuffer=NULL; // Borrowed staging reference, not a second allocation owner.
+    BtechHostDiscardNearHeap();
 }
 
 /* Actual installed BTECH.EXE's backward EXEPACK B0/B2 interpreter and sixteen

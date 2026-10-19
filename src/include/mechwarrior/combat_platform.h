@@ -9,6 +9,7 @@ extern FILE *(*btechHostOpenStream)(const char *filename,const char *mode);
 extern uint8_t (*btechHostReadPort)(uint16_t port);
 extern void (*btechHostWritePort)(uint16_t port,uint8_t value);
 extern uint8_t (*btechHostSetInterrupts)(uint8_t enabled);
+extern uint8_t (*btechHostReadInterrupts)(void);
 extern void (*btechHostDelayLoops)(uint16_t loopCount);
 extern void (*btechHostPollInterrupts)(void);
 /* Host-only CPU-work instrumentation at native0019 loop boundary. Does not
@@ -16,6 +17,9 @@ extern void (*btechHostPollInterrupts)(void);
 extern void (*btechHostPaceCombatCpu)(void);
 extern uint8_t *(*btechHostAllocateParagraphs)(uint16_t paragraphs,uint16_t *largestFreeParagraphs);
 extern void (*btechHostFreeDosAllocation)(uint8_t *allocation);
+extern void (*btechHostFreeDosSelector)(uint16_t selector);
+/* Query the existing DOS MCB owner; this is not a host-pointer cache key. */
+extern uint16_t (*btechHostDosAllocationSelector)(const uint8_t *allocation);
 /* Physical foreign-memory edge of the signed, wrapping BA56 directory read.
  * Returns a real recovered byte owner, never a synthetic surface/priority. */
 extern const uint8_t *(*btechHostResolveWrappedResourcePriority)(const uint8_t *directory,int16_t resourceId);

@@ -5,7 +5,7 @@
 #include <stdbool.h>
 
 enum { COMBAT_STREAM_SLOTS=0x14,COMBAT_STREAM_TABLE=0x4BC0,COMBAT_STREAM_STRIDE=8,
-    COMBAT_STREAM_ACTIVE_MASK=0x83,COMBAT_STREAM_READ=1,COMBAT_STREAM_WRITE=2,
+    COMBAT_STREAM_ACTIVE_MASK=0x83,COMBAT_STREAM_READ=1,COMBAT_STREAM_WRITE=2,COMBAT_STREAM_UNBUFFERED=4,
     COMBAT_STREAM_OWNS_BUFFER=8,COMBAT_STREAM_PROTECTED=0x40,COMBAT_STREAM_AUX_EXTERNAL_BUFFER=1,
     COMBAT_TAGGED_STREAMS=4,COMBAT_TAG_PATH_BYTES=0x1A,COMBAT_TAG_LEVELS=7,
     COMBAT_SOUND_BANKS=0x0B,COMBAT_MUSIC_BANKS=0x10,COMBAT_MUSIC_FIRST_ROOT=0x0A,
@@ -91,9 +91,21 @@ void BtechStartSoftwareMusicTrack(MwNativeByteView musicHeader,uint16_t headerOf
 void BtechTickSoftwareMusic(void);
 uint8_t BtechDecodeNextMidiEvent(uint8_t inheritedDeltaHighByte);
 typedef void (*BtechAudioTick)(void);
+#define BTECH_MUSIC_TIMER_VECTOR UINT32_C(0x1ADF0F39)
+extern BtechAudioTick musicTimerCallback;
+extern uint8_t musicTimerInstalled;
+extern uint16_t savedMusicTimerDivisor;
+extern uint32_t savedMusicTimerVector;
+void BtechMusicTimerInterrupt(void);
+void BtechInstallMusicTimerCallback(BtechAudioTick callback,uint16_t divisor);
+void BtechRestoreMusicTimerInterrupt(void);
+uint16_t BtechStopAllAudioChannels(void);
+uint16_t BtechShutdownAudioBackends(void);
+uint16_t BtechUnloadSoundBank(uint16_t bankHandle);
 BtechAudioTick BtechSelectTandyOrFallbackAudioCallback(void);
 BtechAudioTick BtechSelectSpeakerAdlibOrMpuCallback(void);
 void BtechAudioTimerNoOp(void);
+uint16_t BtechAudioMusicNoOp(uint16_t statusDisplacement,uint16_t channel,uint16_t packedData);
 void BtechTickSpeakerToneChannels(void);
 void BtechTickTandyToneChannels(void);
 void BtechAdvanceToneChannel(BtechToneChannelState *state,MwNativeByteView event,uint16_t channel);
@@ -116,6 +128,7 @@ void BtechRestoreSoundTimerInterrupt(void);
 typedef struct BtechRuntimeStream {
     FILE *file;
     uint8_t flags,dosHandle;
+    uint8_t *buffer; /* Native F776 allocation; host stdio still performs buffering. */
 } BtechRuntimeStream;
 typedef struct BtechTaggedStream {
     BtechRuntimeStream *stream;
@@ -128,11 +141,16 @@ typedef struct BtechSoundAllocationNode {
     BtechResourceAllocation allocation;
     struct BtechSoundAllocationNode *next;
     char chunkTag[0x0A];
+    uint16_t allocationSelector; /* Original DOS allocation identity. */
+    uint16_t allocationOffset;
 } BtechSoundAllocationNode;
+BtechSoundAllocationNode *BtechHostResolveReleasedSoundNode(BtechSoundAllocationNode *node);
+void BtechHostStoreSoundAllocationNext(BtechSoundAllocationNode *node,BtechSoundAllocationNode *next);
 
 typedef struct BtechSoundEvent {
     MwNativeByteView data; /* Borrowed selector-relative allocation bytes. */
     uint16_t offset; /* Native near cursor remains observable to bytecode. */
+    uint16_t selector; /* Relocated DOS selector, not a host-pointer hash. */
 } BtechSoundEvent;
 BtechSoundEvent BtechAdvanceMusicSequence(void);
 typedef struct BtechSoundBank {
@@ -168,6 +186,13 @@ uint16_t BtechLoadSoundBank(const char *filename,BtechRuntimeStream *stream,uint
 uint16_t BtechMergeSoundBackendDirectory(BtechSoundBank *bank,BtechRuntimeStream *stream,const char *tag);
 BtechSoundAllocationNode *BtechLoadTaggedSoundAllocation(BtechSoundBank *bank,BtechRuntimeStream *stream,const char *tag);
 uint16_t BtechSelectActiveSoundBank(uint16_t bankHandle);
+uint16_t BtechLoadMusicBank(const char *filename,BtechRuntimeStream *stream);
+uint16_t BtechSelectActiveMusicBank(uint16_t bankHandle);
+uint16_t BtechStartSelectedMusicBankTrack(uint16_t trackIndex,uint16_t priority);
+/* Void projection: callers do not consume native AX residue on non-MPU stops. */
+void BtechStopMusicStreams(void);
+uint16_t BtechUnloadMusicBank(uint16_t bankHandle);
+uint16_t BtechFreeSoundAllocationChain(BtechSoundBank *bank);
 uint16_t BtechAllocateToneEventChannels(BtechSoundEvent event,uint16_t priority,uint16_t soundEventIndex);
 uint16_t BtechDispatchSoundBankEvent(int16_t soundEventIndex,uint16_t priority);
 void BtechPlaySoundIfEnabled(int16_t soundEventIndex,uint16_t priority);

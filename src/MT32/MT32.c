@@ -2,9 +2,10 @@
 #include <mt32emu/mt32emu.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 static mt32emu_context synthesizer;
+/* One physical synthesizer survives campaign/combat child changes. Only host
+ * device shutdown frees it; native MIDI reset messages still reach Munt. */
 static mt32emu_report_handler_version MT32EMU_C_CALL ReportVersion(mt32emu_report_handler_i reports)
 {(void)reports;return MT32EMU_REPORT_HANDLER_VERSION_0;}
 static void MT32EMU_C_CALL DebugMessage(void *unused,const char *format,va_list arguments)
@@ -16,6 +17,8 @@ static const mt32emu_report_handler_i_v0 reportCallbacks={.getVersionID=ReportVe
 
 bool MwMt32Open(const char *controlRom,const char *pcmRom,uint32_t sampleRate,char *error,size_t errorSize)
 {
+    if (synthesizer)
+    {snprintf(error,errorSize,"MT-32 is already open");return false;}
     mt32emu_report_handler_i reports={.v0=&reportCallbacks};
     synthesizer=mt32emu_create_context(reports,NULL);
     if (!synthesizer) {snprintf(error,errorSize,"Cannot create libmt32emu context");return false;}
@@ -40,8 +43,9 @@ bool MwMt32Open(const char *controlRom,const char *pcmRom,uint32_t sampleRate,ch
      * byte queue. Do not add a second message-length MIDI cable delay. */
     mt32emu_set_midi_delay_mode(synthesizer,MT32EMU_MDM_IMMEDIATE);
     mt32emu_rom_info roms;mt32emu_get_rom_info(synthesizer,&roms);
-    fprintf(stderr,"MT-32: %s; %s; libmt32emu %s\n",roms.control_rom_description,
+    printf("MT-32: %s; %s; libmt32emu %s\n",roms.control_rom_description,
         roms.pcm_rom_description,mt32emu_get_library_version_string());
+    fflush(stdout);
     return true;
 }
 void MwMt32ReceiveByte(uint8_t value)

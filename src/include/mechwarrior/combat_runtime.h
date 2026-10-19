@@ -1,5 +1,6 @@
 #ifndef MECHWARRIOR_COMBAT_RUNTIME_H
 #define MECHWARRIOR_COMBAT_RUNTIME_H
+#include <stdio.h>
 #include "mechwarrior/combat_sound.h"
 
 enum { COMBAT_DOS_HANDLES=0x14,COMBAT_STANDARD_HANDLES=5,COMBAT_RUNTIME_MESSAGES=8,
@@ -35,6 +36,11 @@ extern void (*btechHostWriteHandle)(uint16_t handle,const char *text,uint16_t by
 extern void (*btechHostTerminateChild)(uint8_t exitCode);
 bool BtechImportRuntimeInitialData(const uint8_t *data,size_t bytes);
 int16_t BtechRuntimeStreamClose(BtechRuntimeStream *stream);
+size_t BtechReadStreamElements(void *destination,size_t size,size_t count,FILE *file);
+int BtechReadStreamByte(FILE *file);
+int BtechCloseStreamFile(FILE *file);
+void BtechRuntimeStreamAllocateBuffer(BtechRuntimeStream *stream);
+void BtechRuntimeStreamReleaseBuffer(BtechRuntimeStream *stream);
 int16_t BtechRuntimeStreamFlush(BtechRuntimeStream *stream);
 uint16_t BtechFlushAllRuntimeStreams(void);
 void BtechRunNearCallbacksReverse(BtechRuntimeCallback *callbacks,uint16_t count);

@@ -1,6 +1,7 @@
 #include "mechwarrior/campaign_music.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 /* Writable native callback identities stay observable; synthesis lives below
  * the original byte/register outputs, not in a replacement host sequencer. */
@@ -34,11 +35,28 @@ void MwSelectAndInitializeMidiBackend(MwCampaignAudioBackend *backend)
     {
         MwInitializeMpuUartBackend();
         /* 0B6C uses BX left by DOS GET VECTOR, NOT the selected descriptor.
-         * The existing host's zero saved-vector identity aliases this header.
-         * Do not silently set MPU selectedVoiceCount to voiceCapacity instead. */
+         * After BTECH returns,0106 aliases two AdLib frequency WORDs rather
+         * than the runtime header. Apply the native byte write to that actual
+         * owner; do not zero the retained IRQ or change MPU voice capacity. */
         uint16_t previousOffset=(uint16_t)mpuPreviousIrq;
-        if ((uint32_t)previousOffset+0x17>=sizeof(musicRuntimeHeader)) abort();
-        musicRuntimeHeader[previousOffset+0x17]=musicRuntimeHeader[previousOffset+3];
+        uint16_t source=(uint16_t)(previousOffset+3),destination=(uint16_t)(previousOffset+0x17);
+        if (source<sizeof(musicRuntimeHeader) && destination<sizeof(musicRuntimeHeader))
+            musicRuntimeHeader[destination]=musicRuntimeHeader[source];
+        else if (source>=MIDI_ADLIB_NOTE_FREQUENCIES_OFFSET && destination>=MIDI_ADLIB_NOTE_FREQUENCIES_OFFSET
+            && source-MIDI_ADLIB_NOTE_FREQUENCIES_OFFSET<sizeof(adlibPackedNoteFrequencies)
+            && destination-MIDI_ADLIB_NOTE_FREQUENCIES_OFFSET<sizeof(adlibPackedNoteFrequencies))
+        {
+            source-=MIDI_ADLIB_NOTE_FREQUENCIES_OFFSET;destination-=MIDI_ADLIB_NOTE_FREQUENCIES_OFFSET;
+            uint8_t value=(uint8_t)(adlibPackedNoteFrequencies[source/2]>>((source&1)*8));
+            uint8_t shift=(destination&1)*8;
+            adlibPackedNoteFrequencies[destination/2]=(uint16_t)((adlibPackedNoteFrequencies[destination/2]
+                &~(UINT16_C(0xFF)<<shift))|((uint16_t)value<<shift));
+        }
+        else
+        {
+            fprintf(stderr,"Campaign MPU install residue for saved IRQ2 %04X:%04X has no typed owner\n",
+                (uint16_t)(mpuPreviousIrq>>16),previousOffset);abort();
+        }
     }
     else
     {

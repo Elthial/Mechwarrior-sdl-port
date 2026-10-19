@@ -1,4 +1,6 @@
+#include "mechwarrior/combat_runtime.h"
 #include "mechwarrior/combat_import.h"
+#include "mechwarrior/combat_heap.h"
 #include "mechwarrior/combat_world.h"
 #include "mechwarrior/combat_resources.h"
 #include "mechwarrior/native_address.h"
@@ -9,7 +11,7 @@
  * not a serialized length. The common prefix is shared through real pointers. */
 BtechWorldObjectPrefix *BtechAllocateHeapWorldObject(uint16_t resourceId,const BtechPosition3D *placement)
 {
-    BtechHeapWorldObject *object=malloc(sizeof(*object));
+    BtechHeapWorldObject *object=BtechAllocateNearBytes(BTECH_NEAR_WORLD_OBJECT_BYTES,sizeof(*object),BTECH_NEAR_WORLD_OBJECT);
     if (!object || worldObjectCount>=COMBAT_WORLD_OBJECTS) abort();
     *object=(BtechHeapWorldObject){0};
     object->prefix.updateCallbackOffset=WORLD_OBJECT_SELECTION_PIXEL_CALLBACK;
@@ -74,7 +76,7 @@ void BtechReleaseHeapWorldObjectList(void)
         if (slot>=COMBAT_WORLD_OBJECTS) abort();
         if (heapWorldObjectOwned[slot])
         {
-            free(worldObjects[slot]);
+            BtechReleaseNearHeapBlock(worldObjects[slot]);
             worldObjects[slot]=NULL;heapWorldObjectOwned[slot]=0;
         }
     }
@@ -210,11 +212,11 @@ void BtechLoadTerrainWorldResources(void)
         strcat(terrainWorldFilename,".WLD");strcat(terrainGridFilename,".GRD");
         FILE *stream=BtechOpenStreamWithRetry(terrainWorldFilename,"rb");
         size_t read;
-        while ((read=fread(resourceBytes,1,2,stream))!=0)
+        while ((read=BtechReadStreamElements(resourceBytes,1,2,stream))!=0)
         {
             if (read<2 && !haveResource) abort();
             haveResource=1;
-            read=fread(positionBytes,1,12,stream);
+            read=BtechReadStreamElements(positionBytes,1,12,stream);
             if (read<12 && !havePosition) abort();
             havePosition=1;
             BtechPosition3D placement={
@@ -224,15 +226,15 @@ void BtechLoadTerrainWorldResources(void)
             BtechWorldObjectPrefix *object=BtechAllocateHeapWorldObject(MwReadNativeWord(resourceBytes,0),&placement);
             object->renderFlags=WORLD_OBJECT_SURFACE_QUERY_CANDIDATE;
         }
-        fclose(stream);
+        BtechCloseStreamFile(stream);
         stream=BtechOpenStreamWithRetry(terrainGridFilename,"rb");
         uint16_t rowBase=terrainTileGridRowBases[tile],columnBase=terrainTileGridColumnBases[tile];
         for (uint16_t row=0;row<TERRAIN_TILE_ROWS;++row)
         {
             if (rowBase+row>=TERRAIN_GRID_ROWS || columnBase+TERRAIN_TILE_COLUMNS>TERRAIN_GRID_COLUMNS) abort();
-            fread(&terrainHeightGrid[rowBase+row][columnBase],TERRAIN_TILE_COLUMNS,1,stream);
+            BtechReadStreamElements(&terrainHeightGrid[rowBase+row][columnBase],TERRAIN_TILE_COLUMNS,1,stream);
         }
-        fclose(stream);
+        BtechCloseStreamFile(stream);
     }
 }
 
@@ -270,7 +272,7 @@ void BtechLoadScenarioAndWorld(uint16_t scenarioIndex)
     FILE *stream=BtechOpenStreamWithRetry("snario.dat","rb");
     uint16_t offset=(uint16_t)(scenarioIndex<<4);
     fseek(stream,offset<0x8000?offset:(long)offset-0x10000,SEEK_SET);
-    fread(&scenarioSelectors,1,sizeof(scenarioSelectors),stream);fclose(stream);
+    BtechReadStreamElements(&scenarioSelectors,1,sizeof(scenarioSelectors),stream);BtechCloseStreamFile(stream);
     BtechLoadTerrainWorldResources();
     for (uint16_t slot=0;slot<COMBAT_MECH_SLOTS;++slot)
     {
@@ -302,7 +304,7 @@ void BtechLoadScenarioAndWorld(uint16_t scenarioIndex)
             for (uint16_t byte=0;byte<4;++byte)
             {formationBytes[unit*8+byte]=(uint8_t)(position->positionA>>(byte*8));formationBytes[unit*8+4+byte]=(uint8_t)(position->positionB>>(byte*8));}
         }
-        fread(formationBytes,1,sizeof(formationBytes),stream);
+        BtechReadStreamElements(formationBytes,1,sizeof(formationBytes),stream);
         for (uint16_t unit=0;unit<4;++unit)
         {
             BtechFormationPosition *position=&unitFormationPositions[side*4+unit];
@@ -316,7 +318,7 @@ void BtechLoadScenarioAndWorld(uint16_t scenarioIndex)
         offset=(uint16_t)((specialTerrain<<3)+0x0DC0);
         fseek(stream,offset<0x8000?offset:(long)offset-0x10000,SEEK_SET);
         uint8_t positionBytes[8];
-        if (fread(positionBytes,1,8,stream)!=8) abort(); /* Unknown initial native local residue. */
+        if (BtechReadStreamElements(positionBytes,1,8,stream)!=8) abort(); /* Unknown initial native local residue. */
         BtechPosition3D position={
             (uint32_t)MwReadNativeWord(positionBytes,0)|((uint32_t)MwReadNativeWord(positionBytes,2)<<16),
             (uint32_t)MwReadNativeWord(positionBytes,4)|((uint32_t)MwReadNativeWord(positionBytes,6)<<16),SPECIAL_TARGET_ALTITUDE};
@@ -325,7 +327,7 @@ void BtechLoadScenarioAndWorld(uint16_t scenarioIndex)
         specialTargetObject->object.prefix.renderFlags|=WORLD_OBJECT_SPECIAL_TARGET;
         unknownWorldObject=specialTargetObject;
     }
-    fclose(stream);
+    BtechCloseStreamFile(stream);
     for (uint16_t slot=0;slot<COMBAT_MECH_SLOTS;++slot)
         if (unitBindings[slot].mech)
         {
