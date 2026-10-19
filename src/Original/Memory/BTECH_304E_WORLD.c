@@ -30,7 +30,6 @@ BtechPooledWorldObject pooledWorldObjects[COMBAT_POOLED_OBJECTS];
 BtechWorldObjectPrefix *worldObjects[COMBAT_WORLD_OBJECTS];
 BtechWorldObjectPrefix *selectedWorldObjects[COMBAT_SELECTED_WORLD_OBJECTS];
 uint16_t selectedObjectCount;
-const uint16_t *specialTargetControlAlias;
 uint8_t heapWorldObjectOwned[COMBAT_WORLD_OBJECTS];
 BtechWorldObjectPrefix *cockpitWorldObjects[COMBAT_WORLD_OBJECTS];
 uint16_t worldObjectCount,cockpitWorldObjectCount,distinctSceneMechChassisCount;
@@ -262,7 +261,6 @@ void BtechInitializeFreshWorldOwners(const uint8_t *data)
     playerPoseObject=NULL;
     orderMapCameraObject=NULL;
     specialTargetObject=NULL;
-    specialTargetControlAlias=NULL;
     unknownWorldObject=NULL;
     orderMapCameraContext=NULL;
     playerPoseCameraContext=NULL;

@@ -9,12 +9,8 @@ uint16_t BtechCalculateVectorHeadingFar(uint32_t componentA,uint32_t componentB)
     return BtechCalculateVectorHeading(componentA,componentB);
 }
 
-/*0810:BA56. Descending BYTE priority selection sort. Native does NOT test
- * the final key for zero; a lone last zero remains part of the prefix.
- * Original capture20261017 proves sixFFFF parts read priorityE9 through an
- * out-of-bank bitmap-byte/far-pointer/code alias; see ORIGINAL_COMBAT_CAPTURE_20261017.md.
- * The physical DOS alias boundary below resolves recovered typed byte owners;
- * it must not turn that observed load layout into an unconditional E9 default. */
+/* Sort actual surface resources by priority. Mech parts and unassigned
+ * resources remain in the ordinary distance-sorted object group. */
 int16_t BtechSortWorldObjectsBySurfacePriority(BtechWorldObjectPrefix **objects,int16_t count,uint8_t *priorities)
 {
     if (count<2) return 0;
@@ -23,20 +19,10 @@ int16_t BtechSortWorldObjectsBySurfacePriority(BtechWorldObjectPrefix **objects,
         if (index>=COMBAT_WORLD_OBJECTS || !objects[index]) abort();
         int16_t resource=(int16_t)objects[index]->resourceId;
         uint8_t priority=0;
-        if (resource<(int16_t)surfaceResourceBank.resourceCount)
+        if (resource>=0 && resource<(int16_t)surfaceResourceBank.resourceCount)
         {
-            if (resource<0)
-            {
-                if (!btechHostResolveWrappedResourcePriority) abort();
-                const uint8_t *priorityByte=btechHostResolveWrappedResourcePriority(surfaceResourceBank.allocation.bytes,resource);
-                if (!priorityByte) abort();
-                priority=*priorityByte;
-            }
-            else
-            {
-                if (!surfaceResourceBank.surfaces || !surfaceResourceBank.surfaces[resource]) abort();
-                priority=surfaceResourceBank.surfaces[resource]->priorityClass;
-            }
+            if (!surfaceResourceBank.surfaces || !surfaceResourceBank.surfaces[resource]) abort();
+            priority=surfaceResourceBank.surfaces[resource]->priorityClass;
         }
         priorities[index]=priority;
     }
@@ -53,6 +39,7 @@ int16_t BtechSortWorldObjectsBySurfacePriority(BtechWorldObjectPrefix **objects,
         }
         if (firstZero==-1 && !priorities[index]) firstZero=index;
     }
+    if (firstZero==-1 && !priorities[count-1]) firstZero=count-1;
     return firstZero==-1?count:firstZero;
 }
 

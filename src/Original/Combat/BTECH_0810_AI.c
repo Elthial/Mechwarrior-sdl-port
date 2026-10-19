@@ -7,17 +7,10 @@
 #include "mechwarrior/combat_render.h"
 #include <stdlib.h>
 
-/* Specific reused native stack bytes, not a new game global or stack emulator.
- * Last9C06 -> A05F ->1E28 ->0714 saves SI/DI exactly where739C's unwritten
- * formation height will lie. DI is00C4's retained dispatch-end cursor. */
-static uint32_t formationHeightStackResidue;
-static uint8_t formationHeightStackResidueKnown;
-
 /*0810:71ED. The actual non-player update chain, not a replacement AI tick.
  * Global control finishes one-past the eight records unless739C rebinds it. */
 void BtechUpdateAiMechUnits(void)
 {
-    formationHeightStackResidueKnown=0;
     for (uint16_t slot=0;slot<COMBAT_MECH_SLOTS;++slot) unitControls[slot].targetSelectionCount=0;
     BtechRefreshLastVisibleUnitPositions();
     BtechRecalculateUnitCombatValuesAndBoundaries();
@@ -78,9 +71,7 @@ tacticalUpdate:
         }
 animate:
         {
-            uint16_t animationLookupIndex=BtechAdvanceUnitAnimationAndMovementMode();
-            formationHeightStackResidue=((uint32_t)COMBAT_NATIVE_GRAPHICS_DISPATCH_END<<16)|animationLookupIndex;
-            formationHeightStackResidueKnown=combatRendererKind==COMBAT_VIDEO_EGA;
+            BtechAdvanceUnitAnimationAndMovementMode();
             BtechSynchronizeMechRenderParts();
         }
     }
@@ -88,8 +79,7 @@ animate:
 }
 
 /*0810:739C. Side ZERO's signed rule gates the whole routine. Worklist targets
- * are consumed even when reassignment fails. Formation height aliases the
- * preceding animation resource lookup's saved registers, not terrain height. */
+ * are consumed even when reassignment fails. Formation waypoints use terrain height. */
 void BtechCoordinateSpecialObjectiveUnits(void)
 {
     if ((int16_t)sideObjectiveRules[0]<=OBJECTIVE_OPPOSE_WITHDRAWAL) return;
@@ -152,13 +142,12 @@ void BtechCoordinateSpecialObjectiveUnits(void)
         activeMechState=unitBindings[slot].mech;
         if (!activeMechState || unitControls[slot].controlState!=TACTICAL_DEFENDING) continue;
         BtechSelectActiveUnitContext(slot);
-        BtechPosition3D destination;
+        BtechPosition3D destination={0};
         if (activeUnitControl->commandCode==COMBAT_ORDER_ACT_ON_OWN)
         {
-            if (!formationHeightStackResidueKnown) abort(); /* No preceding native producer is represented. */
             destination.positionA=unitFormationPositions[slot].positionA;
             destination.positionB=unitFormationPositions[slot].positionB;
-            destination.positionC=formationHeightStackResidue;
+            destination.positionC=(uint32_t)(int32_t)(int16_t)BtechSampleTerrainOrSurfaceHeight(&destination);
         }
         else
         {

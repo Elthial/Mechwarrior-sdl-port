@@ -130,16 +130,17 @@ uint8_t BtechIsAvoidanceProbeBlocked(uint16_t probe)
         if (magnitudeY==0x8000) magnitudeY=0x7FFF;else if ((int32_t)magnitudeY<0) magnitudeY=0-magnitudeY;
         if ((int32_t)magnitudeX<COMBAT_BOUNDARY_LIMIT_A && (int32_t)magnitudeY<COMBAT_BOUNDARY_LIMIT_B)
         {
-            uint16_t firstRow=(uint16_t)((uint16_t)BtechDivideSignedDword(x+COMBAT_BOUNDARY_LIMIT_A,TERRAIN_WORLD_CELL_SIZE)-AVOIDANCE_GRID_RADIUS);
-            uint16_t firstColumn=(uint16_t)((uint16_t)BtechDivideSignedDword(COMBAT_BOUNDARY_LIMIT_B-y,TERRAIN_WORLD_CELL_SIZE)-AVOIDANCE_GRID_RADIUS);
+            int32_t firstRow=(int32_t)BtechDivideSignedDword(x+COMBAT_BOUNDARY_LIMIT_A,TERRAIN_WORLD_CELL_SIZE)-AVOIDANCE_GRID_RADIUS;
+            int32_t firstColumn=(int32_t)BtechDivideSignedDword(COMBAT_BOUNDARY_LIMIT_B-y,TERRAIN_WORLD_CELL_SIZE)-AVOIDANCE_GRID_RADIUS;
             for (uint16_t row=0;row<AVOIDANCE_GRID_WINDOW;++row)
             {
-                uint16_t cell=(uint16_t)((uint16_t)(firstRow+row)*TERRAIN_GRID_COLUMNS+firstColumn);
+                int32_t gridRow=firstRow+row;
+                if (gridRow<0 || gridRow>=TERRAIN_GRID_ROWS) continue;
                 for (uint16_t column=0;column<AVOIDANCE_GRID_WINDOW;++column)
                 {
-                    uint16_t at=(uint16_t)(cell+column);
-                    if (at>=TERRAIN_GRID_ROWS*TERRAIN_GRID_COLUMNS) abort(); /* Adjacent8026 owner alias, not a padded map. */
-                    if (terrainHeightGrid[at/TERRAIN_GRID_COLUMNS][at%TERRAIN_GRID_COLUMNS]) return 1;
+                    int32_t gridColumn=firstColumn+column;
+                    if (gridColumn<0 || gridColumn>=TERRAIN_GRID_COLUMNS) continue;
+                    if (terrainHeightGrid[gridRow][gridColumn]) return 1;
                 }
             }
         }

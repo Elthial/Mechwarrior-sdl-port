@@ -12,6 +12,10 @@ error paths and observable quirks. One original procedure should retain one
 recognisable implementation boundary. Use typed C objects, ordinary references
 and named constants rather than an emulated segment-memory registry.
 
+Invalid native reads are not a compatibility goal. Use explicit target validity,
+objective health, terrain bounds and resource metadata instead of reproducing
+accidental dependencies on adjacent data, freed allocations or stack residue.
+
 Original executable behaviour and assembly remain the authority for uncertain
 logic. The detailed annotations, provenance ledgers, Reko projects and regression
 harnesses are maintained separately in the reverse-engineering repository.

@@ -9,6 +9,10 @@
 /*0810:5B08. First free effect; anchor only A/B, retain height on world object. */
 void BtechSpawnBodyDamageEffect(const BtechPosition3D *position)
 {
+    uint16_t freeObject=0;
+    while (freeObject<COMBAT_POOLED_OBJECTS && pooledWorldObjects[freeObject].occupied) ++freeObject;
+    if (freeObject==COMBAT_POOLED_OBJECTS || worldObjectCount>=COMBAT_WORLD_OBJECTS
+        || cockpitWorldObjectCount>=COMBAT_WORLD_OBJECTS) return;
     for (uint16_t slot=0;slot<COMBAT_BODY_EFFECT_SLOTS;++slot)
     {
         BtechBodyDamageEffect *effect=&bodyDamageEffects[slot];
@@ -112,7 +116,11 @@ void BtechSpawnSequencedWorldEffect(const BtechPosition3D *position,uint16_t seq
 {
     uint16_t slot=0;
     while (slot<COMBAT_EFFECT_SLOTS && effectSequences[slot].worldObject) ++slot;
-    if (slot==COMBAT_EFFECT_SLOTS) abort(); /* Native overruns the unaliased sequence owner. */
+    if (slot==COMBAT_EFFECT_SLOTS) return; /* Drop a cosmetic effect when all slots are busy. */
+    uint16_t freeObject=0;
+    while (freeObject<COMBAT_POOLED_OBJECTS && pooledWorldObjects[freeObject].occupied) ++freeObject;
+    if (freeObject==COMBAT_POOLED_OBJECTS || worldObjectCount>=COMBAT_WORLD_OBJECTS
+        || cockpitWorldObjectCount>=COMBAT_WORLD_OBJECTS) return;
     BtechEffectSequenceState *effect=&effectSequences[slot];
     effect->worldObject=BtechAllocatePooledWorldObject(0,position);
     BtechWorldObjectPrefix *object=&effect->worldObject->object.prefix;

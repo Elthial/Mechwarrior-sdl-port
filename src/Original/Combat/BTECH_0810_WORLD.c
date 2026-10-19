@@ -4,6 +4,7 @@
 #include "mechwarrior/combat_world.h"
 #include "mechwarrior/combat_resources.h"
 #include "mechwarrior/native_address.h"
+#include "mechwarrior/combat_startup.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -41,7 +42,9 @@ BtechPooledWorldObject *BtechAllocatePooledWorldObject(uint16_t resourceId,const
         cockpitWorldObjects[cockpitWorldObjectCount++]=&object->object.prefix;
         return object;
     }
-    abort(); /* Native fatal pool exhaustion; no fabricated AX object. */
+    /* B203 passes304E:2778 to the game's fatal renderer/cleanup, not CRT abort. */
+    BtechShowFatalErrorAndExit("Could not allocate dynamic object...");
+    abort(); /* The native fatal exit must not return an invented object. */
 }
 
 /*0810:B0FE. Swap-last removal leaves stale tail entries; no storage is freed.
@@ -336,10 +339,12 @@ void BtechLoadScenarioAndWorld(uint16_t scenarioIndex)
             object->position.positionB=unitFormationPositions[slot].positionB;
             object->position.positionC=COMBAT_INITIAL_ALTITUDE;
         }
-    if (!unitBindings[4].positionedLeftLeg || !unitBindings[0].positionedLeftLeg) abort();
-    const BtechPosition3D *opposing=&unitBindings[4].positionedLeftLeg->object.prefix.position;
-    const BtechPosition3D *friendly=&unitBindings[0].positionedLeftLeg->object.prefix.position;
-    uint16_t heading=BtechCalculateVectorHeading(opposing->positionA-friendly->positionA,opposing->positionB-friendly->positionB);
+    /* Face the opposing deployment area. These are the positions just copied
+     * into each lance leader's leg object; no enemy object is needed here. */
+    const BtechFormationPosition *friendly=&unitFormationPositions[0];
+    const BtechFormationPosition *opposing=&unitFormationPositions[COMBAT_LANCE_SLOTS];
+    uint16_t heading=BtechCalculateVectorHeading(opposing->positionA-friendly->positionA,
+        opposing->positionB-friendly->positionB);
     for (uint16_t slot=0;slot<COMBAT_MECH_SLOTS;++slot)
     {
         if (!unitBindings[slot].mech) continue;

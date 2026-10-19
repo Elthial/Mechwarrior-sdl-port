@@ -10,6 +10,9 @@ enum { NAVIGATION_ARRIVAL_HALF_WIDTH=160,AVOIDANCE_PROBES=4,AVOIDANCE_TURNS=3,
     NAVIGATION_TACTICAL_CHARGING=2,NAVIGATION_TACTICAL_FLEEING=4,NAVIGATION_TACTICAL_CHARGING_BASE=6,
     AVOIDANCE_TRIG_FRACTION_BITS=14,JUMP_TURN_DAMPING=0x80,JUMP_GRAVITY_STEP=3 };
 extern int16_t avoidanceStepX,avoidanceStepY;
+/* BSS bytes between the clipping selector and Gunnery table, observed only
+ * by the original unbounded five-by-five terrain neighbourhood read. */
+/* Exact adjacent-owner transport for that read, not a general memory API. */
 extern const BtechPosition3D *avoidancePosition;
 /* Native5430 references angles at object+14; C retains the owning prefix so
  * its heading remains a named field, not an untyped adjacent-field array. */

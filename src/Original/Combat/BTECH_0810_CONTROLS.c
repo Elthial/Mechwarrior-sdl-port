@@ -3,10 +3,12 @@
 #include "mechwarrior/combat_startup.h"
 #include "mechwarrior/combat_runtime.h"
 #include "mechwarrior/combat_damage.h"
+#include "mechwarrior/combat_surface.h"
+#include "mechwarrior/combat_platform.h"
 #include <stdlib.h>
 
-/*0810:5565. Interior GRD height path. Signed low WORD returned by the native
- * sampler is consumed by5212. Exterior D5CE world-surface queries stay gated. */
+/*0810:5565. Sample the height grid, or the selected world surfaces outside
+ * it. Visibility consumes only the signed low WORD of the resulting height. */
 uint16_t BtechSampleTerrainOrSurfaceHeight(const BtechPosition3D *position)
 {
     uint32_t magnitudeA=position->positionA,magnitudeB=position->positionB;
@@ -23,7 +25,10 @@ uint16_t BtechSampleTerrainOrSurfaceHeight(const BtechPosition3D *position)
         if (row>=TERRAIN_GRID_ROWS || column>=TERRAIN_GRID_COLUMNS) abort(); /* Adjacent-owner wrapping alias. */
         return (uint16_t)(terrainHeightGrid[row][column]<<TERRAIN_HEIGHT_SHIFT);
     }
-    abort(); /* Original D5CE surface query not yet converted; no fake height0. */
+    BtechSurfaceQueryResult surfaceQuery={0};
+    if (BtechQueryWorldSurface(&surfaceQuery,position,selectedWorldObjects,(int16_t)selectedObjectCount))
+        return (uint16_t)surfaceQuery.surfacePositionC;
+    return 0;
 }
 
 /*0810:5212. Original signed interpolation. Runtime32-bit signed division
@@ -38,7 +43,8 @@ uint8_t BtechTestTerrainLineOfSight(const BtechPosition3D *start,const BtechPosi
     uint32_t deltaC=end->positionC-start->positionC,magnitudeB=deltaB;
     if (magnitudeB==0x8000) magnitudeB=0x7FFF;
     else if ((int32_t)magnitudeB<0) magnitudeB=0-magnitudeB;
-    if ((int32_t)deltaA<TERRAIN_WORLD_CELL_SIZE && (int32_t)magnitudeB<TERRAIN_WORLD_CELL_SIZE) return 1;
+    if ((int32_t)deltaA<TERRAIN_WORLD_CELL_SIZE && (int32_t)magnitudeB<TERRAIN_WORLD_CELL_SIZE)
+        return 1;
     uint8_t dominantA=(int32_t)deltaA>(int32_t)magnitudeB;
     uint32_t distance=dominantA?deltaA:magnitudeB,numerator;
     if (!distance) abort(); /* Native division fault. */
@@ -65,47 +71,26 @@ uint8_t BtechTestTerrainLineOfSight(const BtechPosition3D *start,const BtechPosi
     return 1;
 }
 
-/*0810:50FA. Render mask00/02, not a Boolean LOS result. Slot8 uses the
- * separate objective and retained MW_2PICS word, not a ninth Mech record. */
+/* Return the target's render-visibility mask. The objective building is a
+ * separate world object, not another BattleMech slot. */
 uint8_t BtechTestPlayerTargetRenderVisibility(int16_t targetSlot)
 {
-    if (targetSlot<0 || targetSlot>COMBAT_SPECIAL_TARGET_SLOT || !playerUnitBinding
-        || !playerUnitBinding->positionedLeftLeg) abort();
+    if (targetSlot<=0 || targetSlot>COMBAT_SPECIAL_TARGET_SLOT || !playerUnitBinding
+        || !playerUnitBinding->positionedLeftLeg) return 0;
+    if (targetSlot!=COMBAT_SPECIAL_TARGET_SLOT && !unitBindings[targetSlot].mech) return 0;
+    if (targetSlot==COMBAT_SPECIAL_TARGET_SLOT && !specialTargetDamageRemaining) return 0;
     const BtechPosition3D *player=&playerUnitBinding->positionedLeftLeg->object.prefix.position;
     const BtechPooledWorldObject *target=targetSlot==COMBAT_SPECIAL_TARGET_SLOT
         ?specialTargetObject:unitBindings[targetSlot].positionedLeftLeg;
-    uint32_t targetX,targetY;
-    if (target)
-    {
-        targetX=target->object.prefix.position.positionA;
-        targetY=target->object.prefix.position.positionB;
-    }
-    else
-    {
-        /* Native ADD08 on an absent near pointer reads copyright bytes0008
-         * and000C as little-endian DWORDs. Use their canonical runtime owner,
-         * not an invented empty world object or a zero position. */
-        const uint8_t *copyright=runtimePrefix.copyrightBytes;
-        targetX=(uint32_t)copyright[0]|((uint32_t)copyright[1]<<8)|((uint32_t)copyright[2]<<16)|((uint32_t)copyright[3]<<24);
-        targetY=(uint32_t)copyright[4]|((uint32_t)copyright[5]<<8)|((uint32_t)copyright[6]<<16)|((uint32_t)copyright[7]<<24);
-    }
-    uint32_t deltaA=player->positionA-targetX,deltaB=player->positionB-targetY;
+    if (!target) return 0;
+    uint32_t deltaA=player->positionA-target->object.prefix.position.positionA;
+    uint32_t deltaB=player->positionB-target->object.prefix.position.positionB;
     if (deltaA==0x8000) deltaA=0x7FFF;else if ((int32_t)deltaA<0) deltaA=0-deltaA;
     if (deltaB==0x8000) deltaB=0x7FFF;else if ((int32_t)deltaB<0) deltaB=0-deltaB;
-    if (targetSlot==COMBAT_SPECIAL_TARGET_SLOT)
-    {
-        if (!specialTargetControlAlias) abort();
-        /*51D2:83 /7 FE sign-extends FE to FFFE, not positive00FE. */
-        if ((int16_t)*specialTargetControlAlias<=-2) return 0;
-    }
     if ((int32_t)deltaA>=COMBAT_VISIBLE_PLANAR_LIMIT || (int32_t)deltaB>=COMBAT_VISIBLE_PLANAR_LIMIT) return 0;
     const BtechPooledWorldObject *lastDrawnPart=targetSlot==COMBAT_SPECIAL_TARGET_SLOT
         ?unknownWorldObject:unitLastDrawParts[targetSlot];
-    /*5200's [BX+1] with BX0000 reads the HIGH BYTE of prefix WORD0000.
-     * In particular the hidden player has no last-drawn part at startup. */
-    uint8_t flags=lastDrawnPart?lastDrawnPart->object.prefix.flags
-        :(uint8_t)(runtimePrefix.ambientFallbackWords[0]>>8);
-    return flags&WORLD_OBJECT_TARGET_PROBE_VISIBLE;
+    return lastDrawnPart?lastDrawnPart->object.prefix.flags&WORLD_OBJECT_TARGET_PROBE_VISIBLE:0;
 }
 
 /*0810:445B. Starting from no target uses slot4 then increments BEFORE its

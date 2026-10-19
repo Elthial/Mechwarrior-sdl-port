@@ -19,9 +19,6 @@ extern uint32_t distanceSortDistances[COMBAT_WORLD_OBJECTS];
 extern uint16_t distanceBucketShift,surfacePriorityPrefixCount;
 extern uint16_t distanceBucketEnds[WORLD_DISTANCE_BUCKETS],distanceBucketCounts[WORLD_DISTANCE_BUCKETS];
 extern BtechPosition3D nearbyFilterCameraPosition;
-extern uint8_t weaponListLoopJumpOpcode; /* Immutable native CS byte observed as data through the captured alias. */
-extern uint8_t hudTargetFlagsLocalDisplacement; /* OR [BP-2],AX displacement read through the Jenner-bank alias. */
-extern uint8_t weaponDisabledColourModRm; /* MOV AL,[BX+1F6A] encoding observed through a resource alias. */
 void BtechInitializeFreshSceneOwners(void);
 int16_t BtechFilterNearbyWorldObjects(BtechCameraContext *camera,BtechWorldObjectPrefix *const *source,int16_t sourceCount,BtechWorldObjectPrefix **destination,int16_t previousCount);
 int16_t BtechSortWorldObjectsBySurfacePriority(BtechWorldObjectPrefix **objects,int16_t count,uint8_t *priorities);

@@ -139,9 +139,11 @@ void BtechProcessPlayerControls(void)
         break;
     }
     uint16_t directions=combatInputDirectionMask,aimButton=combatInputButton1State,fireButton=combatInputButton0State;
-    if ((previousFireButtonState && !fireButton) || scanCode==COMBAT_KEY_SPACE || fireCycleActive)
+    if (selectedWeaponMount>=COMBAT_WEAPON_MOUNTS || selectedWeaponMount>=playerMechTemplate->weaponMountCount
+        || (uint16_t)playerMechTemplate->weaponMounts[selectedWeaponMount].weaponKind>=COMBAT_WEAPON_KINDS)
+        fireCycleActive=0;
+    else if ((previousFireButtonState && !fireButton) || scanCode==COMBAT_KEY_SPACE || fireCycleActive)
     {
-        if (selectedWeaponMount>=COMBAT_WEAPON_MOUNTS) abort(); /* Firing ammo alias is not an installed mount. */
         BtechWeaponState *weapon=&playerMechState->weapons[selectedWeaponMount];
         if (weapon->reloadTicksRemaining || heatInhibitFlags[0] || unitControls[0].combatValueOrBoundaryCode<=0 || !weapon->operational)
             fireCycleActive=0;

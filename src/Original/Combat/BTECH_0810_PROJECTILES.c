@@ -102,6 +102,10 @@ int16_t BtechCalculateProjectileImpactDamage(const BtechProjectileState *project
 /*0810:59A4. Record allocation is separate from pooled-object allocation. */
 BtechProjectileState *BtechAllocateProjectileFromWeaponProfile(int16_t weaponKind,const BtechPosition3D *placement)
 {
+    uint16_t freeObject=0;
+    while (freeObject<COMBAT_POOLED_OBJECTS && pooledWorldObjects[freeObject].occupied) ++freeObject;
+    if (freeObject==COMBAT_POOLED_OBJECTS || worldObjectCount>=COMBAT_WORLD_OBJECTS
+        || cockpitWorldObjectCount>=COMBAT_WORLD_OBJECTS) return NULL;
     for (uint16_t slot=0;slot<COMBAT_PROJECTILE_SLOTS;++slot)
     {
         BtechProjectileState *projectile=&projectiles[slot];
@@ -143,7 +147,6 @@ BtechProjectileState *BtechSpawnUnitWeaponProjectile(uint16_t unitSlot,int16_t w
         projectile->worldObject->orientationSteps[2]=0;
         projectile->targetUnitSlot=COMBAT_PROJECTILE_NO_TARGET;
     }
-    else BtechShowFatalErrorAndExit("no shells left to allocate"); /*304E:2312. */
     return projectile;
 }
 
@@ -161,10 +164,10 @@ void BtechFirePlayerWeaponProjectile(uint16_t mountIndex)
     if (mount->bodyLocation>=COMBAT_BODY_LOCATIONS) abort();
     BtechPosition3D *position=BtechGetUnitBodyReferencePosition(0,(int16_t)bodyLocationReferenceIndices[mount->bodyLocation]);
     BtechProjectileState *projectile=BtechSpawnUnitWeaponProjectile(0,mount->weaponKind,position);
+    if (!projectile) return; /* No projectile means no guidance target or fabricated hit. */
     uint16_t target,armor;BtechMapSelectedRenderPartToArmorLocation(&armor,&target);
     if (target)
     {
-        if (!projectile) abort(); /* Native near0 write corrupts unrelated prefix strings; unsupported alias. */
         projectile->targetUnitSlot=target;projectile->targetArmorLocation=armor;
     }
 }

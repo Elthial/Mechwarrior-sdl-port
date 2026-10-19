@@ -61,18 +61,16 @@ int16_t BtechTestAiFiringCandidate(const BtechPosition3D *position,uint32_t dist
     return 1;
 }
 
-/*0810:A7AB. Ten physical mounts, irrespective of template mount count.
- * Read ammo family before operational/reload gates; unused definitionFFFF's
- * +2 WORD is0ED8, the existing chassis-resource-base[2] alias. */
+/* Score installed weapons that can fire at this range without overheating. */
 int16_t BtechSelectAiWeaponMountForDistance(int16_t distance)
 {
     if (!activeMechTemplate || !activeMechState) abort();
     int16_t selected=-1,bestScore=0;
-    for (int16_t mount=0;mount<COMBAT_WEAPON_MOUNTS;++mount)
+    for (int16_t mount=0;mount<COMBAT_WEAPON_MOUNTS && mount<activeMechTemplate->weaponMountCount;++mount)
     {
         int16_t kind=activeMechTemplate->weaponMounts[mount].weaponKind;
-        if ((uint16_t)kind>=COMBAT_WEAPON_KINDS && (uint16_t)kind!=COMBAT_WEAPON_NONE) abort();
-        int16_t ammoFamily=(uint16_t)kind==COMBAT_WEAPON_NONE?(int16_t)mechResourceBaseIds[2]:weaponDefinitions[kind].ammoFamily;
+        if ((uint16_t)kind>=COMBAT_WEAPON_KINDS) continue;
+        int16_t ammoFamily=weaponDefinitions[kind].ammoFamily;
         if (!activeMechState->weapons[mount].operational) continue;
         if ((uint16_t)ammoFamily!=COMBAT_WEAPON_NONE)
         {
@@ -80,7 +78,6 @@ int16_t BtechSelectAiWeaponMountForDistance(int16_t distance)
             if (!activeMechState->ammoSalvosRemaining[ammoFamily]) continue;
         }
         if (activeMechState->weapons[mount].reloadTicksRemaining) continue;
-        if ((uint16_t)kind>=COMBAT_WEAPON_KINDS) abort(); /* Operational unused mount crosses unrelated definition owners. */
         BtechWeaponDefinition *weapon=&weaponDefinitions[kind];
         if ((int16_t)(uint16_t)(weapon->minimumRange*WEAPON_RANGE_WORLD_SCALE)>=distance
             || (int16_t)(uint16_t)(weapon->longRangeBoundary*WEAPON_RANGE_WORLD_SCALE)<=distance) continue;
@@ -150,7 +147,7 @@ void BtechFireAiWeaponAtUnit(int16_t targetSlot,int16_t weaponKind,uint16_t body
         BtechProjectileState *projectile=BtechSpawnUnitWeaponProjectile(activeUnitControl->unitSlot,weaponKind,&origin);
         if (targetSlot<COMBAT_MECH_SLOTS)
         {
-            if (!projectile) abort(); /* Native near0 aimed-write corruption is unsupported. */
+            if (!projectile) return;
             projectile->targetUnitSlot=(uint16_t)targetSlot;projectile->targetArmorLocation=armor;
         }
     }

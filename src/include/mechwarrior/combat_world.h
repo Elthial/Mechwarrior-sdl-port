@@ -108,7 +108,6 @@ extern BtechCameraContext *orderMapCameraContext,*playerPoseCameraContext;
 extern uint16_t specialTargetDamageRemaining;
 /* Native slot8 score probe aliases retained campaign picture bytes, not a
  * ninth control record. Bound at EXEC or by an original-RAM test fixture. */
-extern const uint16_t *specialTargetControlAlias;
 extern uint16_t headingRatioAngles[0x200]; /* Authored CS22B6, not304E. */
 extern uint8_t vertexNearPlaneState[0xFF];
 bool BtechImportWorldInitialData(const uint8_t *data,size_t bytes,const uint8_t *segment22B6,size_t segmentBytes);

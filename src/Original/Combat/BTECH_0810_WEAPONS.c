@@ -81,10 +81,7 @@ void BtechFirePlayerDirectWeapon(uint16_t mountIndex)
 void BtechMapSelectedRenderPartToArmorLocation(uint16_t *armorLocation,uint16_t *unitSlot)
 {
     uint16_t armor=COMBAT_ARMOR_LEFT_ARM,matched=0;
-    /* NULL is native near offset0: resource WORD aliases the canonical0002
-     * missing-sound prefix owner. Missile firing calls this even without a hit. */
-    uint16_t resource=selectedHitObject?selectedHitObject->resourceId:missingSoundFallbackSelectorAlias;
-    if ((int16_t)resource>=(int16_t)mechResourceBaseIds[0])
+    if (selectedHitObject)
         for (uint16_t slot=1;slot<COMBAT_MECH_SLOTS;++slot)
         {
             BtechUnitBinding *binding=&unitBindings[slot];
@@ -115,39 +112,31 @@ void BtechMapSelectedRenderPartToArmorLocation(uint16_t *armorLocation,uint16_t 
     *armorLocation=armor;*unitSlot=matched;
 }
 
-/*0810:45B1. Native inclusive forward scan can ask about mount10. That is a
- * proved view of following ammo fields, not an eleventh installed weapon. */
+/* Only installed, operational weapons with ammunition can be selected. */
 uint8_t BtechIsPlayerWeaponMountReady(uint16_t mountIndex)
 {
-    if (!playerMechTemplate || !playerMechState || mountIndex>COMBAT_WEAPON_MOUNTS) abort();
-    int16_t kind=mountIndex==COMBAT_WEAPON_MOUNTS?playerMechTemplate->ammoBodyLocations[0]
-        :playerMechTemplate->weaponMounts[mountIndex].weaponKind;
-    if ((uint16_t)kind==COMBAT_WEAPON_NONE) return 0;
-    uint8_t operational;
-    uint16_t reload;
-    if (mountIndex==COMBAT_WEAPON_MOUNTS)
-    {
-        operational=(uint8_t)playerMechState->ammoSalvosRemaining[0];
-        reload=(playerMechState->ammoSalvosRemaining[0]>>8)|((uint16_t)(uint8_t)playerMechState->ammoSalvosRemaining[1]<<8);
-    }
-    else
-    {operational=playerMechState->weapons[mountIndex].operational;reload=playerMechState->weapons[mountIndex].reloadTicksRemaining;}
-    if (!operational || reload) return 0;
-    if ((uint16_t)kind>=COMBAT_WEAPON_KINDS) abort();
+    if (!playerMechTemplate || !playerMechState || mountIndex>=COMBAT_WEAPON_MOUNTS
+        || mountIndex>=playerMechTemplate->weaponMountCount) return 0;
+    int16_t kind=playerMechTemplate->weaponMounts[mountIndex].weaponKind;
+    if ((uint16_t)kind>=COMBAT_WEAPON_KINDS) return 0;
+    if (!playerMechState->weapons[mountIndex].operational
+        || playerMechState->weapons[mountIndex].reloadTicksRemaining) return 0;
     int16_t family=weaponDefinitions[kind].ammoFamily;
     if ((uint16_t)family==COMBAT_WEAPON_NONE) return 1;
     if ((uint16_t)family>=COMBAT_AMMO_FAMILIES) abort();
     return playerMechState->ammoSalvosRemaining[family]!=0;
 }
 
-/*0810:44C4. COUNT<candidate, not COUNT<=candidate. Wrap tests only LOW BYTE. */
+/* Advance through the installed weapon mounts, optionally wrapping. */
 uint16_t BtechFindNextReadyPlayerWeaponMount(uint16_t currentMount,uint16_t allowWrap)
 {
+    if (!playerMechTemplate || !playerMechTemplate->weaponMountCount) return 0;
+    if (currentMount>=playerMechTemplate->weaponMountCount) currentMount=playerMechTemplate->weaponMountCount-1;
     uint16_t candidate=currentMount;
     do
     {
         ++candidate;
-        if ((int16_t)playerMechTemplate->weaponMountCount<(int16_t)candidate) candidate=(uint8_t)allowWrap?0:currentMount;
+        if (candidate>=playerMechTemplate->weaponMountCount) candidate=allowWrap?0:currentMount;
     } while (!BtechIsPlayerWeaponMountReady(candidate) && candidate!=currentMount);
     return candidate;
 }
@@ -155,6 +144,8 @@ uint16_t BtechFindNextReadyPlayerWeaponMount(uint16_t currentMount,uint16_t allo
 /*0810:450E. Exhaustion may return the original unready mount. */
 uint16_t BtechFindPreviousReadyPlayerWeaponMount(uint16_t currentMount,uint16_t allowWrap)
 {
+    if (!playerMechTemplate || !playerMechTemplate->weaponMountCount) return 0;
+    if (currentMount>=playerMechTemplate->weaponMountCount) currentMount=0;
     uint16_t candidate=currentMount;
     do
     {
@@ -167,18 +158,17 @@ uint16_t BtechFindPreviousReadyPlayerWeaponMount(uint16_t currentMount,uint16_t 
 /*0810:4551. Group mode advances selection; it does not fire an alpha strike. */
 void BtechAdvancePlayerGroupedWeaponSelection(void)
 {
+    if (!playerMechTemplate || !playerMechTemplate->weaponMountCount) return;
+    if (selectedWeaponMount>=playerMechTemplate->weaponMountCount) selectedWeaponMount=0;
     if (BtechIsPlayerWeaponMountReady(selectedWeaponMount) || !mountGroupMode) return;
     uint16_t candidate=selectedWeaponMount;
     do
     {
         ++candidate;
-        if ((int16_t)playerMechTemplate->weaponMountCount<(int16_t)candidate) candidate=0;
+        if (candidate>=playerMechTemplate->weaponMountCount) candidate=0;
         if (BtechIsPlayerWeaponMountReady(candidate))
         {
-            if (candidate>COMBAT_WEAPON_MOUNTS) abort();
-            /*7D42+10*2 aliases first resource-reference WORD7D56. */
-            uint16_t flag=candidate==COMBAT_WEAPON_MOUNTS?resourceReferenceVector[0]:playerMountFireFlags[candidate];
-            if (flag) break;
+            if (playerMountFireFlags[candidate]) break;
         }
     } while (candidate!=selectedWeaponMount);
     selectedWeaponMount=candidate;

@@ -95,8 +95,7 @@ void BtechDrawLanceMapUnitMarkers(void)
 }
 
 /*17FB:16E4. Animated world-boundary dashes; the last WITHDRAW mask wins.
- * Rejected projections leave native stack residue. Both are called before
- * gating that unsupported case; no uninitialized C value is read or invented. */
+ * Omit the boundary decoration when its corners are outside the map view. */
 void BtechDrawLanceMapRetreatBoundaries(void)
 {
     uint8_t retreatMask=0;
@@ -105,7 +104,7 @@ void BtechDrawLanceMapRetreatBoundaries(void)
     int16_t left,right,top,bottom;
     uint8_t firstVisible=BtechProjectPositionToOrderMap(&combatWorldBoundaryCorners[0],&left,&top);
     uint8_t secondVisible=BtechProjectPositionToOrderMap(&combatWorldBoundaryCorners[1],&right,&bottom);
-    if (!firstVisible || !secondVisible) abort();
+    if (!firstVisible || !secondVisible) return;
     clipMinimumY=top;clipMaximumY=bottom;clipMinimumX=left;clipMaximumX=right;
     screenPolygonNeedsClip=1;
     int16_t phase=(int16_t)((combatTickCounter&7)-4);

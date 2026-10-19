@@ -39,8 +39,6 @@ static bool ExecuteChild(const char *filename,const MwCampaignLaunch *launch,uin
     if (!MwHostLoadCampaignInitialData(path) || !MwHostLoadCampaignEventText(path)
         || !MwHostLoadCampaignMusicData(path)) return true;
     *exitCode=(uint8_t)MwRunCampaignProgram(launch,audioCode);
-    if (*exitCode==CAMPAIGN_EXIT_COMBAT)
-        MwSdlRetainCampaignPictureTail(MwResolveNativeSegment(secondaryPictureBankSelector));
     ReleaseChildResources();
     return false;
 }

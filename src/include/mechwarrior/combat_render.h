@@ -3,6 +3,7 @@
 #include "mechwarrior/combat_cockpit.h"
 #include "mechwarrior/combat_resources.h"
 #include "mechwarrior/combat_polygons.h"
+/* CS geometry code observed as data by a wrapped surface-priority read. */
 
 enum { CAMERA_NO_BACKGROUND=0x08,CAMERA_PROJECTION_MODE_10=0x10,CAMERA_MIRROR_HORIZONTAL=0x20,
     CAMERA_KEEP_SCREEN_CENTRE=0x40,CAMERA_GRADIENT_BACKGROUND=0x04,

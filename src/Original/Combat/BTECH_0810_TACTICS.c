@@ -52,12 +52,8 @@ uint16_t BtechShouldDisengageForWeaponsOrStructure(void)
 
 /*0810:7B5A. Special-target geometry precedes ordinary visibility checks.
  * Signed thresholds are sign-extended WORDs; equality is not nearby. */
-uint8_t BtechHasNearbyVisibleThreat(uint16_t *controlSideCursorResidue)
+uint8_t BtechHasNearbyVisibleThreat(void)
 {
-    /* 7BC6/7C29: this local cursor survives at the following7E3A BP-0E.
-     * Numeric offset is observable as a heading there, not a C data accessor. */
-    uint16_t controlSideCursor=TACTICAL_NATIVE_CONTROL_SIDE_START;
-    if (controlSideCursorResidue) *controlSideCursorResidue=controlSideCursor;
     if (!activeUnitControl || activeUnitControl->sideIndex>=2) abort();
     BtechUnitControlState *control=activeUnitControl;
     if (sideObjectiveRules[control->sideIndex]==OBJECTIVE_SPECIAL_TARGET && specialTargetDamageRemaining)
@@ -73,13 +69,8 @@ uint8_t BtechHasNearbyVisibleThreat(uint16_t *controlSideCursorResidue)
             && unitVisibility[control->unitSlot][slot] && unitControls[slot].combatValueOrBoundaryCode>0
             && (int32_t)unitDistances[control->unitSlot][slot]<(int16_t)control->doubleWeaponRange)
         {
-            /* The native loop increments all three cursors before checking
-             * the found BYTE on its next iteration (including slot7). */
-            controlSideCursor+=(uint16_t)((slot+1)*TACTICAL_NATIVE_CONTROL_STRIDE);
-            if (controlSideCursorResidue) *controlSideCursorResidue=controlSideCursor;
             return 1;
         }
-    if (controlSideCursorResidue) *controlSideCursorResidue=controlSideCursor+COMBAT_MECH_SLOTS*TACTICAL_NATIVE_CONTROL_STRIDE;
     return 0;
 }
 

@@ -17,10 +17,9 @@ void BtechUpdateTacticalNavigation(void)
     if (!activeUnitControl || !activeUnitPositionedObject) abort();
     BtechUnitControlState *control=activeUnitControl;
     BtechPosition3D waypoint;
-    uint16_t inheritedHeading;
-    if (BtechHasNearbyVisibleThreat(&inheritedHeading) && combatTickCounter)
+    if (BtechHasNearbyVisibleThreat() && combatTickCounter)
     {
-        BtechSelectUnitTacticalState(&inheritedHeading);
+        BtechSelectUnitTacticalState();
         if (control->trackedUnitOrSpecialSlot>=0)
         {
             uint16_t tracked=control->trackedUnitOrSpecialSlot;
@@ -38,18 +37,11 @@ void BtechUpdateTacticalNavigation(void)
                 for (uint16_t axis=0;axis<3;++axis) control->trackedPosition[axis]=unitControls[tracked].lastVisiblePosition[axis];
             }
         }
-        if (control->targetUnitSlot!=0)
+        if (control->targetUnitSlot>=0)
         {
             int16_t value;
-            if (control->targetUnitSlot==-1)
-                value=(int16_t)(uint16_t)(unitDistances[6][0]>>8); /* Wrapped D2F5 WORD: distance bytes1..2. */
-            else if (control->targetUnitSlot==COMBAT_SPECIAL_TARGET_SLOT)
-            {
-                /* 77F8..7805: IMUL55, CMP WORD[D34A+BX],-1; slot8
-                 * reaches D5F2, the same retained picture tail read by51D2. */
-                if (!specialTargetControlAlias) abort();
-                value=(int16_t)*specialTargetControlAlias;
-            }
+            if (control->targetUnitSlot==COMBAT_SPECIAL_TARGET_SLOT)
+                value=specialTargetObject && specialTargetDamageRemaining?0:-1;
             else
             {
                 if ((uint16_t)control->targetUnitSlot>=COMBAT_MECH_SLOTS)
@@ -136,10 +128,8 @@ void BtechUpdateTacticalNavigation(void)
 
 /* Reassess whether this MechWarrior should close, track, avoid or defend,
  * respecting lance orders, mission objectives and the decision countdown.
- *0810:7E3A. 77A3's preceding7B5A uses the same BP and writes BP-0E with
- * its control-side cursor. Keep that native residue on unwritten branches,
- * not a zero/default heading or a new persistent game variable. */
-void BtechSelectUnitTacticalState(const uint16_t *inheritedHeading)
+ * Retain the current heading when threats and orders supply no new direction. */
+void BtechSelectUnitTacticalState(void)
 {
     if (!activeUnitControl || !activeUnitPositionedObject) abort();
     BtechUnitControlState *control=activeUnitControl;
@@ -183,8 +173,7 @@ void BtechSelectUnitTacticalState(const uint16_t *inheritedHeading)
             break;
         }
     }
-    uint16_t threatCount=0,strongestHeadingIndex=0,selectedHeading=0;
-    bool headingWritten=false;
+    uint16_t threatCount=0,strongestHeadingIndex=0,selectedHeading=root->orientationC;
     int16_t combinedThreatValue=0,strongestThreat=-1;
     int16_t savedPlayerValue=unitControls[0].combatValueOrBoundaryCode;
     int16_t halfPlayerValue=(int16_t)(((uint16_t)savedPlayerValue>>1)|((uint16_t)savedPlayerValue&0x8000));
@@ -219,7 +208,7 @@ void BtechSelectUnitTacticalState(const uint16_t *inheritedHeading)
             if (distance<=TACTICAL_OBJECTIVE_COMMIT_RANGE && (int16_t)(uint16_t)(BtechRandomBelowBound(TACTICAL_OBJECTIVE_COMMIT_ROLL)+TACTICAL_OBJECTIVE_COMMIT_ROLL)>=(int16_t)specialTargetDamageRemaining) goto steer;
         }
         if (control->controlState==TACTICAL_CHARGING_BASE || control->controlState==TACTICAL_DEFENDING) control->controlState=TACTICAL_CHARGING;
-        control->targetUnitSlot=strongestThreat;selectedHeading=tacticalThreatHeadings[strongestHeadingIndex];headingWritten=true;
+        control->targetUnitSlot=strongestThreat;selectedHeading=tacticalThreatHeadings[strongestHeadingIndex];
         if (control->controlState!=TACTICAL_WANDERING)
         {
             if ((int16_t)(uint16_t)(control->combatValueOrBoundaryCode*3)<combinedThreatValue) control->controlState=TACTICAL_FLEEING;
@@ -231,7 +220,7 @@ void BtechSelectUnitTacticalState(const uint16_t *inheritedHeading)
         if (!specialTargetObject) abort();
         BtechPosition3D *position=&specialTargetObject->object.prefix.position;
         selectedHeading=BtechCalculateVectorHeading(position->positionA-root->position.positionA,position->positionB-root->position.positionB);
-        headingWritten=true;control->targetUnitSlot=COMBAT_SPECIAL_TARGET_SLOT;
+        control->targetUnitSlot=COMBAT_SPECIAL_TARGET_SLOT;
     }
     else if (control->controlState==TACTICAL_CHARGING)
     {
@@ -244,7 +233,6 @@ void BtechSelectUnitTacticalState(const uint16_t *inheritedHeading)
             selectedHeading=BtechCalculateVectorHeading(position->positionA-root->position.positionA,position->positionB-root->position.positionB);
         }
         else selectedHeading=root->orientationC;
-        headingWritten=true;
     }
 steer:
     if (control->controlState==TACTICAL_AVOIDING)
@@ -260,11 +248,6 @@ steer:
     }
     else
     {
-        if (!headingWritten)
-        {
-            if (!inheritedHeading) abort(); /* A direct test entry must supply its caller history. */
-            selectedHeading=*inheritedHeading;
-        }
         BtechSteerActiveUnitHeading(selectedHeading);
     }
 }

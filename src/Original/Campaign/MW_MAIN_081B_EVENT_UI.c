@@ -33,7 +33,6 @@ MwTextPanelReturn MwShowCampaignEventText(uint16_t textId)
         if (!*page)
         {
             result.textOffset=(uint16_t)(page-eventTextStorage+EVENT_TEXT_STORAGE_START);
-            result.textOriginX=0x1AA5; /* Actual6210 register residue, NOT a screen coordinate. */
             return result;
         }
     }
@@ -251,8 +250,7 @@ uint16_t MwEventOpenChoiceContinuation(const MwEventCommand *command)
     }
     if (campaignEventClass>=7 || !eventClassHandlers[campaignEventClass]) abort();
     MwTextPanelReturn display=eventClassHandlers[campaignEventClass](currentEventId);
-    /* All shipped choice pages finish through the FF/100C path. The ordinary
-     * path's AX1AA5 residue is deliberately not normalized to panel X. */
+    /* Place choices relative to the text panel on either return path. */
     uint16_t x=display.textOriginX+0x000C;
     for (uint16_t i=0;i<2;++i) eventTwoChoiceRecords[i].x=x;
     for (uint16_t i=0;i<3;++i) eventThreeChoiceRecords[i].x=x;

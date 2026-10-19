@@ -16,6 +16,10 @@ and gameplay decisions rather than replacing them with a new engine.
   aliases, overlapping access and native numeric identities where required.
 - Preserve integer widths, signedness, wrap, truncation, RNG order, partial writes
   and call order. Do not rely on signed overflow or host pointer sizes.
+- Preserve meaningful game behaviour, not invalid memory reads. Missing targets,
+  invalid resource sentinels, exhausted effect pools and map edges need explicit
+  typed handling. Do not derive gameplay state from copyright text, executable
+  bytes, unrelated variables or uninitialized native registers/stack contents.
 - Name meaningful constants, flags and continuation destinations. Avoid magic
   numbers, redundant temporaries and invented pass-through Support helpers.
 - Use readable loops, ++, -- and compound assignments when native-width behaviour

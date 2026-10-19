@@ -244,9 +244,6 @@ bool BtechHostLoadInitialData(const char *executablePath)
     savedBiosTickVector=(uint32_t)MwReadNativeWord(platform,0x2BC4)|((uint32_t)MwReadNativeWord(platform,0x2BC6)<<16);
     savedTimerVector=(uint32_t)MwReadNativeWord(platform,0x253C)|((uint32_t)MwReadNativeWord(platform,0x253E)<<16);
     keyboardScanMask=platform[0x2D51];keyboardExtendedScanMask=platform[0x2D5E];
-    weaponListLoopJumpOpcode=image[0x6964]; /* Actual code-as-data byte, not an invented E9 default. */
-    hudTargetFlagsLocalDisplacement=image[0x06A5]; /* Native5524C -> Jenner vertices ->0000:9C05 in the supported DOS profile. */
-    weaponDisabledColourModRm=image[0x69A8]; /* Native0000:FF03+5 = CS0956:69A8, also present in original RAM. */
     savedCriticalErrorVector=(uint32_t)MwReadNativeWord(image,0xCE9A)|((uint32_t)MwReadNativeWord(image,0xCE9C)<<16);
     savedSampleIrqVector=(uint32_t)MwReadNativeWord(audio,0x0E7D)|((uint32_t)MwReadNativeWord(audio,0x0E7F)<<16);
     loaded=BtechImportCombatStageInitialData(data,0x10000)

@@ -452,7 +452,7 @@ uint16_t MwCheckDeploymentWithoutRefusalPenalty(void)
     return MwCheckAssignedMechDeploymentReadiness();
 }
 /* MW_MAIN081B:1B5A..1B86,1BD2..1C3D. The1B87 cancellation label is
- * shared, not a new source CALL. Success JMP1C3E remains explicitly gated. */
+ * shared, not a new source CALL. Success joins the native deployment chain. */
 uint16_t MwCheckAssignedMechDeploymentReadiness(void)
 {
     if (rosterMechAssignments[0]==CAMPAIGN_NO_MECH_ASSIGNMENT)

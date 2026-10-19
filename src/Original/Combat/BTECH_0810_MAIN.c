@@ -14,8 +14,8 @@
 
 /* Run the combat mission: update MechWarriors, BattleMechs, weapons and effects,
  * draw the active cockpit/tactical screen, then resolve the contract outcome.
- *0810:0019. Original mission loop and call/write order. Still Mapped:
- * scene/HUD, alternate screens and37F7 transitions have explicit native gates.
+ *0810:0019. Preserve the connected EGA mission loop and call/write order;
+ * remaining foreign-memory aliases are explicit limits, not replacement AI.
  * Typed argv transports the original near vector; no host ABI is seeded. */
 void BtechProgramMain(uint16_t argumentCount,const char *const *arguments)
 {
