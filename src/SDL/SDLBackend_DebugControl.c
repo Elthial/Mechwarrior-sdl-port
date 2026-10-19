@@ -5,13 +5,17 @@
 #include "mechwarrior/combat_startup.h"
 #include "mechwarrior/combat_import.h"
 #include "mechwarrior/combat_cockpit.h"
+#include "mechwarrior/combat_pose.h"
 #include "mechwarrior/campaign_state.h"
 #include "mechwarrior/campaign_ui.h"
 #include <stdlib.h>
 #include <string.h>
 
-enum { DEBUG_MAX_STEPS=32,DEBUG_MAX_KEYS=4,DEBUG_MAX_STEP_MS=3000,
-    DEBUG_MAX_BATCH_MS=10000,DEBUG_POLL_MS=25,DEBUG_STATUS_MS=100,DEBUG_SETTLE_MS=200 };
+/* A jump can remain powered for tens of seconds at the configured CPU budget.
+ * Keep real input bounded, but allow one continuous hold instead of introducing
+ * artificial release/repress gaps into a flight comparison. */
+enum { DEBUG_MAX_STEPS=32,DEBUG_MAX_KEYS=4,DEBUG_MAX_STEP_MS=30000,
+    DEBUG_MAX_BATCH_MS=60000,DEBUG_POLL_MS=25,DEBUG_STATUS_MS=100,DEBUG_SETTLE_MS=200 };
 typedef struct DebugKeyStep {uint32_t milliseconds;unsigned count;SDL_Scancode keys[DEBUG_MAX_KEYS];} DebugKeyStep;
 static char debugDirectory[4096],commandPath[4096],statusPath[4096];
 static DebugKeyStep steps[DEBUG_MAX_STEPS],held;
@@ -75,6 +79,14 @@ static void PublishStatus(void)
         fprintf(file,"%s{\"slot\":%u,\"side\":%u,\"chassis\":%u,\"step\":%d,",first?"":",",slot,
             unitControls[slot].sideIndex,mech->templateIndex,body->forwardStepScale);first=false;
         Position(file,&body->object.prefix);
+        fprintf(file,",\"movementMode\":%u,\"verticalStep\":%d,\"jumpCharge\":%u",
+            unitControls[slot].movementMode,body->positionSteps[2],mech->jumpCharge);
+        if (!slot && playerPoseObject)
+        {
+            fputs(",\"camera\":{",file);
+            Position(file,&playerPoseObject->object.prefix);
+            fputc('}',file);
+        }
         fprintf(file,",\"torsoOrientation\":[%u,%u,%u],\"heat\":%u,\"engineHits\":%u,\"gyroHits\":%u,\"cockpitDisabled\":%u,\"armor\":",
             binding->torso?binding->torso->object.prefix.orientationA:0,
             binding->torso?binding->torso->object.prefix.orientationB:0,

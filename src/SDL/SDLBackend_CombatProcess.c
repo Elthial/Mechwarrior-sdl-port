@@ -7,6 +7,7 @@
 #include "mechwarrior/combat_scene.h"
 #include "mechwarrior/combat_video.h"
 #include "mechwarrior/combat_sound.h"
+#include "mechwarrior/combat_input.h"
 #include <setjmp.h>
 #include <stdlib.h>
 #include <string.h>
@@ -226,6 +227,11 @@ static void WriteHandle(uint16_t handle,const char *text,uint16_t bytes)
 static void TerminateChild(uint8_t exitCode)
 {
     if (!childActive) MwSdlFail("BTECH termination outside EXEC");
+    printf("Combat return: DOS exit=%u result=%u tick=%u objective=%u completion=%u/%u protectedTargetRemaining=%u playerValue=%d movementMode=%u lastScan=%02X\n",
+        exitCode,campaignResultExchange.result,combatTickCounter,sideObjectiveRules[0],
+        sideCompletionFlags[0],sideCompletionFlags[1],specialTargetDamageRemaining,
+        unitControls[0].combatValueOrBoundaryCode,unitControls[0].movementMode,combatInputScanCode);
+    fflush(stdout);
     childExitCode=exitCode;
     longjmp(childReturn,1); /* Actual DOS termination never returns to E144. */
 }
