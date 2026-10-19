@@ -539,3 +539,159 @@ uint16_t MwQuoteSelectedMechRearm(void)
     MwSelectUiRecordTable(0,&rearmConfirmationMenu);
     return CAMPAIGN_CONTINUE_UI;
 }
+
+/* MW_MAIN081B:476A..47E7. Reserve hold shop, not selected-Mech reloading.
+ * POP discards the menu CALL return; entry charges one campaign time unit. */
+uint16_t MwOpenReserveAmmunitionShop(void)
+{
+    MwAdvanceCampaignTimeAndChargeWages(1);
+    reserveAmmoShopSelectedRow=0;unitInspectionContextCode=1;
+    reserveAmmoSelling=0;reserveAmmoPreviewSelection=0;
+    MwMarkOwnedAmmunitionCompatibleMechs();
+    EgaSelectFont(TEXT_PANEL_COMPACT_FONT);MwDrawMechComplexBackground();
+    for (uint16_t family=0;family<CAMPAIGN_AMMO_FAMILY_COUNT;++family)
+        MwFormatReserveAmmunitionQuantity(family,reserveAmmoQuantitiesByFamily[family]);
+    MwDrawDescriptorTextPanel(&reserveAmmoShopPanel);
+    EgaCopyDisplayToDrawPage(0,0,RESERVE_AMMO_PREVIEW_WIDTH,RESERVE_AMMO_PREVIEW_HEIGHT);
+    MwShowReserveAmmunitionCompatibility(0);
+    MwDrawReserveAmmunitionPrices(false);MwDrawAmmunitionShopCompanyFunds();
+    uiSelectionChangedCodeOffset=CAMPAIGN_CALLBACK_REFRESH_RESERVE_AMMO;
+    MwInitializeMechServiceIdle();MwSelectUiRecordTable(reserveAmmoShopSelectedRow,&reserveAmmoShopMenu);
+    return CAMPAIGN_CONTINUE_UI;
+}
+
+/* MW_MAIN081B:47E8..4821. Five digits, blank-padded except the last zero. */
+void MwFormatReserveAmmunitionQuantity(uint16_t family,uint16_t quantity)
+{
+    if (family>=CAMPAIGN_AMMO_FAMILY_COUNT) abort();
+    MwBuildDecimalDigitBuffer(quantity);
+    bool leading=true;
+    for (uint16_t digit=0;digit<5;++digit)
+    {
+        uint8_t value=numericDecimalDigits[DECIMAL_DIGIT_COUNT-5+digit];
+        if (digit!=4 && value==0 && leading) reserveAmmoQuantityRows[family].text[digit]=ASCII_SPACE;
+        else {leading=false;reserveAmmoQuantityRows[family].text[digit]=(char)(value+ASCII_DIGIT_ZERO);}
+    }
+}
+/* MW_MAIN081B:4822/4827..4859. Two native entries choose buy/sell price rows. */
+void MwDrawReserveAmmunitionPrices(bool selling)
+{
+    for (uint16_t family=0;family<CAMPAIGN_AMMO_FAMILY_COUNT;++family)
+        MwDrawSignedDecimalField(ammunitionTransactionPrices[family+(selling?CAMPAIGN_AMMO_FAMILY_COUNT:0)],
+            RESERVE_AMMO_PRICE_X,0,4,TEXT_PANEL_FOREGROUND,TEXT_PANEL_BACKGROUND,
+            RESERVE_AMMO_ROW_Y+family*RESERVE_AMMO_ROW_HEIGHT);
+}
+/* MW_MAIN081B:485A..4877. Grouping stays enabled after drawing company funds. */
+void MwDrawAmmunitionShopCompanyFunds(void)
+{
+    ++numericGroupingEnabled;
+    MwDrawSignedDecimalField(((uint32_t)campaignFundsHigh<<NATIVE_WORD_BITS)|campaignFundsLow,
+        0xA1,0,9,TEXT_PANEL_FOREGROUND,TEXT_PANEL_BACKGROUND,0xB8);
+}
+/* MW_MAIN081B:4878..48E5. Partial purchases survive insufficient C-bills.
+ * Machine-gun cartridges trade in batches of ten, charged individually. */
+void MwBuyReserveAmmunition(void)
+{
+    uiSelectionChangedCodeOffset=CAMPAIGN_CALLBACK_REFRESH_RESERVE_AMMO;MwInitializeMechServiceIdle();
+    uint16_t family=selectedUiRecordIndex;
+    if (family>=CAMPAIGN_AMMO_FAMILY_COUNT) abort();
+    uint16_t remaining=family==RESERVE_AMMO_MACHINE_GUN_FAMILY?RESERVE_AMMO_MACHINE_GUN_BATCH:1;
+    do
+    {
+        uint32_t funds=((uint32_t)campaignFundsHigh<<NATIVE_WORD_BITS)|campaignFundsLow;
+        uint16_t price=ammunitionTransactionPrices[family];
+        if (funds<price) break;
+        funds-=price;campaignFundsLow=(uint16_t)funds;campaignFundsHigh=(uint16_t)(funds>>NATIVE_WORD_BITS);
+        ++reserveAmmoQuantitiesByFamily[family];
+    } while (--remaining);
+    MwFormatReserveAmmunitionQuantity(family,reserveAmmoQuantitiesByFamily[family]);
+    MwDrawSignedDecimalField(reserveAmmoQuantitiesByFamily[family],RESERVE_AMMO_QUANTITY_X,0,5,
+        TEXT_PANEL_FOREGROUND,TEXT_PANEL_BACKGROUND,RESERVE_AMMO_ROW_Y+family*RESERVE_AMMO_ROW_HEIGHT);
+    MwDrawAmmunitionShopCompanyFunds();
+}
+/* MW_MAIN081B:48E6..49D7, including DONE's49D8..49F1 restore tail. */
+void MwRefreshReserveAmmunitionSelection(void)
+{
+    uint16_t row=selectedUiRecordIndex;
+    if (row>=RESERVE_AMMO_MENU_ROWS) abort();
+    bool selling=row>=CAMPAIGN_AMMO_FAMILY_COUNT && row!=RESERVE_AMMO_DONE_ROW;
+    if (row!=RESERVE_AMMO_DONE_ROW && selling!=(reserveAmmoSelling!=0))
+    {
+        const char *label=selling?reserveAmmoSellLabel:reserveAmmoBuyLabel;
+        MwNativeByteView text={(const uint8_t *)label,0,(uint32_t)strlen(label)+1};
+        uint16_t y=0x6A,offset=0;EgaDrawString(0x89,&y,0x0408,&text,&offset);
+        reserveAmmoSelling=selling;MwDrawReserveAmmunitionPrices(selling);
+    }
+    if (row==RESERVE_AMMO_DONE_ROW)
+    {
+        EgaCopyDrawPageToDisplay(0,0,RESERVE_AMMO_PREVIEW_WIDTH,RESERVE_AMMO_PREVIEW_HEIGHT);
+        reserveAmmoPreviewSelection=UINT16_MAX;return;
+    }
+    uint16_t family=selling?(uint16_t)(row-CAMPAIGN_AMMO_FAMILY_COUNT):row;
+    if (family==reserveAmmoPreviewSelection) return;
+    if (reserveAmmoPreviewSelection==UINT16_MAX) MwShowReserveAmmunitionCompatibility(family);
+    else
+    {
+        reserveAmmoPreviewSelection=row;
+        EgaFillDisplayPageRectangle(6,6,0x58,0x32,TEXT_PANEL_BACKGROUND);
+        MwDrawReserveAmmunitionCompatibleMechs(family);
+    }
+}
+/* MW_MAIN081B:497B..49C7, shared rendering tail of48E6 and49C8. */
+void MwDrawReserveAmmunitionCompatibleMechs(uint16_t family)
+{
+    if (family>=CAMPAIGN_AMMO_FAMILY_COUNT) abort();
+    const char *heading=reserveAmmoCompatibilityHeadings[family].text;
+    MwNativeByteView text={(const uint8_t *)heading,0,(uint32_t)strlen(heading)+1};
+    EgaDrawTransparentText(0x0E,0x0C,TEXT_PANEL_FOREGROUND,&text,0);
+    uint16_t y=0x13;
+    for (uint16_t index=0;index<6;++index)
+    {
+        uint16_t kind=reserveAmmoCompatibleMechs[family][index];
+        if (kind==UINT16_MAX) return;
+        const char *name=unitDisplayNames[kind];
+        text=(MwNativeByteView){(const uint8_t *)name,0,(uint32_t)strlen(name)+1};
+        EgaDrawTransparentText(0x0E,y,reserveAmmoMechColours[kind],&text,0);y+=7;
+    }
+    abort();
+}
+/* MW_MAIN081B:49C8..49D6 jumps back into497B after drawing the frame. */
+void MwShowReserveAmmunitionCompatibility(uint16_t family)
+{
+    if (family>=CAMPAIGN_AMMO_FAMILY_COUNT) abort();
+    reserveAmmoPreviewSelection=family;
+    MwDrawDescriptorTextPanel(&reserveAmmoCompatibilityPanels[family]);
+    MwDrawReserveAmmunitionCompatibleMechs(family);
+}
+/* MW_MAIN081B:49F2..4A76. Selling ends by reselecting the live menu row. */
+uint16_t MwSellReserveAmmunition(void)
+{
+    uiSelectionChangedCodeOffset=CAMPAIGN_CALLBACK_REFRESH_RESERVE_AMMO;MwInitializeMechServiceIdle();
+    uint16_t family=(uint16_t)(selectedUiRecordIndex-CAMPAIGN_AMMO_FAMILY_COUNT);
+    if (family>=CAMPAIGN_AMMO_FAMILY_COUNT) abort();
+    uint16_t remaining=family==RESERVE_AMMO_MACHINE_GUN_FAMILY?RESERVE_AMMO_MACHINE_GUN_BATCH:1;
+    do
+    {
+        if (!reserveAmmoQuantitiesByFamily[family]) break;
+        uint32_t funds=((uint32_t)campaignFundsHigh<<NATIVE_WORD_BITS)|campaignFundsLow;
+        funds+=ammunitionTransactionPrices[family+CAMPAIGN_AMMO_FAMILY_COUNT];
+        campaignFundsLow=(uint16_t)funds;campaignFundsHigh=(uint16_t)(funds>>NATIVE_WORD_BITS);
+        --reserveAmmoQuantitiesByFamily[family];
+    } while (--remaining);
+    MwFormatReserveAmmunitionQuantity(family,reserveAmmoQuantitiesByFamily[family]);
+    MwDrawSignedDecimalField(reserveAmmoQuantitiesByFamily[family],RESERVE_AMMO_QUANTITY_X,0,5,
+        TEXT_PANEL_FOREGROUND,TEXT_PANEL_BACKGROUND,RESERVE_AMMO_ROW_Y+family*RESERVE_AMMO_ROW_HEIGHT);
+    MwDrawAmmunitionShopCompanyFunds();MwSelectUiRecordTable(selectedUiRecordIndex,&reserveAmmoShopMenu);
+    return CAMPAIGN_CONTINUE_UI;
+}
+/* MW_MAIN081B:4A77..4AA1. Highlight chassis already in the company roster. */
+void MwMarkOwnedAmmunitionCompatibleMechs(void)
+{
+    memset(reserveAmmoMechColours,TEXT_PANEL_FOREGROUND,sizeof(reserveAmmoMechColours));
+    for (uint16_t slot=0;slot<CAMPAIGN_OWNED_UNIT_SLOTS;++slot)
+        if (ownedUnitKinds[slot]!=UINT16_MAX)
+        {
+            uint16_t kind=ownedUnitKinds[slot];if (kind>=sizeof(reserveAmmoMechColours)) abort();
+            reserveAmmoMechColours[kind]=UI_SELECTED_TEXT_COLOUR;
+        }
+}

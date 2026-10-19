@@ -130,6 +130,9 @@ uint16_t MwCampaignUiEventLoop(void)
                 case CAMPAIGN_CONTINUE_OWNED_MECH_LIST:codeOffset=MwOpenOwnedMechList();break;
                 case CAMPAIGN_CONTINUE_MECH_COMPLEX:case CAMPAIGN_CONTINUE_MECH_COMPLEX_EVENT_RETURN:codeOffset=MwEnterMechServiceMenuContinuation(codeOffset);break;
                 case CAMPAIGN_CONTINUE_MARKET_MECH_LIST:codeOffset=MwOpenMarketMechList();break;
+                case CAMPAIGN_CONTINUE_RESERVE_AMMO_SHOP:codeOffset=MwOpenReserveAmmunitionShop();break;
+                case CAMPAIGN_CALLBACK_BUY_RESERVE_AMMO:MwBuyReserveAmmunition();codeOffset=0;break;
+                case CAMPAIGN_CONTINUE_SELL_RESERVE_AMMO:codeOffset=MwSellReserveAmmunition();break;
                 case CAMPAIGN_CALLBACK_BEGIN_MECH_SALE:codeOffset=MwBeginOwnedUnitSaleCallback();break;
                 case CAMPAIGN_CONTINUE_MECH_SALE:codeOffset=MwSaleContinuation();break;
                 case CAMPAIGN_CONTINUE_CANCEL_MECH_SALE:codeOffset=MwCancelOwnedUnitSale();break;
@@ -382,6 +385,7 @@ uint16_t MwSelectUiRecord(uint16_t selectedIndex)
     if (callback != 0)
     {
         if (callback==CAMPAIGN_CALLBACK_REFRESH_COMPONENT_QUOTE) MwRefreshSelectedComponentRepairQuote();
+        else if (callback==CAMPAIGN_CALLBACK_REFRESH_RESERVE_AMMO) MwRefreshReserveAmmunitionSelection();
         else if (callback==CAMPAIGN_CALLBACK_SELECT_TRAVEL_MAP_PLANET) return MwHandleTravelMapSelection();
         else
         {

@@ -12,7 +12,9 @@ No alternate MIDI/FM weapon sounds or combat score are invented. See [audio setu
 ## Connected gameplay
 
 The campaign supports planet services, repair/rearm/trading, recruitment and
-Mech assignments, contract negotiation, travel/arrival and save/load. The real
+Mech assignments, contract negotiation, travel/arrival and save/load. The Extra
+Ammo shop buys and sells company reserves separately from reloading a selected
+Mech; machine-gun ammunition trades in batches of ten. The real
 campaign-to-combat chain reaches briefing, movement, firing, weapon effects,
 command and damage screens, and returns mission results to the company.
 

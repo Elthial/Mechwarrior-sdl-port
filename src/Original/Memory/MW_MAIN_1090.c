@@ -602,6 +602,7 @@ MwUiMenu crewMenu={crewRecords,5,&rearmConfirmationRecords[1].textRecord};
 MwUiMenu barMenu={barRecords,3,NULL};
 MwUiMenu recruitInterviewMenu={recruitInterviewRecords,2,NULL,&saveListRows[4].display.x,0};
 static bool ImportPilotUiData(const uint8_t *data);
+static bool ImportReserveAmmoUiData(const uint8_t *data);
 static bool ImportContractData(const uint8_t *data);
 bool MwImportCampaignInitialData(const uint8_t *data, size_t byteCount)
 {
@@ -1095,6 +1096,7 @@ bool MwImportCampaignInitialData(const uint8_t *data, size_t byteCount)
         if (!ImportInitialString(data,MwReadNativeWord(data,(uint16_t)(0x2DB5+i*2)),shopUnitNames[i],sizeof(shopUnitNames[i]))) return false;
     for (uint16_t i=0;i<0x0B;++i)
         if (!ImportInitialString(data,MwReadNativeWord(data,(uint16_t)(0x2E70+i*2)),unitDisplayNames[i],sizeof(unitDisplayNames[i]))) return false;
+    if (!ImportReserveAmmoUiData(data)) return false;
     for (uint16_t i=0;i<0x06;++i)
         if (!ImportInitialString(data,MwReadNativeWord(data,(uint16_t)(0x2F78+i*2)),ammoFamilyDisplayNames[i],sizeof(ammoFamilyDisplayNames[i]))) return false;
     for (uint16_t i=0;i<0x04;++i)
@@ -2279,5 +2281,85 @@ bool MwImportCampaignHandoffData(const uint8_t *data,size_t byteCount)
             || MwReadNativeWord(data,0x166A+house*2)!=successOffsets[house]) return false;
     for (uint16_t message=0;message<3;++message)
         if (MwReadNativeWord(data,0x1786+message*2)!=deductionOffsets[message]) return false;
+    return true;
+}
+
+/* Native reserve-ammunition shop state and shared caption/menu owners. */
+uint16_t reserveAmmoShopSelectedRow,reserveAmmoPreviewSelection;
+uint8_t reserveAmmoSelling,reserveAmmoMechColours[11];
+char reserveAmmoBuyLabel[5],reserveAmmoSellLabel[5];
+MwServiceCaption reserveAmmoShopHeading,reserveAmmoFamilyLabels[6],reserveAmmoDoneLabel;
+MwReserveAmmoQuantityRow reserveAmmoQuantityRows[6];
+MwPanelDescriptor reserveAmmoShopPanel,reserveAmmoCompatibilityPanels[6];
+MwServiceCaption reserveAmmoCompatibilityHeadings[6];
+uint16_t reserveAmmoCompatibleMechs[6][6];
+MwUiRecord reserveAmmoShopRecords[RESERVE_AMMO_MENU_ROWS];
+/* Native FF-neighbour probe is 1090:505A, the existing travel table WORD. */
+MwUiMenu reserveAmmoShopMenu={reserveAmmoShopRecords,RESERVE_AMMO_MENU_ROWS,NULL,&travelSquareRootValues[0x1BA],0};
+
+static bool ImportReserveAmmoUiData(const uint8_t *data)
+{
+    reserveAmmoShopSelectedRow=MwReadNativeWord(data,0x4137);
+    reserveAmmoPreviewSelection=MwReadNativeWord(data,0x3F6E);
+    reserveAmmoSelling=data[0x4139];memcpy(reserveAmmoMechColours,data+0x3F70,sizeof(reserveAmmoMechColours));
+    if (!ImportInitialString(data,0x413A,reserveAmmoBuyLabel,sizeof(reserveAmmoBuyLabel))
+        || !ImportInitialString(data,0x413F,reserveAmmoSellLabel,sizeof(reserveAmmoSellLabel))) return false;
+    for (uint16_t panelIndex=0;panelIndex<=CAMPAIGN_AMMO_FAMILY_COUNT;++panelIndex)
+    {
+        bool shop=panelIndex==CAMPAIGN_AMMO_FAMILY_COUNT;
+        uint16_t offset=shop?0x4144:MwReadNativeWord(data,0x3F7B+panelIndex*2);
+        MwPanelDescriptor *panel=shop?&reserveAmmoShopPanel:&reserveAmmoCompatibilityPanels[panelIndex];
+        panel->x=MwReadNativeWord(data,offset);panel->y=MwReadNativeWord(data,offset+2);
+        panel->width=MwReadNativeWord(data,offset+4);panel->bottomInset=MwReadNativeWord(data,offset+6);
+        panel->lineCount=MwReadNativeWord(data,offset+8);panel->borderEnabled=MwReadNativeWord(data,offset+10);
+        panel->lineSpacing=MwReadNativeWord(data,offset+12);panel->background=MwReadNativeWord(data,offset+14);
+        if (panel->lineCount!=(shop?14:1)) return false;
+        for (uint16_t line=0;line<panel->lineCount;++line)
+        {
+            uint16_t caption=MwReadNativeWord(data,offset+16+line*2);
+            MwPanelText *display;char *text;size_t capacity;
+            if (!shop)
+            {
+                display=&reserveAmmoCompatibilityHeadings[panelIndex].display;
+                text=reserveAmmoCompatibilityHeadings[panelIndex].text;capacity=sizeof(reserveAmmoCompatibilityHeadings[panelIndex].text);
+            }
+            else if (line>=7 && line<=12)
+            {
+                display=&reserveAmmoQuantityRows[line-7].display;
+                text=reserveAmmoQuantityRows[line-7].text;capacity=sizeof(reserveAmmoQuantityRows[line-7].text);
+            }
+            else
+            {
+                MwServiceCaption *label=line==0?&reserveAmmoShopHeading:
+                    line==13?&reserveAmmoDoneLabel:&reserveAmmoFamilyLabels[line-1];
+                display=&label->display;text=label->text;capacity=sizeof(label->text);
+            }
+            if (!ImportInitialString(data,caption+5,text,capacity)) return false;
+            ImportInitialText(data,caption,display,text,0);panel->lines[line]=display;
+        }
+        if (shop) continue;
+        uint16_t kinds=MwReadNativeWord(data,0x3F87+panelIndex*2),index=0;
+        do
+        {
+            if (index>=6) return false;
+            uint16_t kind=MwReadNativeWord(data,kinds+index*2);
+            reserveAmmoCompatibleMechs[panelIndex][index++]=kind;
+            if (kind==UINT16_MAX) break;
+            if (kind>=CAMPAIGN_MECH_KIND_COUNT) return false;
+        } while (true);
+    }
+    for (uint16_t index=0;index<RESERVE_AMMO_MENU_ROWS;++index)
+    {
+        const uint8_t *encoded=data+0x4268+index*CAMPAIGN_UI_RECORD_BYTES;
+        MwUiRecord *record=&reserveAmmoShopRecords[index];
+        record->enabled=encoded[0];record->textRecord=encoded[1];
+        record->x=MwReadNativeWord(encoded,2);record->y=MwReadNativeWord(encoded,4);
+        record->activateCodeOffset=MwReadNativeWord(encoded,6);record->pictureIndex=0;
+        MwPanelText *caption=index<6?&reserveAmmoFamilyLabels[index].display:
+            index<12?&reserveAmmoQuantityRows[index-6].display:&reserveAmmoDoneLabel.display;
+        record->text=caption->text;record->textColour=&caption->colour;
+        record->upRecordIndex=encoded[10];record->downRecordIndex=encoded[11];
+        record->leftRecordIndex=encoded[12];record->rightRecordIndex=encoded[13];
+    }
     return true;
 }

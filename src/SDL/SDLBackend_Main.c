@@ -56,7 +56,12 @@ static void ClearLauncherText(void) {MwSdlSetVideoMode(3);}
 static void WriteLauncherChar(uint8_t character) {fputc(character,stderr);fflush(stderr);}
 
 _Noreturn void MwSdlFail(const char *operation)
-{fprintf(stderr,"MechWarrior: %s. SDL: %s\n",operation,SDL_GetError());abort();}
+{
+    fprintf(stderr,"MechWarrior: %s",operation);
+    const char *error=SDL_GetError();
+    if (error && *error) fprintf(stderr,". SDL: %s",error);
+    fputc('\n',stderr);abort();
+}
 static bool AllocateParagraphs(uint16_t paragraphs,uint16_t *selectorOrError)
 {
     (void)paragraphs; /* Full resource windows retain native WORD-cursor wrap. */
@@ -96,8 +101,10 @@ static void DosString(const char *text)
 {while (*text && *text!='$') fputc(*text++,stderr);fflush(stderr);}
 static void UnsupportedCampaignCall(uint16_t codeOffset)
 {
-    fprintf(stderr,"Unconverted campaign callback081B:%04X (combat transition remains outside this live slice).\n",codeOffset);
-    MwSdlFail("Unconverted campaign callback");
+    fprintf(stderr,"Unconverted campaign callback 081B:%04X.\n",codeOffset);
+    /* This is a game conversion failure, not a failed SDL call. SDL's error
+     * slot may still contain an unrelated device-probe diagnostic. */
+    SDL_ClearError();MwSdlFail("Unconverted campaign callback");
 }
 static bool LoadResidentLauncher(const char *path)
 {

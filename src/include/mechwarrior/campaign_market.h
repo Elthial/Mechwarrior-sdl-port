@@ -2,6 +2,32 @@
 #define MECHWARRIOR_CAMPAIGN_MARKET_H
 #include "mechwarrior/campaign_service.h"
 
+enum { RESERVE_AMMO_MENU_ROWS=13,RESERVE_AMMO_DONE_ROW=12,RESERVE_AMMO_MACHINE_GUN_FAMILY=5,
+    RESERVE_AMMO_MACHINE_GUN_BATCH=10,RESERVE_AMMO_ROW_Y=0x82,RESERVE_AMMO_ROW_HEIGHT=6,
+    RESERVE_AMMO_PRICE_X=0x98,RESERVE_AMMO_QUANTITY_X=0xD7,
+    RESERVE_AMMO_PREVIEW_WIDTH=0x6C,RESERVE_AMMO_PREVIEW_HEIGHT=0x3E };
+typedef struct MwReserveAmmoQuantityRow {MwPanelText display;char text[6];} MwReserveAmmoQuantityRow;
+extern uint16_t reserveAmmoShopSelectedRow,reserveAmmoPreviewSelection;
+extern uint8_t reserveAmmoSelling,reserveAmmoMechColours[11];
+extern char reserveAmmoBuyLabel[5],reserveAmmoSellLabel[5];
+extern MwServiceCaption reserveAmmoShopHeading,reserveAmmoFamilyLabels[6],reserveAmmoDoneLabel;
+extern MwReserveAmmoQuantityRow reserveAmmoQuantityRows[6];
+extern MwPanelDescriptor reserveAmmoShopPanel,reserveAmmoCompatibilityPanels[6];
+extern MwServiceCaption reserveAmmoCompatibilityHeadings[6];
+extern uint16_t reserveAmmoCompatibleMechs[6][6];
+extern MwUiRecord reserveAmmoShopRecords[RESERVE_AMMO_MENU_ROWS];
+extern MwUiMenu reserveAmmoShopMenu;
+uint16_t MwOpenReserveAmmunitionShop(void);
+void MwFormatReserveAmmunitionQuantity(uint16_t family,uint16_t quantity);
+void MwDrawReserveAmmunitionPrices(bool selling);
+void MwDrawAmmunitionShopCompanyFunds(void);
+void MwRefreshReserveAmmunitionSelection(void);
+void MwShowReserveAmmunitionCompatibility(uint16_t family);
+void MwDrawReserveAmmunitionCompatibleMechs(uint16_t family);
+void MwMarkOwnedAmmunitionCompatibleMechs(void);
+void MwBuyReserveAmmunition(void);
+uint16_t MwSellReserveAmmunition(void);
+
 enum { MECH_SERVICE_ROW_REARM=2, MECH_SERVICE_ROW_SELL=3,
     REARM_DIALOG_X=0x10, REARM_DIALOG_Y=0x8E, REARM_DIALOG_WIDTH=0xB2, REARM_DIALOG_HEIGHT=0x37,
     SALE_DIALOG_X=0x0A, SALE_DIALOG_Y=0x72, SALE_DIALOG_WIDTH=0xC8, SALE_DIALOG_HEIGHT=0x50,
