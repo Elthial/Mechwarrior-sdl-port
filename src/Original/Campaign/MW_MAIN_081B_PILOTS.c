@@ -221,7 +221,7 @@ void MwDrawCommanderProfile(void)
         else if (standing>COMPANY_HOUSE_STANDING_LIMIT) standing=COMPANY_HOUSE_STANDING_LIMIT;
         uint16_t attitude=(uint16_t)(((uint16_t)standing&0xFFFE)+COMPANY_HOUSE_STANDING_LIMIT)>>1;
         MwNativeByteView text={(const uint8_t *)houseAttitudeText[attitude],0,(uint32_t)strlen(houseAttitudeText[attitude])+1};
-        EgaDrawTransparentText((uint16_t)(commanderProfilePanel.x+COMPANY_HOUSE_ATTITUDE_X),(uint16_t)(COMPANY_HOUSE_FIRST_Y+house*COMPANY_HOUSE_ROW_HEIGHT),3,&text,0);
+        EgaDrawTransparentText((uint16_t)(commanderProfilePanel.x+COMPANY_HOUSE_ATTITUDE_X),(uint16_t)(COMPANY_HOUSE_FIRST_Y+house*COMPANY_HOUSE_ROW_HEIGHT),CAMPAIGN_LIGHT_GREY,&text,0);
     }
     EgaSelectFont(COMPANY_MENU_FONT);
 }

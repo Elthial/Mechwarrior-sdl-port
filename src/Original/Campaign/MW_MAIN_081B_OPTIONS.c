@@ -55,7 +55,7 @@ void MwToggleAudioOption(void)
     MwUpdateAudioOptionLabel();
     MwNativeByteView text={(const uint8_t *)optionsLabels[OPTION_SOUND].text,0x9D97,sizeof(optionsLabels[OPTION_SOUND].text)};
     uint16_t y=OPTIONS_SOUND_Y,offset=0x9D97;
-    EgaDrawString(OPTIONS_SOUND_X,&y,(OPTIONS_VALUE_BACKGROUND<<8)|OPTIONS_VALUE_FOREGROUND,&text,&offset);
+    EgaDrawString(OPTIONS_SOUND_X,&y,(CAMPAIGN_DARK_GREY<<EGA_BYTE_BITS)|CAMPAIGN_YELLOW,&text,&offset);
 }
 
 /* MW_MAIN081B:6FFA..702A. Native JL compares the incremented BYTE signed. */
@@ -67,7 +67,7 @@ void MwCycleTerrainDetailOption(void)
     MwUpdateTerrainDetailOptionLabel();
     MwNativeByteView text={(const uint8_t *)optionsLabels[OPTION_DETAIL].text,0x9DAB,sizeof(optionsLabels[OPTION_DETAIL].text)};
     uint16_t y=OPTIONS_DETAIL_Y,offset=0x9DAB;
-    EgaDrawString(OPTIONS_DETAIL_X,&y,(OPTIONS_VALUE_BACKGROUND<<8)|OPTIONS_VALUE_FOREGROUND,&text,&offset);
+    EgaDrawString(OPTIONS_DETAIL_X,&y,(CAMPAIGN_DARK_GREY<<EGA_BYTE_BITS)|CAMPAIGN_YELLOW,&text,&offset);
 }
 
 /* MW_MAIN081B:7047..707E. Mutate the SAME heading and YES-record owner

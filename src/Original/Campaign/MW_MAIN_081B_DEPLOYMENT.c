@@ -6,6 +6,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+enum { COMBAT_DISK_TEXT_OFFSET=0x0F00, COMBAT_DISK_PROMPT_INSET=16,
+    COMBAT_DISK_PROMPT_COLUMNS=36, COMBAT_DISK_PROMPT_ROWS=8 };
+
 /* MW_MAIN081B:1423..144D. The successful close result is ignored. */
 void MwWaitForRequiredResourceFile(void)
 {
@@ -14,8 +17,9 @@ void MwWaitForRequiredResourceFile(void)
     {
         if (!mwCampaignInput.currentDefaultDrive) abort();
         combatDiskPrompt.driveLetter=mwCampaignInput.currentDefaultDrive()+'A';
-        MwNativeByteView text={(const uint8_t *)&combatDiskPrompt,0x0F00,sizeof(combatDiskPrompt)};
-        (void)MwShowMonospaceTextPanel(0x0010,0x0010,0x0024,8,&text,0x0F00);
+        MwNativeByteView text={(const uint8_t *)&combatDiskPrompt,COMBAT_DISK_TEXT_OFFSET,sizeof(combatDiskPrompt)};
+        (void)MwShowMonospaceTextPanel(COMBAT_DISK_PROMPT_INSET,COMBAT_DISK_PROMPT_INSET,
+            COMBAT_DISK_PROMPT_COLUMNS,COMBAT_DISK_PROMPT_ROWS,&text,text.nativeBase);
     }
     (void)MwDosCloseFile(fileHandle);
 }

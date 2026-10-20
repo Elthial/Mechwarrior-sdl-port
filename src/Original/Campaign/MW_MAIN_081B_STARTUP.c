@@ -623,13 +623,13 @@ bool MwWaitTicksOrInputInterruption(uint16_t delayTicks)
 void MwSetIntroTextPaletteColour(uint8_t paletteCode)
 {
     if (!egaSetPaletteRegister) abort();
-    egaSetPaletteRegister(2,paletteCode);
+    egaSetPaletteRegister(CAMPAIGN_WHITE,paletteCode);
 }
 /* MW_MAIN081B:162E..1643. Original record has X/Y then NUL text, no colour. */
 void MwDrawPositionedIntroText(const MwIntroPositionedText *text)
 {
     MwNativeByteView view={(const uint8_t *)text->text,0,sizeof(text->text)};
-    (void)EgaDrawTransparentText(text->x,text->y,2,&view,0);
+    (void)EgaDrawTransparentText(text->x,text->y,CAMPAIGN_WHITE,&view,0);
 }
 /* MW_MAIN081B:1644..166C.166D result below transports the POP-IP/JMP path;
  * successful native return has no AX result contract. Do not seed this host
@@ -685,14 +685,14 @@ uint16_t MwRunCopyProtectionAndInitializeCampaign(uint16_t entryOffset)
     MwDrawPicturePanelBorder(0,0x0074,EGA_COLUMNS,0x0054);
     EgaSelectFont(0);
     MwNativeByteView prompt={(const uint8_t *)copyProtectionPrompt,0,sizeof(copyProtectionPrompt)};
-    (void)EgaDrawTransparentText(0x000C,0x0080,8,&prompt,0);
+    (void)EgaDrawTransparentText(0x000C,0x0080,CAMPAIGN_LIGHT_RED,&prompt,0);
     (void)EgaDrawPackedSprite(0x00F0,0x007C,EGA_DISPLAY_PAGE,0,pictureSelector);
     /* Native stores BYTE displacement into two parallel WORD directories. */
     uint16_t callsignRowByteOffset=copyProtectionSelection*COPY_PROTECTION_CALLSIGNS_PER_MECH*sizeof(uint16_t);
     copyProtectionSelection=callsignRowByteOffset+MwRandomUpTo(COPY_PROTECTION_CALLSIGNS_PER_MECH-1)*sizeof(uint16_t);
     uint16_t question=copyProtectionSelection/sizeof(uint16_t);
     MwNativeByteView callsign={(const uint8_t *)copyProtectionCallsigns[question],0,COPY_PROTECTION_TEXT_CAPACITY};
-    (void)EgaDrawTransparentText(0x0054,0x00AA,3,&callsign,0);
+    (void)EgaDrawTransparentText(0x0054,0x00AA,CAMPAIGN_LIGHT_GREY,&callsign,0);
     /*174A..174C NOP: there is intentionally no keyboard answer-entry call. */
     EgaCopyDrawPageToDisplay(0,0,EGA_COLUMNS,EGA_ROWS);
     uint16_t answerIndex=0;

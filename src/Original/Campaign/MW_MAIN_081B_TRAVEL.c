@@ -182,24 +182,24 @@ void MwDrawTravelDestinationDetails(void)
     const uint8_t *nameEnd=memchr(name,0,bytesRemaining);
     if (!nameEnd) abort();
     MwNativeByteView nameView={name,0,(uint32_t)(nameEnd-name+1)};
-    EgaDrawTransparentText(0x000A,0x0008,2,&nameView,0);
+    EgaDrawTransparentText(0x000A,0x0008,CAMPAIGN_WHITE,&nameView,0);
     uint16_t pictureSelector=MwLoadIndexedPicture((uint16_t)(TRAVEL_HOUSE_PICTURE_BASE+planet->houseIndex));
     EgaDrawPackedSprite(0x00EF,0x0021,EGA_DISPLAY_PAGE,0,pictureSelector);
     uint8_t classification=(uint8_t)(planet->landscapeAndMarketCode-1);
     const char *landscape=travelLandscapeLabels[classification%TRAVEL_LANDSCAPE_LABEL_COUNT];
     MwNativeByteView landscapeView={(const uint8_t *)landscape,0,(uint32_t)strlen(landscape)+1};
-    EgaDrawTransparentText(0x008D,0x0008,2,&landscapeView,0);
+    EgaDrawTransparentText(0x008D,0x0008,CAMPAIGN_WHITE,&landscapeView,0);
     uint16_t population=MwReadNativeWord(planet->populationMillions,0);
     numericGroupingEnabled++;
     MwDrawSignedDecimalField(population,0x00E6,0,4,2,3,0x0008);
     MwNativeByteView suffix={(const uint8_t *)travelPopulationSuffix,0,sizeof(travelPopulationSuffix)};
-    EgaDrawTransparentText(0x0104,0x0008,2,&suffix,0);
+    EgaDrawTransparentText(0x0104,0x0008,CAMPAIGN_WHITE,&suffix,0);
     const uint8_t *description=nameEnd+1;
     size_t descriptionCapacity=bytesRemaining-(size_t)(description-name);
     const uint8_t *descriptionEnd=memchr(description,0,descriptionCapacity);
     if (!descriptionEnd) abort();
     MwNativeByteView descriptionView={description,0,(uint32_t)(descriptionEnd-description+1)};
-    EgaDrawTransparentText(0x000A,0x0017,2,&descriptionView,0);
+    EgaDrawTransparentText(0x000A,0x0017,CAMPAIGN_WHITE,&descriptionView,0);
 }
 
 /* MW_MAIN 081B:569F..56C2, then the fallthrough56C3..56E6. The genuine5816

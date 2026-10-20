@@ -32,6 +32,8 @@ typedef struct MwTextPanelReturn
     uint16_t textOffset, textOriginX, textOriginY;
     bool discardReturnWord;
 } MwTextPanelReturn;
+/* textOffset is the cursor within text, usually text->nativeBase. It is not
+ * a colour; TEXT_PANEL_FOREGROUND/BACKGROUND select the panel colours. */
 MwTextPanelReturn MwShowMonospaceTextPanel(uint16_t insetX, uint16_t insetY,
     uint16_t columns, uint16_t rows, const MwNativeByteView *text, uint16_t textOffset);
 MwTextPanelReturn MwShowCompactTextPanel(uint16_t insetX, uint16_t insetY,

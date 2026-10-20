@@ -176,7 +176,7 @@ MwTextPanelReturn MwShowClassThreeEventPages(uint16_t textId)
     for (;;)
     {
         page+=sizeof(MwEventTextPageHeader);
-        uint16_t cursor=EgaDrawTextWithLineSpacing(0x001F,0x0019,0x0C,&text,(uint16_t)(page-eventTextStorage+EVENT_TEXT_STORAGE_START));
+        uint16_t cursor=EgaDrawTextWithLineSpacing(0x001F,0x0019,CAMPAIGN_GREEN,&text,(uint16_t)(page-eventTextStorage+EVENT_TEXT_STORAGE_START));
         page=&eventTextStorage[cursor-EVENT_TEXT_STORAGE_START+1];
         if (page>=eventTextStorage+sizeof(eventTextStorage)) abort();
         if (!*page)
