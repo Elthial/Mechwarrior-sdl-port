@@ -34,16 +34,16 @@ void BtechUpdateHeatGauge(int16_t heatLevel)
     uint16_t layoutIndex=mechCockpitLayoutIndices[unitBindings[0].mech->templateIndex];
     if (layoutIndex>=COMBAT_COCKPIT_LAYOUTS) abort();
     const BtechHudGaugeAnchor *gauge=&cockpitLayouts[layoutIndex].heatGauge;
-    uint16_t rowY=(uint16_t)(gauge->y-((uint16_t)lowerLevel<<HEAT_GAUGE_ROW_SHIFT));
+    uint16_t rowY=gauge->y-((uint16_t)lowerLevel<<HEAT_GAUGE_ROW_SHIFT);
     for (int16_t row=0;row<(int16_t)difference;++row)
     {
-        uint16_t rowX=(uint16_t)gauge->x;
-        BtechDrawClippedLine((int16_t)rowX,(int16_t)rowY,(int16_t)(uint16_t)(rowX+HEAT_GAUGE_LAST_COLUMN),(int16_t)rowY);
+        uint16_t rowX=gauge->x;
+        BtechDrawClippedLine((int16_t)rowX,(int16_t)rowY,(int16_t)(rowX+HEAT_GAUGE_LAST_COLUMN),(int16_t)rowY);
         if (!hudColourSchemeIndex)
         {
-            BtechWriteClippedPixel((int16_t)(uint16_t)(gauge->x+HEAT_GAUGE_LAST_COLUMN),(int16_t)rowY,pixelColour);
-            BtechWriteClippedPixel((int16_t)(uint16_t)(gauge->x+HEAT_GAUGE_EDGE_COLUMN),(int16_t)rowY,pixelColour);
-            BtechWriteClippedPixel((int16_t)(uint16_t)(gauge->x+HEAT_GAUGE_INNER_COLUMN),(int16_t)rowY,pixelColour);
+            BtechWriteClippedPixel((int16_t)(gauge->x+HEAT_GAUGE_LAST_COLUMN),(int16_t)rowY,pixelColour);
+            BtechWriteClippedPixel((int16_t)(gauge->x+HEAT_GAUGE_EDGE_COLUMN),(int16_t)rowY,pixelColour);
+            BtechWriteClippedPixel((int16_t)(gauge->x+HEAT_GAUGE_INNER_COLUMN),(int16_t)rowY,pixelColour);
         }
         rowY-=HEAT_GAUGE_ROW_HEIGHT;
     }
@@ -64,19 +64,19 @@ void BtechDrawForwardMovementGauge(int16_t forwardScale)
     drawFillColour=(uint8_t)hudColourSchemes[hudColourSchemeIndex].forwardTicks;
     uint16_t pixelColour=Combat_Pal_EGA_LightGreen;
     int16_t marker=forward>>MOVEMENT_GAUGE_SCALE_SHIFT;
-    uint16_t tickX=(uint16_t)(gauge->x+MOVEMENT_GAUGE_FORWARD_X);
+    uint16_t tickX=gauge->x+MOVEMENT_GAUGE_FORWARD_X;
     for (int16_t tick=0;tick<MOVEMENT_GAUGE_FORWARD_TICKS;++tick)
     {
         if (tick==marker)
         {pixelColour=Combat_Pal_EGA_LightGrey;drawFillColour=(uint8_t)hudColourSchemes[hudColourSchemeIndex].selectedMovementTick;}
-        BtechDrawClippedLine((int16_t)tickX,gauge->y,(int16_t)tickX,(int16_t)(uint16_t)(gauge->y+MOVEMENT_GAUGE_TICK_LAST_ROW));
+        BtechDrawClippedLine((int16_t)tickX,gauge->y,(int16_t)tickX,(int16_t)(gauge->y+MOVEMENT_GAUGE_TICK_LAST_ROW));
         if (!hudColourSchemeIndex) BtechWriteClippedPixel((int16_t)tickX,gauge->y,pixelColour);
         tickX+=MOVEMENT_GAUGE_TICK_SPACING;
     }
     drawFillColour=(uint8_t)hudColourSchemes[hudColourSchemeIndex].movementZeroReference;
-    uint16_t zeroX=(uint16_t)(gauge->x+MOVEMENT_GAUGE_ZERO_X);
-    BtechDrawClippedLine((int16_t)zeroX,gauge->y,(int16_t)zeroX,(int16_t)(uint16_t)(gauge->y+MOVEMENT_GAUGE_TICK_LAST_ROW));
-    if (!hudColourSchemeIndex) BtechWriteClippedPixel((int16_t)(uint16_t)(gauge->x+MOVEMENT_GAUGE_ZERO_X),gauge->y,Combat_Pal_EGA_White);
+    uint16_t zeroX=gauge->x+MOVEMENT_GAUGE_ZERO_X;
+    BtechDrawClippedLine((int16_t)zeroX,gauge->y,(int16_t)zeroX,(int16_t)(gauge->y+MOVEMENT_GAUGE_TICK_LAST_ROW));
+    if (!hudColourSchemeIndex) BtechWriteClippedPixel((int16_t)(gauge->x+MOVEMENT_GAUGE_ZERO_X),gauge->y,Combat_Pal_EGA_White);
     drawFillColour=(uint8_t)hudColourSchemes[hudColourSchemeIndex].reverseTicks;
     pixelColour=Combat_Pal_EGA_LightRed;marker=(int16_t)((reverse>>MOVEMENT_GAUGE_SCALE_SHIFT)|((reverse&0x8000)?0xC000:0));
     tickX=(uint16_t)(gauge->x+MOVEMENT_GAUGE_REVERSE_X);
@@ -84,7 +84,7 @@ void BtechDrawForwardMovementGauge(int16_t forwardScale)
     {
         if (tick==marker)
         {drawFillColour=(uint8_t)hudColourSchemes[hudColourSchemeIndex].selectedMovementTick;pixelColour=Combat_Pal_EGA_LightGrey;}
-        BtechDrawClippedLine((int16_t)tickX,gauge->y,(int16_t)tickX,(int16_t)(uint16_t)(gauge->y+MOVEMENT_GAUGE_TICK_LAST_ROW));
+        BtechDrawClippedLine((int16_t)tickX,gauge->y,(int16_t)tickX,(int16_t)(gauge->y+MOVEMENT_GAUGE_TICK_LAST_ROW));
         if (!hudColourSchemeIndex) BtechWriteClippedPixel((int16_t)tickX,gauge->y,pixelColour);
         tickX-=MOVEMENT_GAUGE_TICK_SPACING;
     }
@@ -103,15 +103,15 @@ void BtechUpdateJumpChargeGauge(int16_t jumpCharge)
     if (layoutIndex>=COMBAT_COCKPIT_LAYOUTS || hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES) abort();
     const BtechHudGaugeAnchor *gauge=&cockpitLayouts[layoutIndex].jumpChargeGauge;
     uint16_t belowThreshold=jumpCharge<JUMP_GAUGE_READY_CHARGE;
-    uint8_t thresholdColour=(uint8_t)(belowThreshold?hudColourSchemes[hudColourSchemeIndex].jumpBelowThreshold:hudColourSchemes[hudColourSchemeIndex].jumpCharged);
+    uint8_t thresholdColour=belowThreshold?hudColourSchemes[hudColourSchemeIndex].jumpBelowThreshold:hudColourSchemes[hudColourSchemeIndex].jumpCharged;
     drawLineColour=thresholdColour;drawFillColour=thresholdColour;
     BtechDrawStyledRectangle((uint16_t)(gauge->x+JUMP_LAMP_X_INSET),JUMP_LAMP_Y,JUMP_LAMP_SIZE,JUMP_LAMP_SIZE);
     if (!hudColourSchemeIndex)
     {
         uint16_t colour=belowThreshold?Combat_Pal_EGA_LightRed:Combat_Pal_EGA_LightGreen;
-        BtechWriteClippedPixel((int16_t)(uint16_t)(gauge->x+JUMP_LAMP_HIGHLIGHT_X),JUMP_LAMP_Y,colour);
-        BtechWriteClippedPixel((int16_t)(uint16_t)(gauge->x+JUMP_LAMP_HIGHLIGHT_RIGHT_X),JUMP_LAMP_Y,colour);
-        BtechWriteClippedPixel((int16_t)(uint16_t)(gauge->x+JUMP_LAMP_HIGHLIGHT_RIGHT_X),JUMP_LAMP_HIGHLIGHT_BOTTOM_Y,colour);
+        BtechWriteClippedPixel((int16_t)(gauge->x+JUMP_LAMP_HIGHLIGHT_X),JUMP_LAMP_Y,colour);
+        BtechWriteClippedPixel((int16_t)(gauge->x+JUMP_LAMP_HIGHLIGHT_RIGHT_X),JUMP_LAMP_Y,colour);
+        BtechWriteClippedPixel((int16_t)(gauge->x+JUMP_LAMP_HIGHLIGHT_RIGHT_X),JUMP_LAMP_HIGHLIGHT_BOTTOM_Y,colour);
     }
     BtechCopyHudRectangleIfReady((uint16_t)(gauge->x+JUMP_LAMP_X_INSET),JUMP_LAMP_Y,JUMP_LAMP_SIZE,JUMP_LAMP_SIZE);
     int16_t lowerLevel=level;
@@ -120,21 +120,21 @@ void BtechUpdateJumpChargeGauge(int16_t jumpCharge)
     if ((uint16_t)(cachedJumpChargeGaugeLevel-(uint16_t)level)==0x8000) difference=0x7FFF;
     else if ((int16_t)cachedJumpChargeGaugeLevel<level) difference=(uint16_t)(level-cachedJumpChargeGaugeLevel);
     else difference=(uint16_t)(cachedJumpChargeGaugeLevel-level);
-    uint8_t colour=(uint8_t)(level<(int16_t)cachedJumpChargeGaugeLevel?
-        hudColourSchemes[hudColourSchemeIndex].jumpFalling:hudColourSchemes[hudColourSchemeIndex].jumpRising);
+    uint8_t colour=level<(int16_t)cachedJumpChargeGaugeLevel?
+        hudColourSchemes[hudColourSchemeIndex].jumpFalling:hudColourSchemes[hudColourSchemeIndex].jumpRising;
     drawLineColour=colour;drawFillColour=colour;
-    uint16_t rowY=(uint16_t)(gauge->y-lowerLevel);
+    uint16_t rowY=gauge->y-lowerLevel;
     BtechDrawStyledRectangle((uint16_t)gauge->x,(uint16_t)(rowY-difference+1),JUMP_GAUGE_WIDTH,difference);
     if (!hudColourSchemeIndex)
     {
         drawFillColour=level<(int16_t)cachedJumpChargeGaugeLevel?Combat_Pal_EGA_White:Combat_Pal_EGA_LightCyan;
-        uint16_t edgeX=(uint16_t)(gauge->x+JUMP_GAUGE_LAST_COLUMN);
-        BtechDrawClippedLine((int16_t)edgeX,(int16_t)rowY,(int16_t)edgeX,(int16_t)(uint16_t)(rowY-difference+1));
+        uint16_t edgeX=gauge->x+JUMP_GAUGE_LAST_COLUMN;
+        BtechDrawClippedLine((int16_t)edgeX,(int16_t)rowY,(int16_t)edgeX,(int16_t)(rowY-difference+1));
     }
     drawFillColour=(uint8_t)hudColourSchemes[hudColourSchemeIndex].jumpReference;
-    uint16_t referenceX=(uint16_t)gauge->x;
-    BtechDrawClippedLine((int16_t)referenceX,JUMP_GAUGE_BASELINE_Y,(int16_t)(uint16_t)(referenceX+6),0x92);
-    if (!hudColourSchemeIndex) BtechWriteClippedPixel((int16_t)(uint16_t)(gauge->x+JUMP_GAUGE_LAST_COLUMN),JUMP_GAUGE_BASELINE_Y,Combat_Pal_EGA_LightRed);
+    uint16_t referenceX=gauge->x;
+    BtechDrawClippedLine((int16_t)referenceX,JUMP_GAUGE_BASELINE_Y,(int16_t)(referenceX+6),0x92);
+    if (!hudColourSchemeIndex) BtechWriteClippedPixel((int16_t)(gauge->x+JUMP_GAUGE_LAST_COLUMN),JUMP_GAUGE_BASELINE_Y,Combat_Pal_EGA_LightRed);
     BtechCopyHudRectangleIfReady((uint16_t)gauge->x,(uint16_t)(rowY-difference+1),JUMP_GAUGE_COPY_WIDTH,(uint16_t)(difference+1));
     cachedJumpChargeGaugeLevel=(uint16_t)level;
 }

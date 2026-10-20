@@ -50,7 +50,7 @@ BtechPolygonSpan *BtechDrawScreenPolygon(int16_t count,const int16_t *x,const in
     uint16_t minimumY=0x7FFF,maximumY=0x8001,minimumXAtMaximumY=0x7FFF,maximumXAtMinimumY=0x8001;
     for (;;)
     {
-        uint16_t vertexY=(uint16_t)screenPolygonY[source];
+        uint16_t vertexY=screenPolygonY[source];
         if (vertexY!=polygonPreviousVertexY || (uint16_t)screenPolygonX[source]!=polygonPreviousVertexX)
         {
             polygonPreviousVertexY=vertexY;polygonWorkY[accepted]=(int16_t)vertexY;
@@ -58,7 +58,7 @@ BtechPolygonSpan *BtechDrawScreenPolygon(int16_t count,const int16_t *x,const in
             {polygonMinimumYVertexByteOffset=accepted*2;minimumY=vertexY;maximumXAtMinimumY=(uint16_t)screenPolygonX[source];}
             if ((int16_t)vertexY>(int16_t)maximumY || (vertexY==maximumY && screenPolygonX[source]<=(int16_t)minimumXAtMaximumY))
             {polygonMaximumYVertexByteOffset=accepted*2;maximumY=vertexY;minimumXAtMaximumY=(uint16_t)screenPolygonX[source];}
-            uint16_t vertexX=(uint16_t)screenPolygonX[source];polygonPreviousVertexX=vertexX;
+            uint16_t vertexX=screenPolygonX[source];polygonPreviousVertexX=vertexX;
             polygonWorkX[accepted++]=(int16_t)vertexX;
         }
         if (!source) break;
@@ -70,12 +70,12 @@ BtechPolygonSpan *BtechDrawScreenPolygon(int16_t count,const int16_t *x,const in
     polygonVertexCount=accepted;
     uint16_t minimum=polygonMinimumYVertexByteOffset/2,next=minimum+1;
     if (next>=accepted) next=0;
-    uint16_t nextNumerator=(uint16_t)(polygonWorkX[next]-polygonWorkX[minimum]);
-    uint16_t nextDenominator=(uint16_t)(polygonWorkY[next]-polygonWorkY[minimum]);
+    uint16_t nextNumerator=polygonWorkX[next]-polygonWorkX[minimum];
+    uint16_t nextDenominator=polygonWorkY[next]-polygonWorkY[minimum];
     if (!nextDenominator) {nextDenominator=1;nextNumerator=(int16_t)nextNumerator<0?0x8001:0x7FFF;}
     uint16_t previous=minimum?minimum-1:accepted-1;
-    uint16_t previousNumerator=(uint16_t)(polygonWorkX[previous]-polygonWorkX[minimum]);
-    uint16_t previousDenominator=(uint16_t)(polygonWorkY[previous]-polygonWorkY[minimum]);
+    uint16_t previousNumerator=polygonWorkX[previous]-polygonWorkX[minimum];
+    uint16_t previousDenominator=polygonWorkY[previous]-polygonWorkY[minimum];
     if (!previousDenominator) {previousDenominator=1;previousNumerator=(int16_t)previousNumerator<0?0x8001:0x7FFF;}
     bool reverseWinding;
     if ((int16_t)previousNumerator>=0 && (int16_t)nextNumerator<=0) reverseWinding=true;
@@ -84,7 +84,7 @@ BtechPolygonSpan *BtechDrawScreenPolygon(int16_t count,const int16_t *x,const in
     {
         if ((int16_t)previousNumerator<0)
         {
-            uint16_t saved=(uint16_t)(0-nextNumerator);nextNumerator=(uint16_t)(0-previousNumerator);previousNumerator=saved;
+            uint16_t saved=0-nextNumerator;nextNumerator=(uint16_t)(0-previousNumerator);previousNumerator=saved;
             saved=nextDenominator;nextDenominator=previousDenominator;previousDenominator=saved;
         }
         uint16_t previousQuotient=previousNumerator/previousDenominator,previousRemainder=previousNumerator%previousDenominator;
@@ -92,8 +92,8 @@ BtechPolygonSpan *BtechDrawScreenPolygon(int16_t count,const int16_t *x,const in
         reverseWinding=nextQuotient<previousQuotient;
         if (nextQuotient==previousQuotient)
         {
-            uint16_t nextFraction=(uint16_t)(((uint32_t)nextRemainder<<16)/nextDenominator);
-            uint16_t previousFraction=(uint16_t)(((uint32_t)previousRemainder<<16)/previousDenominator);
+            uint16_t nextFraction=((uint32_t)nextRemainder<<16)/nextDenominator;
+            uint16_t previousFraction=((uint32_t)previousRemainder<<16)/previousDenominator;
             reverseWinding=nextFraction<previousFraction;
         }
     }
@@ -119,7 +119,7 @@ BtechPolygonSpan *BtechDrawScreenPolygon(int16_t count,const int16_t *x,const in
         {
             if (chainDestination>=COMBAT_POLYGON_VERTEX_WORDS) abort();
             polygonWorkX[chainDestination]=screenPolygonX[source];
-            uint16_t vertexY=(uint16_t)screenPolygonY[source];polygonWorkY[chainDestination++]=(int16_t)vertexY;
+            uint16_t vertexY=screenPolygonY[source];polygonWorkY[chainDestination++]=(int16_t)vertexY;
             if (chain?(int16_t)vertexY<=(int16_t)minimumY:(int16_t)vertexY>=(int16_t)maximumY) break;
             if (++source>=accepted) source=0;
         }
@@ -141,7 +141,7 @@ BtechPolygonSpan *BtechDrawScreenPolygon(int16_t count,const int16_t *x,const in
         if (chainOffset+1>=COMBAT_POLYGON_VERTEX_WORDS) abort();
         int16_t firstX=polygonWorkX[chainOffset],secondX=polygonWorkX[chainOffset+1];
         int16_t firstY=polygonWorkY[chainOffset],secondY=polygonWorkY[chainOffset+1];
-        int16_t deltaX=(int16_t)(uint16_t)(firstX-secondX),deltaY=(int16_t)(uint16_t)(firstY-secondY);
+        int16_t deltaX=(int16_t)(firstX-secondX),deltaY=(int16_t)(firstY-secondY);
         uint16_t magnitudeX=deltaX<0?(uint16_t)(0-(uint16_t)deltaX):(uint16_t)deltaX;
         uint16_t magnitudeY=deltaY<0?(uint16_t)(0-(uint16_t)deltaY):(uint16_t)deltaY;
         if (!magnitudeX) BtechAccumulateVerticalPolygonEdge(firstY,secondX,secondY);

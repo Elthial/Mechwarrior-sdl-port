@@ -31,16 +31,16 @@ uint8_t BtechProjectPositionToOrderMap(const BtechPosition3D *position,int16_t *
     uint32_t relative=position->positionA-orderMapCameraObject->object.prefix.position.positionA;
     uint16_t scaled=BtechShiftSignedDwordRightLow(relative,(uint16_t)(orderMapScaleShifts[orderMapScaleIndex]-7));
     BtechCameraContext *viewport=orderMapCameraContext;
-    uint16_t midpoint=(uint16_t)((uint16_t)viewport->clipMinimumA+(uint16_t)viewport->clipMaximumA);
+    uint16_t midpoint=(uint16_t)viewport->clipMinimumA+(uint16_t)viewport->clipMaximumA;
     midpoint=(midpoint>>1)|(midpoint&0x8000);
-    int16_t x=(int16_t)(uint16_t)(scaled+midpoint);
+    int16_t x=scaled+midpoint;
     if (x<=viewport->clipMinimumA || x>=viewport->clipMaximumA) return 0;
     relative=orderMapCameraObject->object.prefix.position.positionB-position->positionB;
     scaled=BtechShiftSignedDwordRightLow(relative,(uint16_t)(orderMapScaleShifts[orderMapScaleIndex]-7));
     viewport=orderMapCameraContext;
     midpoint=(uint16_t)((uint16_t)viewport->clipMinimumB+(uint16_t)viewport->clipMaximumB);
     midpoint=(midpoint>>1)|(midpoint&0x8000);
-    int16_t y=(int16_t)(uint16_t)(scaled+midpoint);
+    int16_t y=scaled+midpoint;
     if (y<=viewport->clipMinimumB || y>=viewport->clipMaximumB) return 0;
     *screenX=x;*screenY=y;
     return 1;
@@ -53,7 +53,7 @@ void BtechDrawThreeByThreeMarker(int16_t x,int16_t y,uint16_t colour,uint16_t st
     for (uint16_t column=0;column<ORDER_MAP_MARKER_WIDTH;++column)
         for (uint16_t row=0;row<ORDER_MAP_MARKER_WIDTH;++row)
             if (orderMapMarkerMasks[style][column][row])
-                BtechWriteClippedPixel((int16_t)(uint16_t)(x+column-1),(int16_t)(uint16_t)(y+row-1),colour);
+                BtechWriteClippedPixel((int16_t)(x+column-1),(int16_t)(y+row-1),colour);
 }
 
 /*17FB:0457. Side1 chooses remembered positions; side0 chooses numbered
@@ -107,19 +107,19 @@ void BtechDrawLanceMapRetreatBoundaries(void)
     if (!firstVisible || !secondVisible) return;
     clipMinimumY=top;clipMaximumY=bottom;clipMinimumX=left;clipMaximumX=right;
     screenPolygonNeedsClip=true;
-    int16_t phase=(int16_t)((combatTickCounter&7)-4);
+    int16_t phase=(combatTickCounter&7)-4;
     if (combatLandscapeIndex>=COMBAT_LANDSCAPES || hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES) abort();
     const BtechLandscapeCameraColourRow *colours=&landscapeCameraColourRows[hudColourSchemeIndex][combatLandscapeIndex];
     drawFillColour=(uint8_t)((retreatMask&1)?colours->mapRetreatBoundaryColour:colours->mapBoundaryColour);
-    for (int16_t x=(int16_t)(uint16_t)(left+phase);x<right;x=(int16_t)(uint16_t)(x+8))
-        BtechDrawClippedLine(x,top,(int16_t)(uint16_t)(x+4),top);
+    for (int16_t x=left+phase;x<right;x=(int16_t)(x+8))
+        BtechDrawClippedLine(x,top,(int16_t)(x+4),top);
     drawFillColour=(uint8_t)((retreatMask&2)?colours->mapRetreatBoundaryColour:colours->mapBoundaryColour);
-    for (int16_t x=(int16_t)(uint16_t)(right-phase);x>left;x=(int16_t)(uint16_t)(x-8))
-        BtechDrawClippedLine(x,bottom,(int16_t)(uint16_t)(x-4),bottom);
+    for (int16_t x=right-phase;x>left;x=(int16_t)(x-8))
+        BtechDrawClippedLine(x,bottom,(int16_t)(x-4),bottom);
     drawFillColour=(uint8_t)((retreatMask&8)?colours->mapRetreatBoundaryColour:colours->mapBoundaryColour);
-    for (int16_t y=(int16_t)(uint16_t)(top+phase-5);y<bottom;y=(int16_t)(uint16_t)(y+8))
-        BtechDrawClippedLine(right,y,right,(int16_t)(uint16_t)(y+4));
+    for (int16_t y=top+phase-5;y<bottom;y=(int16_t)(y+8))
+        BtechDrawClippedLine(right,y,right,(int16_t)(y+4));
     drawFillColour=(uint8_t)((retreatMask&4)?colours->mapRetreatBoundaryColour:colours->mapBoundaryColour);
-    for (int16_t y=(int16_t)(uint16_t)(bottom-phase+5);y>top;y=(int16_t)(uint16_t)(y-8))
-        BtechDrawClippedLine(left,y,left,(int16_t)(uint16_t)(y-4));
+    for (int16_t y=bottom-phase+5;y>top;y=(int16_t)(y-8))
+        BtechDrawClippedLine(left,y,left,(int16_t)(y-4));
 }

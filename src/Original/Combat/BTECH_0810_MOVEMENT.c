@@ -40,8 +40,8 @@ uint16_t BtechResolveUnitContactWithSpecialTarget(uint16_t unitSlot)
         sideCompletionFlags[side]=1;
     else
     {
-        uint16_t product=(uint16_t)((int32_t)(int16_t)mech->movementReferenceScale*(int16_t)chassis->tonnage);
-        int16_t damage=(int16_t)((product>>CONTACT_DAMAGE_PRODUCT_SHIFT)|(product&0x8000?0xFF80:0));
+        uint16_t product=(int32_t)(int16_t)mech->movementReferenceScale*(int16_t)chassis->tonnage;
+        int16_t damage=(product>>CONTACT_DAMAGE_PRODUCT_SHIFT)|(product&0x8000?0xFF80:0);
         BtechApplyArmorAndInternalDamage(unitSlot,COMBAT_ARMOR_CENTER_TORSO,damage);
         BtechApplyArmorAndInternalDamage(unitSlot,COMBAT_ARMOR_LEFT_LEG,damage);
         BtechApplyArmorAndInternalDamage(unitSlot,COMBAT_ARMOR_RIGHT_LEG,damage);
@@ -66,7 +66,7 @@ uint8_t BtechTestUnitMovementBoundary(uint16_t unitSlot)
                 classify=1;
                 for (uint16_t axis=0;axis<2;++axis)
                 {
-                    uint32_t magnitude=(uint32_t)activeUnitControl->trackedPosition[axis];
+                    uint32_t magnitude=activeUnitControl->trackedPosition[axis];
                     if (magnitude==0x8000) magnitude=0x7FFF;else if ((int32_t)magnitude<0) magnitude=0-magnitude;
                     uint16_t limit=axis?COMBAT_BOUNDARY_LIMIT_B:COMBAT_BOUNDARY_LIMIT_A;
                     if ((int16_t)(magnitude>>16)>0 || (!(magnitude>>16) && (uint16_t)magnitude>=limit)) {classify=0;break;}
@@ -113,67 +113,67 @@ void BtechApplyUnitCollisionDamage(uint16_t movingSlot,uint16_t otherSlot)
     BtechUnitBinding *moving=&unitBindings[movingSlot],*other=&unitBindings[otherSlot];
     if (!moving->mech || !other->mech || !moving->positionedLeftLeg || !other->positionedLeftLeg
         || moving->mech->templateIndex>=COMBAT_MECH_TEMPLATES || other->mech->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
-    int16_t movingMass=(int16_t)mechTemplates[moving->mech->templateIndex].tonnage;
-    int16_t otherMass=(int16_t)mechTemplates[other->mech->templateIndex].tonnage;
-    int16_t movingSquared=(int16_t)(uint16_t)((int32_t)movingMass*movingMass);
-    int16_t otherSquared=(int16_t)(uint16_t)((int32_t)otherMass*otherMass);
+    int16_t movingMass=mechTemplates[moving->mech->templateIndex].tonnage;
+    int16_t otherMass=mechTemplates[other->mech->templateIndex].tonnage;
+    int16_t movingSquared=(int32_t)movingMass*movingMass;
+    int16_t otherSquared=(int32_t)otherMass*otherMass;
     int16_t movingSpeed=moving->positionedLeftLeg->forwardStepScale;
     int16_t otherSpeed=other->positionedLeftLeg->forwardStepScale;
-    uint32_t movingWeight=(uint32_t)(int32_t)(int16_t)(uint16_t)((int32_t)movingSpeed*movingSquared);
-    uint32_t otherWeight=(uint32_t)(int32_t)(int16_t)(uint16_t)((int32_t)otherSpeed*otherSquared);
-    int16_t headingDifference=(int16_t)(uint16_t)(moving->positionedLeftLeg->object.prefix.orientationC
-        -other->positionedLeftLeg->object.prefix.orientationC);
+    uint32_t movingWeight=(int16_t)((int32_t)movingSpeed*movingSquared);
+    uint32_t otherWeight=(int16_t)((int32_t)otherSpeed*otherSquared);
+    int16_t headingDifference=moving->positionedLeftLeg->object.prefix.orientationC
+        -other->positionedLeftLeg->object.prefix.orientationC;
     int16_t absoluteHeading=headingDifference==INT16_MIN?INT16_MAX:headingDifference<0?-headingDifference:headingDifference;
     if (absoluteHeading>CONTACT_HEAD_ON_ANGLE)
     {
         int16_t damage=(int16_t)BtechShiftSignedDwordRight(movingWeight,CONTACT_WEIGHT_SHIFT);
         BtechApplyArmorAndInternalDamage(otherSlot,COMBAT_ARMOR_CENTER_TORSO,damage);
-        BtechApplyArmorAndInternalDamage(otherSlot,COMBAT_ARMOR_LEFT_LEG,damage/2);
-        BtechApplyArmorAndInternalDamage(otherSlot,COMBAT_ARMOR_RIGHT_LEG,damage/2);
+        BtechApplyArmorAndInternalDamage(otherSlot,COMBAT_ARMOR_LEFT_LEG,damage/CONTACT_LIMB_DAMAGE_DIVISOR);
+        BtechApplyArmorAndInternalDamage(otherSlot,COMBAT_ARMOR_RIGHT_LEG,damage/CONTACT_LIMB_DAMAGE_DIVISOR);
         damage=(int16_t)BtechShiftSignedDwordRight(otherWeight,CONTACT_WEIGHT_SHIFT);
         BtechApplyArmorAndInternalDamage(movingSlot,COMBAT_ARMOR_CENTER_TORSO,damage);
-        BtechApplyArmorAndInternalDamage(movingSlot,COMBAT_ARMOR_LEFT_LEG,damage/2);
-        BtechApplyArmorAndInternalDamage(movingSlot,COMBAT_ARMOR_RIGHT_LEG,damage/2);
+        BtechApplyArmorAndInternalDamage(movingSlot,COMBAT_ARMOR_LEFT_LEG,damage/CONTACT_LIMB_DAMAGE_DIVISOR);
+        BtechApplyArmorAndInternalDamage(movingSlot,COMBAT_ARMOR_RIGHT_LEG,damage/CONTACT_LIMB_DAMAGE_DIVISOR);
         BtechClearObjectMotionTail(other->positionedLeftLeg); /* Reload binding after damage. */
         uint32_t difference=movingWeight-otherWeight;
-        int16_t threshold=unitControls[otherSlot].combatValueOrBoundaryCode==-1?CONTACT_DISABLED_FALL_THRESHOLD:CONTACT_FALL_THRESHOLD;
+        int16_t threshold=unitControls[otherSlot].combatValueOrBoundaryCode==COMBAT_MECH_DISABLED_VALUE?CONTACT_DISABLED_FALL_THRESHOLD:CONTACT_FALL_THRESHOLD;
         if ((int32_t)difference>0
-            && (int32_t)BtechDivideSignedDword(difference,(uint32_t)(int32_t)otherSquared)>threshold)
+            && (int32_t)BtechDivideSignedDword(difference,(uint32_t)otherSquared)>threshold)
         {unitControls[otherSlot].animationRequestFlags|=ANIMATION_REQUEST_FALL_POSE;return;}
         if ((int32_t)difference<0
-            && (int32_t)BtechDivideSignedDword(0-difference,(uint32_t)(int32_t)movingSquared)>CONTACT_FALL_THRESHOLD)
+            && (int32_t)BtechDivideSignedDword(0-difference,(uint32_t)movingSquared)>CONTACT_FALL_THRESHOLD)
             unitControls[movingSlot].animationRequestFlags|=ANIMATION_REQUEST_FALL_POSE;
         return;
     }
     int16_t damage;
     if (absoluteHeading<CONTACT_FOLLOWING_ANGLE)
     {
-        int16_t relativeSpeed=(int16_t)(uint16_t)((uint16_t)movingSpeed-(uint16_t)otherSpeed);
-        uint32_t relativeWeight=(uint32_t)(int32_t)(int16_t)(uint16_t)((int32_t)relativeSpeed*movingSquared);
+        int16_t relativeSpeed=(uint16_t)movingSpeed-(uint16_t)otherSpeed;
+        uint32_t relativeWeight=(int16_t)((int32_t)relativeSpeed*movingSquared);
         damage=(int16_t)BtechShiftSignedDwordRight(relativeWeight,CONTACT_WEIGHT_SHIFT);
         BtechApplyArmorAndInternalDamage(otherSlot,COMBAT_ARMOR_REAR_CENTER_TORSO,damage);
-        BtechApplyArmorAndInternalDamage(otherSlot,COMBAT_ARMOR_LEFT_LEG,damage/2);
-        BtechApplyArmorAndInternalDamage(otherSlot,COMBAT_ARMOR_RIGHT_LEG,damage/2);
+        BtechApplyArmorAndInternalDamage(otherSlot,COMBAT_ARMOR_LEFT_LEG,damage/CONTACT_LIMB_DAMAGE_DIVISOR);
+        BtechApplyArmorAndInternalDamage(otherSlot,COMBAT_ARMOR_RIGHT_LEG,damage/CONTACT_LIMB_DAMAGE_DIVISOR);
     }
     else
     {
         uint16_t side=headingDifference>0?1:0;
         damage=(int16_t)BtechShiftSignedDwordRight(movingWeight,CONTACT_WEIGHT_SHIFT);
         BtechApplyArmorAndInternalDamage(otherSlot,(int16_t)(side+COMBAT_ARMOR_LEFT_TORSO),damage);
-        BtechApplyArmorAndInternalDamage(otherSlot,(int16_t)side,damage/2);
-        BtechApplyArmorAndInternalDamage(otherSlot,(int16_t)(side+COMBAT_ARMOR_LEFT_LEG),damage/2);
+        BtechApplyArmorAndInternalDamage(otherSlot,(int16_t)side,damage/CONTACT_LIMB_DAMAGE_DIVISOR);
+        BtechApplyArmorAndInternalDamage(otherSlot,(int16_t)(side+COMBAT_ARMOR_LEFT_LEG),damage/CONTACT_LIMB_DAMAGE_DIVISOR);
     }
-    damage=(int16_t)(((uint16_t)damage>>1)|((uint16_t)damage&0x8000));
+    damage=(int16_t)(((uint16_t)damage>>CONTACT_SELF_DAMAGE_SHIFT)|((uint16_t)damage&0x8000));
     BtechApplyArmorAndInternalDamage(movingSlot,COMBAT_ARMOR_CENTER_TORSO,damage);
     if (absoluteHeading<CONTACT_FOLLOWING_ANGLE)
     {
-        BtechApplyArmorAndInternalDamage(movingSlot,COMBAT_ARMOR_LEFT_LEG,damage/2);
-        BtechApplyArmorAndInternalDamage(movingSlot,COMBAT_ARMOR_RIGHT_LEG,damage/2);
+        BtechApplyArmorAndInternalDamage(movingSlot,COMBAT_ARMOR_LEFT_LEG,damage/CONTACT_LIMB_DAMAGE_DIVISOR);
+        BtechApplyArmorAndInternalDamage(movingSlot,COMBAT_ARMOR_RIGHT_LEG,damage/CONTACT_LIMB_DAMAGE_DIVISOR);
     }
     else
     {
-        BtechApplyArmorAndInternalDamage(movingSlot,COMBAT_ARMOR_RIGHT_LEG,damage/2);
-        BtechApplyArmorAndInternalDamage(movingSlot,COMBAT_ARMOR_LEFT_LEG,damage/2);
+        BtechApplyArmorAndInternalDamage(movingSlot,COMBAT_ARMOR_RIGHT_LEG,damage/CONTACT_LIMB_DAMAGE_DIVISOR);
+        BtechApplyArmorAndInternalDamage(movingSlot,COMBAT_ARMOR_LEFT_LEG,damage/CONTACT_LIMB_DAMAGE_DIVISOR);
     }
 }
 
@@ -194,16 +194,16 @@ void BtechUpdatePlayerMechMotion(void)
         if (BtechQueryWorldSurface(&body->surfaceQuery,&pose->position,selectedWorldObjects,(int16_t)selectedObjectCount))
             ground=body->surfaceQuery.surfacePositionC;
         uint16_t scale=playerMechTemplate->displayScale;
-        int16_t halfScale=(int16_t)((scale>>1)|(scale&0x8000));
-        uint32_t footHeight=pose->position.positionC-(uint32_t)(int32_t)halfScale;
+        int16_t halfScale=(scale>>1)|(scale&0x8000);
+        uint32_t footHeight=pose->position.positionC-(uint32_t)halfScale;
         if ((int32_t)footHeight<=(int32_t)ground)
         {
             scale=playerMechTemplate->displayScale;halfScale=(int16_t)((scale>>1)|(scale&0x8000));
-            pose->position.positionC=ground+(uint32_t)(int32_t)halfScale;
+            pose->position.positionC=ground+(uint32_t)halfScale;
             if (body->positionSteps[2]<PLAYER_HARD_LANDING_STEP)
             {
-                BtechApplyArmorAndInternalDamage(0,COMBAT_ARMOR_LEFT_LEG,(int16_t)(uint16_t)(BtechRandomBelowBound(PLAYER_LANDING_DAMAGE_BOUND)+PLAYER_LANDING_DAMAGE_BASE));
-                BtechApplyArmorAndInternalDamage(0,COMBAT_ARMOR_RIGHT_LEG,(int16_t)(uint16_t)(BtechRandomBelowBound(PLAYER_LANDING_DAMAGE_BOUND)+PLAYER_LANDING_DAMAGE_BASE));
+                BtechApplyArmorAndInternalDamage(0,COMBAT_ARMOR_LEFT_LEG,(int16_t)(BtechRandomBelowBound(PLAYER_LANDING_DAMAGE_BOUND)+PLAYER_LANDING_DAMAGE_BASE));
+                BtechApplyArmorAndInternalDamage(0,COMBAT_ARMOR_RIGHT_LEG,(int16_t)(BtechRandomBelowBound(PLAYER_LANDING_DAMAGE_BOUND)+PLAYER_LANDING_DAMAGE_BASE));
                 unitControls[0].movementMode=MOVEMENT_MODE_FALLING;
                 unitControls[0].animationRequestFlags|=ANIMATION_REQUEST_FALL_POSE;
             }
@@ -249,7 +249,7 @@ void BtechUpdatePlayerMechMotion(void)
             else
             {
                 uint16_t scale=playerMechTemplate->displayScale;
-                pose->position.positionC+=(uint32_t)(int32_t)(int16_t)((scale>>1)|(scale&0x8000));
+                pose->position.positionC+=(uint32_t)(int16_t)((scale>>1)|(scale&0x8000));
                 playerMechState->doubleCoolingFlag=surfaceClass==SURFACE_DOUBLE_COOLING;
             }
         }

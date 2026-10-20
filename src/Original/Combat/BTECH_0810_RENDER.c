@@ -32,7 +32,7 @@ void BtechRenderObjectList(BtechCameraContext *camera,BtechWorldObjectPrefix *co
         resourceScaledExtent=object->prefix.resourceScaledValue;
         projectionRatio.ratio.numerator=resourceScaledExtent;
         projectionRatio.ratio.denominator=transformedViewPosition.positionB-resourceScaledExtent;
-        uint32_t nearDepth=(uint32_t)(int32_t)(int16_t)nearClipDepth;
+        uint32_t nearDepth=(int16_t)nearClipDepth;
         if ((int32_t)nearDepth>(int32_t)projectionRatio.ratio.denominator)
             projectionRatio.ratio.denominator=nearDepth;
         BtechProjectValueDepthRatio(&projectionRatio,&projectionVectorScratch.positionA);
@@ -113,7 +113,7 @@ void BtechRestoreSelectionPixels(BtechWorldObjectPrefix *const *objects)
 
 void BtechUpdateObjectSelectionPixels(BtechHeapWorldObject *object,uint16_t ordinal)
 {
-    int16_t resourceDelta=(int16_t)(uint16_t)(object->prefix.resourceId-otherShapeResourceBase);
+    int16_t resourceDelta=object->prefix.resourceId-otherShapeResourceBase;
     uint8_t retainCoveredEntry=(resourceDelta>=2 && resourceDelta<=7)
         || (resourceDelta>=10 && resourceDelta<=13) || (resourceDelta>=15 && resourceDelta<=22);
     if (targetSelectionProbeActive)
@@ -178,7 +178,7 @@ uint32_t BtechCaptureSelectionPixels(int16_t x,int16_t y)
     uint32_t pixels=0;
     for (uint16_t column=0;column<2;++column)
         for (uint16_t row=0;row<2;++row)
-            pixels|=(uint32_t)(uint8_t)BtechReadClippedPixel((int16_t)(uint16_t)(x+column),(int16_t)(uint16_t)(y+row))<<((column*2+row)*8);
+            pixels|=(uint32_t)(uint8_t)BtechReadClippedPixel((int16_t)(x+column),(int16_t)(y+row))<<((column*2+row)*8);
     return pixels;
 }
 
@@ -189,7 +189,7 @@ void BtechWriteSelectionPixels(int16_t x,int16_t y,const uint32_t *pixels)
     {
         for (uint16_t column=0;column<2;++column)
             for (uint16_t row=0;row<2;++row)
-                BtechWriteClippedPixel((int16_t)(uint16_t)(x+column),(int16_t)(uint16_t)(y+row),(uint8_t)(*pixels>>((column*2+row)*8)));
+                BtechWriteClippedPixel((int16_t)(x+column),(int16_t)(y+row),(uint8_t)(*pixels>>((column*2+row)*8)));
     }
     else BtechWriteClippedPixel(x,y,pixels==&selectionMarkerPixels?SELECTION_MARKER_COLOUR:(uint8_t)*pixels);
 }

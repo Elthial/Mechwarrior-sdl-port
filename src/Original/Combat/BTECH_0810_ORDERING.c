@@ -17,7 +17,7 @@ int16_t BtechSortWorldObjectsBySurfacePriority(BtechWorldObjectPrefix **objects,
     for (int16_t index=0;index<count;++index)
     {
         if (index>=COMBAT_WORLD_OBJECTS || !objects[index]) abort();
-        int16_t resource=(int16_t)objects[index]->resourceId;
+        int16_t resource=objects[index]->resourceId;
         uint8_t priority=0;
         if (resource>=0 && resource<(int16_t)surfaceResourceBank.resourceCount)
         {
@@ -106,7 +106,7 @@ void BtechChooseDistanceBucketShift(uint32_t maximum)
 uint16_t BtechGetDistanceBucket(uint32_t distance)
 {
     if ((int16_t)(distance>>16)>0 || (!(distance>>16) && (uint16_t)distance>=WORLD_DISTANCE_OVERFLOW_THRESHOLD)) return WORLD_DISTANCE_BUCKET_OVERFLOW;
-    uint8_t shifts=(uint8_t)distanceBucketShift;
+    uint8_t shifts=distanceBucketShift;
     while (shifts--) distance=(distance>>1)|(distance&UINT32_C(0x80000000));
     return (uint16_t)distance;
 }
@@ -140,7 +140,7 @@ void BtechBucketSortWorldObjectsByDistance(BtechWorldObjectPrefix **objects,int1
     for (uint16_t bucket=0;bucket<WORLD_DISTANCE_BUCKETS;++bucket)
     {
         uint16_t bucketCount=distanceBucketCounts[bucket];uint8_t swapped=1;
-        for (int16_t comparisons=(int16_t)(uint16_t)(bucketCount-1);(int16_t)bucketCount>1 && comparisons>0 && swapped;--comparisons)
+        for (int16_t comparisons=bucketCount-1;(int16_t)bucketCount>1 && comparisons>0 && swapped;--comparisons)
         {
             swapped=0;
             for (uint16_t index=0;index<(uint16_t)comparisons;++index)
@@ -208,12 +208,12 @@ uint16_t BtechOrderObjectsAroundSurfacePlanes(BtechCameraContext *camera,BtechWo
         const BtechSurfacePatch *patch=&surface->patches[query->patchIndex];
         const BtechSurfaceBoundary *boundary=&patch->boundaries[0];
         const BtechPosition3D *parent=&query->worldObject->position;
-        uint32_t a=(uint32_t)(int32_t)boundary->anchorA+parent->positionA-cameraPosition->positionA;
-        uint32_t b=(uint32_t)(int32_t)boundary->anchorB+parent->positionB-cameraPosition->positionB;
-        uint32_t c=(uint32_t)(int32_t)patch->baseHeight+parent->positionC-cameraPosition->positionC;
-        uint32_t product=(uint32_t)(int32_t)patch->orderingPlaneCoefficients[0]*a;
-        product+=(uint32_t)(int32_t)patch->orderingPlaneCoefficients[1]*b;
-        product+=(uint32_t)(int32_t)patch->orderingPlaneCoefficients[2]*c;
+        uint32_t a=(uint32_t)boundary->anchorA+parent->positionA-cameraPosition->positionA;
+        uint32_t b=(uint32_t)boundary->anchorB+parent->positionB-cameraPosition->positionB;
+        uint32_t c=(uint32_t)patch->baseHeight+parent->positionC-cameraPosition->positionC;
+        uint32_t product=(uint32_t)patch->orderingPlaneCoefficients[0]*a;
+        product+=(uint32_t)patch->orderingPlaneCoefficients[1]*b;
+        product+=(uint32_t)patch->orderingPlaneCoefficients[2]*c;
         if (product&UINT32_C(0x80000000)) ++insertion;
         memmove(&scratch->surfaceOrder.ordinaryIndices[insertion+1],&scratch->surfaceOrder.ordinaryIndices[insertion],ordinaryCount-insertion);
         scratch->surfaceOrder.ordinaryIndices[insertion]=scratch->surfaceOrder.tail.attachedIndices[remaining];++ordinaryCount;
@@ -228,7 +228,7 @@ uint16_t BtechOrderObjectsAroundSurfacePlanes(BtechCameraContext *camera,BtechWo
 void BtechSortFarWorldObjectsForView(BtechCameraContext *camera,BtechWorldObjectPrefix **objects,int16_t count,BtechObjectSortScratch *scratch)
 {
     uint32_t maximum=0;uint16_t distanceIndex=0;
-    for (int16_t index=(int16_t)surfacePriorityPrefixCount;index<count;++index)
+    for (int16_t index=surfacePriorityPrefixCount;index<count;++index)
     {
         if (index<0 || index>=COMBAT_WORLD_OBJECTS || !camera || !camera->viewObject || !objects[index]) abort();
         uint32_t distance=BtechApproximatePlanarDistance(&camera->viewObject->position,&objects[index]->position);
@@ -237,8 +237,8 @@ void BtechSortFarWorldObjectsForView(BtechCameraContext *camera,BtechWorldObject
     }
     if (surfacePriorityPrefixCount>COMBAT_WORLD_OBJECTS) abort();
     BtechWorldObjectPrefix **tail=objects+surfacePriorityPrefixCount;
-    int16_t tailCount=(int16_t)(uint16_t)(count-surfacePriorityPrefixCount);
+    int16_t tailCount=count-surfacePriorityPrefixCount;
     BtechBucketSortWorldObjectsByDistance(tail,tailCount,scratch->distances,maximum);
     (void)BtechOrderObjectsAroundSurfacePlanes(camera,objects+surfacePriorityPrefixCount,
-        (int16_t)(uint16_t)(count-surfacePriorityPrefixCount),scratch);
+        (int16_t)(count-surfacePriorityPrefixCount),scratch);
 }

@@ -68,12 +68,12 @@ void BtechResetAdlibOperatorLevels(void)
 /* 21CA:050E. Low-DWORD arithmetic and signed runtime divisions, not floating tuning. */
 uint32_t BtechCalculateAdlibRowBaseFrequency(uint16_t step,int16_t scale)
 {
-    int32_t scaleProduct=(int16_t)(uint16_t)((uint16_t)scale*100);
-    int32_t stepProduct=(int16_t)(uint16_t)(step*6);
+    int32_t scaleProduct=(int16_t)((uint16_t)scale*100);
+    int32_t stepProduct=(int16_t)(step*6);
     uint32_t numerator=(uint32_t)(scaleProduct+stepProduct)*(0x65BCu*2);
-    int32_t denominator=(int32_t)((uint32_t)scaleProduct*25);
+    int32_t denominator=(uint32_t)scaleProduct*25;
     if (!denominator || ((int32_t)numerator==INT32_MIN && denominator==-1)) abort();
-    uint32_t ratio=(uint32_t)((int32_t)numerator/denominator);
+    uint32_t ratio=(int32_t)numerator/denominator;
     numerator=(ratio<<14)*9;
     return (uint32_t)((int32_t)numerator/(0xB3*0x271));
 }
@@ -127,9 +127,9 @@ void BtechWriteAdlibOperatorLevel(uint16_t operatorIndex)
     if (operatorIndex>=BTECH_OPL_OPERATORS) abort();
     BtechAdlibOperator *parameters=&combatAdlibOperators[operatorIndex];
     uint16_t amplitude=0x3F-(parameters->attenuation&0x3F);
-    uint16_t product=(uint16_t)(amplitude*(uint16_t)(int16_t)(int8_t)combatAdlibLevels[operatorIndex]);
-    uint16_t attenuation=(uint16_t)(0x3F-(uint16_t)(product+(uint16_t)(product+0x7F))/0xFE);
-    uint16_t scale=(uint16_t)((uint16_t)(int16_t)(int8_t)parameters->keyScaleLevel<<6);
+    uint16_t product=amplitude*(uint16_t)(int8_t)combatAdlibLevels[operatorIndex];
+    uint16_t attenuation=0x3F-(uint16_t)(product+(uint16_t)(product+0x7F))/0xFE;
+    uint16_t scale=(uint16_t)(int8_t)parameters->keyScaleLevel<<6;
     BtechWriteAdlibRegister((int8_t)combatAdlibRegisterOffsets[operatorIndex]+0x40,attenuation|scale);
 }
 /* 21CA:09C8. */
@@ -140,7 +140,7 @@ void BtechWriteAdlibFeedbackAndConnection(uint16_t operatorIndex)
     if (operatorIndex>=BTECH_OPL_OPERATORS) abort();
     if (combatAdlibCarrierFlags[operatorIndex]) return;
     BtechAdlibOperator *parameters=&combatAdlibOperators[operatorIndex];
-    uint16_t feedback=(uint16_t)((uint16_t)(int16_t)(int8_t)parameters->feedback<<1);
+    uint16_t feedback=(uint16_t)(int8_t)parameters->feedback<<1;
     feedback|=parameters->fmConnectionEnabled?0:1;
     BtechWriteAdlibRegister((int8_t)combatAdlibOperatorChannels[operatorIndex]+0xC0,feedback);
 }
@@ -149,7 +149,7 @@ void BtechWriteAdlibAttackDecay(uint16_t operatorIndex)
 {
     if (operatorIndex>=BTECH_OPL_OPERATORS) abort();
     BtechAdlibOperator *parameters=&combatAdlibOperators[operatorIndex];
-    uint16_t envelope=(uint16_t)((uint16_t)(int16_t)(int8_t)parameters->attack<<4)|(parameters->decay&0x0F);
+    uint16_t envelope=(uint16_t)((uint16_t)(int8_t)parameters->attack<<4)|(parameters->decay&0x0F);
     BtechWriteAdlibRegister((int8_t)combatAdlibRegisterOffsets[operatorIndex]+0x60,envelope);
 }
 /* 21CA:0A7C. */
@@ -157,7 +157,7 @@ void BtechWriteAdlibSustainRelease(uint16_t operatorIndex)
 {
     if (operatorIndex>=BTECH_OPL_OPERATORS) abort();
     BtechAdlibOperator *parameters=&combatAdlibOperators[operatorIndex];
-    uint16_t envelope=(uint16_t)((uint16_t)(int16_t)(int8_t)parameters->sustainLevel<<4)|(parameters->release&0x0F);
+    uint16_t envelope=(uint16_t)((uint16_t)(int8_t)parameters->sustainLevel<<4)|(parameters->release&0x0F);
     BtechWriteAdlibRegister((int8_t)combatAdlibRegisterOffsets[operatorIndex]+0x80,envelope);
 }
 /* 21CA:0AC4. */
@@ -173,7 +173,7 @@ void BtechWriteAdlibOperatorModeMultiplier(uint16_t operatorIndex)
 void BtechWriteAdlibRhythmDepthState(void)
 {
     uint16_t rhythm=(combatAdlibTremolo?0x80:0)|(combatAdlibVibrato?0x40:0)|(combatAdlibRhythm?0x20:0);
-    rhythm|=(uint16_t)(int16_t)(int8_t)combatAdlibPercussionKeys;
+    rhythm|=(int8_t)combatAdlibPercussionKeys;
     BtechWriteAdlibRegister(BTECH_OPL_RHYTHM_REGISTER,rhythm);
 }
 /* 21CA:0BA0. */
@@ -196,7 +196,7 @@ void BtechSetAdlibChannelNoteAndKeyState(uint16_t channel,uint16_t note,uint16_t
     uint16_t frequency=combatAdlibFrequencyRows[channel][pitch];
     BtechWriteAdlibRegister(channel+BTECH_OPL_FREQUENCY_LOW,frequency);
     uint16_t key=keyOn?BTECH_OPL_KEY_ON:0;
-    uint16_t octave=(uint16_t)((uint16_t)(int16_t)(int8_t)combatAdlibOctaves[note]<<2);
+    uint16_t octave=(uint16_t)(int8_t)combatAdlibOctaves[note]<<2;
     BtechWriteAdlibRegister(channel+BTECH_OPL_FREQUENCY_HIGH,(uint16_t)(key+octave+((frequency>>8)&3)));
 }
 /* 21CA:0C88. */
@@ -230,14 +230,14 @@ void BtechSetAdlibMidiNote(uint16_t channel,int16_t note,uint16_t velocity)
         if ((int16_t)count<0) count=0;
         combatAdlibNoteReferences.bytes[channel*2]=(uint8_t)count;
         combatAdlibNoteReferences.bytes[channel*2+1]=(uint8_t)(count>>8);
-        if (!count) BtechSetAdlibChannelNoteAndKeyState(channel,(int16_t)(int8_t)combatAdlibNotes[channel],0);
+        if (!count) BtechSetAdlibChannelNoteAndKeyState(channel,(int8_t)combatAdlibNotes[channel],0);
         return;
     }
     if (note<0) return;
     if (channel<6 || !combatAdlibRhythm)
     {
-        note=(int16_t)(uint16_t)(note-12);
-        BtechSetAdlibChannelNoteAndKeyState(channel,(int16_t)(int8_t)combatAdlibNotes[channel],0);
+        note=(int16_t)(note-12);
+        BtechSetAdlibChannelNoteAndKeyState(channel,(int8_t)combatAdlibNotes[channel],0);
         BtechSetAdlibChannelNoteAndKeyState(channel,(uint16_t)note,1);
         uint16_t count=MwReadNativeWord(combatAdlibNoteReferences.bytes,channel*2)+1;
         combatAdlibNoteReferences.bytes[channel*2]=(uint8_t)count;
@@ -269,21 +269,21 @@ void BtechLoadAdlibChannelInstrument(uint16_t channel,const BtechAdlibWordInstru
     uint16_t firstWaveform=instrument->modulatorWaveform,secondWaveform=instrument->carrierWaveform;
     if (!combatAdlibRhythm || (int16_t)channel<BTECH_OPL_FIRST_RHYTHM_CHANNEL)
     {
-        uint16_t mapping=(uint16_t)(channel*2);
+        uint16_t mapping=channel*2;
         if (mapping>=sizeof(combatAdlibOperatorMapping)-1) abort();
-        BtechStoreAdlibInstrumentParameters((uint16_t)(int16_t)(int8_t)combatAdlibOperatorMapping[mapping],instrument->modulator,firstWaveform);
-        BtechStoreAdlibInstrumentParameters((uint16_t)(int16_t)(int8_t)combatAdlibOperatorMapping[mapping+1],instrument->carrier,secondWaveform);
+        BtechStoreAdlibInstrumentParameters((int8_t)combatAdlibOperatorMapping[mapping],instrument->modulator,firstWaveform);
+        BtechStoreAdlibInstrumentParameters((int8_t)combatAdlibOperatorMapping[mapping+1],instrument->carrier,secondWaveform);
     }
     else if (channel==BTECH_OPL_FIRST_RHYTHM_CHANNEL)
     {
-        BtechStoreAdlibInstrumentParameters((uint16_t)(int16_t)(int8_t)combatAdlibOperatorMapping[BTECH_OPL_BASS_DRUM_MAPPING],instrument->modulator,firstWaveform);
-        BtechStoreAdlibInstrumentParameters((uint16_t)(int16_t)(int8_t)combatAdlibOperatorMapping[BTECH_OPL_BASS_DRUM_MAPPING+1],instrument->carrier,secondWaveform);
+        BtechStoreAdlibInstrumentParameters((int8_t)combatAdlibOperatorMapping[BTECH_OPL_BASS_DRUM_MAPPING],instrument->modulator,firstWaveform);
+        BtechStoreAdlibInstrumentParameters((int8_t)combatAdlibOperatorMapping[BTECH_OPL_BASS_DRUM_MAPPING+1],instrument->carrier,secondWaveform);
     }
     else
     {
-        uint16_t mapping=(uint16_t)(BTECH_OPL_RHYTHM_MAPPING_START+channel*2);
+        uint16_t mapping=BTECH_OPL_RHYTHM_MAPPING_START+channel*2;
         if (mapping>=sizeof(combatAdlibOperatorMapping)) abort();
-        BtechStoreAdlibInstrumentParameters((uint16_t)(int16_t)(int8_t)combatAdlibOperatorMapping[mapping],instrument->modulator,firstWaveform);
+        BtechStoreAdlibInstrumentParameters((int8_t)combatAdlibOperatorMapping[mapping],instrument->modulator,firstWaveform);
     }
 }
 /* 21CA:01E6. Melodic and bass-drum volume uses the carrier; other drums use
@@ -294,7 +294,7 @@ void BtechSetAdlibChannelOperatorLevel(uint16_t channel,uint16_t level)
     if (!combatAdlibRhythm || (int16_t)channel<BTECH_OPL_FIRST_RHYTHM_CHANNEL) mapping=(uint16_t)(1+channel*2);
     else mapping=(uint16_t)(BTECH_OPL_RHYTHM_MAPPING_START+channel*2+(channel==BTECH_OPL_FIRST_RHYTHM_CHANNEL?1:0));
     if (mapping>=sizeof(combatAdlibOperatorMapping)) abort();
-    uint16_t operatorIndex=(uint16_t)(int16_t)(int8_t)combatAdlibOperatorMapping[mapping];
+    uint16_t operatorIndex=(int8_t)combatAdlibOperatorMapping[mapping];
     if (operatorIndex>=BTECH_OPL_OPERATORS) abort();
     if (level>BTECH_OPL_LEVEL_MAXIMUM) level=BTECH_OPL_LEVEL_MAXIMUM;
     combatAdlibLevels[operatorIndex]=(uint8_t)level;BtechWriteAdlibOperatorLevel(operatorIndex);
@@ -307,8 +307,8 @@ void BtechSetAdlibChannelPitchBend(uint16_t channel,uint16_t bend)
     if (bend>BTECH_OPL_BEND_MAXIMUM) bend=BTECH_OPL_BEND_MAXIMUM;
     BtechUpdateAdlibPitchBend(channel,bend);
     if (channel>=BTECH_OPL_CHANNELS) abort();
-    uint16_t key=(uint16_t)(int16_t)(int8_t)combatAdlibKeys[channel];
-    uint16_t note=(uint16_t)(int16_t)(int8_t)combatAdlibNotes[channel];
+    uint16_t key=(int8_t)combatAdlibKeys[channel];
+    uint16_t note=(int8_t)combatAdlibNotes[channel];
     BtechSetAdlibChannelNoteAndKeyState(channel,note,key);
 }
 /* 21CA:0406. This API deliberately does NOT use the note-on indexing contract:
@@ -318,7 +318,7 @@ void BtechStopAdlibMidiChannel(uint16_t channel)
     if (!combatAdlibRhythm || channel<BTECH_OPL_FIRST_RHYTHM_CHANNEL)
     {
         if (channel>=BTECH_OPL_CHANNELS) abort();
-        uint16_t note=(uint16_t)(int16_t)(int8_t)combatAdlibNotes[channel];
+        uint16_t note=(int8_t)combatAdlibNotes[channel];
         BtechSetAdlibChannelNoteAndKeyState((uint16_t)(channel-1),note,0);
     }
     else
@@ -332,7 +332,7 @@ void BtechStopAdlibMidiChannel(uint16_t channel)
  * WORD truncation before signed quotient/remainder and all publication order. */
 void BtechUpdateAdlibPitchBend(uint16_t channel,uint16_t bend)
 {
-    int16_t centered=(int16_t)(uint16_t)(bend-BTECH_OPL_BEND_CENTER);
+    int16_t centered=bend-BTECH_OPL_BEND_CENTER;
     int32_t scaled=(int32_t)centered*(int16_t)combatAdlibBendScale;
     if (channel>=BTECH_OPL_TUNING_CHANNELS) abort();
     if (scaled==combatAdlibCachedScaledBend)
@@ -340,13 +340,13 @@ void BtechUpdateAdlibPitchBend(uint16_t channel,uint16_t bend)
         combatAdlibFrequencyRows[channel]=combatAdlibCachedFrequencyRow;
         combatAdlibTransposes[channel]=combatAdlibCachedTranspose;return;
     }
-    int16_t steps=(int16_t)(uint16_t)(scaled/BTECH_OPL_BEND_CENTER);
+    int16_t steps=scaled/BTECH_OPL_BEND_CENTER;
     uint16_t transpose,remainder;
     if (steps<0)
     {
-        int16_t inverted=(int16_t)(uint16_t)(24-(uint16_t)steps);
+        int16_t inverted=24-(uint16_t)steps;
         transpose=(uint16_t)-(inverted/BTECH_OPL_BEND_STEPS_PER_NOTE);
-        int16_t magnitude=(int16_t)(uint16_t)((uint16_t)inverted-24);
+        int16_t magnitude=(uint16_t)inverted-24;
         remainder=(uint16_t)(magnitude%BTECH_OPL_BEND_STEPS_PER_NOTE);
         if (remainder) remainder=(uint16_t)(BTECH_OPL_BEND_STEPS_PER_NOTE-remainder);
     }

@@ -159,7 +159,7 @@ uint16_t BtechEmitArchiveByte(uint16_t value)
     }
     BtechArchiveDescriptor *archive=selectedArchive;
     uint8_t pendingEnd=archive->pendingEnd;
-    uint16_t pendingPair=(uint16_t)(pendingEnd|((uint16_t)archive->pendingRead<<8));
+    uint16_t pendingPair=pendingEnd|((uint16_t)archive->pendingRead<<8);
     ++pendingPair;
     archive->pendingEnd=(uint8_t)pendingPair;archive->pendingRead=(uint8_t)(pendingPair>>8);
     if (pendingEnd>=0x80) abort(); /* Native state-allocation overrun is not host memory. */
@@ -172,7 +172,7 @@ void BtechDeliverPendingArchiveBytes(void)
 {
     BtechArchiveDescriptor *archive=selectedArchive;
     uint16_t pendingRead=archive->pendingRead;
-    uint16_t delivered=(uint16_t)(archive->pendingEnd-pendingRead);
+    uint16_t delivered=archive->pendingEnd-pendingRead;
     if (archiveRemainingBytes<delivered)
     {delivered=archiveRemainingBytes;archive->pendingRead+=(uint8_t)delivered;}
     else {archive->pendingEnd=0;archive->pendingRead=0;}
@@ -349,7 +349,7 @@ extractCode:;
     uint16_t source=bitOffset>>3;
     uint8_t shift=(uint8_t)bitOffset&7;
     if (source>=sizeof(lzwPacketBytes)) abort();
-    uint16_t code=(uint16_t)((lzwPacketBitOffset&0xFF00)|lzwPacketBytes[source++]);
+    uint16_t code=(lzwPacketBitOffset&0xFF00)|lzwPacketBytes[source++];
     code>>=shift;
     uint16_t combined=code;
     shift=(uint8_t)(8-shift);remainingBits-=shift;

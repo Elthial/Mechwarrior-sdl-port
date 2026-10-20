@@ -16,6 +16,14 @@ and gameplay decisions rather than replacing them with a new engine.
   aliases, overlapping access and native numeric identities where required.
 - Preserve integer widths, signedness, wrap, truncation, RNG order, partial writes
   and call order. Do not rely on signed overflow or host pointer sizes.
+- Let typed declarations, assignments, returns and prototyped call arguments
+  perform their normal final conversions. Keep a signed-byte/word interpretation
+  when it is needed, without casting it again to the destination type. Avoid
+  repeated signed/unsigned cast chains and casts back to an already-known type.
+  Keep explicit conversions where an intermediate width or signed interpretation
+  affects a comparison, shift, division or multiplication. Signed movement and
+  damage budgets are not unsigned quantities; world coordinates and fixed-point
+  products can require 32 bits even when the original CPU was 16-bit.
 - Preserve meaningful game behaviour, not invalid memory reads. Missing targets,
   invalid resource sentinels, exhausted effect pools and map edges need explicit
   typed handling. Do not derive gameplay state from copyright text, executable

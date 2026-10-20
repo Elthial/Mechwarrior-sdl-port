@@ -9,7 +9,7 @@
 /*0810:491A. Endpoint effect first, then a shortened non-machine-gun beam. */
 void BtechBuildPlayerDirectShotGeometry(int16_t distance,const BtechWeaponMount *mount,uint8_t impactEffect)
 {
-    distance=(int16_t)(uint16_t)(distance-DIRECT_SHOT_ENDPOINT_MARGIN);
+    distance=(int16_t)(distance-DIRECT_SHOT_ENDPOINT_MARGIN);
     if (!playerUnitBinding || !playerUnitBinding->positionedLeftLeg || !playerPoseObject || !playerMechState) abort();
     BtechPosition3D origin=playerUnitBinding->positionedLeftLeg->object.prefix.position;
     const BtechWorldObjectPrefix *pose=&playerPoseObject->object.prefix;
@@ -50,13 +50,13 @@ void BtechBuildDirectionVectorFromOrientation(int16_t direction[3],const uint16_
     if (pitch|orientation[1])
     {
         int16_t cosine=(int16_t)BtechLookupCosine(pitch);
-        direction[0]=(int16_t)(uint16_t)BtechShiftSignedDwordRight((uint32_t)BtechMultiplySignedWords((int16_t)BtechLookupSine(orientation[2]),(int16_t)(uint16_t)(0-(uint16_t)cosine)),ORIENTATION_FRACTION_BITS);
-        direction[1]=(int16_t)(uint16_t)BtechShiftSignedDwordRight((uint32_t)BtechMultiplySignedWords((int16_t)BtechLookupCosine(orientation[2]),cosine),ORIENTATION_FRACTION_BITS);
+        direction[0]=(int16_t)BtechShiftSignedDwordRight((uint32_t)BtechMultiplySignedWords((int16_t)BtechLookupSine(orientation[2]),(int16_t)(0-(uint16_t)cosine)),ORIENTATION_FRACTION_BITS);
+        direction[1]=(int16_t)BtechShiftSignedDwordRight((uint32_t)BtechMultiplySignedWords((int16_t)BtechLookupCosine(orientation[2]),cosine),ORIENTATION_FRACTION_BITS);
         direction[2]=(int16_t)BtechLookupSine(orientation[0]);
     }
     else if (orientation[2])
     {
-        direction[0]=(int16_t)(uint16_t)(0-BtechLookupSine(orientation[2]));
+        direction[0]=(int16_t)(0-BtechLookupSine(orientation[2]));
         direction[1]=(int16_t)BtechLookupCosine(orientation[2]);direction[2]=0;
     }
     else {direction[1]=1<<ORIENTATION_FRACTION_BITS;direction[2]=0;direction[0]=0;}
@@ -82,9 +82,9 @@ void BtechBuildWeaponBeamGeometry(const BtechPosition3D *origin,const BtechPosit
         vertices[1][0]=(uint16_t)(endpoint->positionA-anchor.positionA);
         vertices[1][1]=(uint16_t)(endpoint->positionB-anchor.positionB);
         vertices[1][2]=(uint16_t)(endpoint->positionC-anchor.positionC);
-        uint16_t relativeA=(uint16_t)(origin->positionA-anchor.positionA);
-        uint16_t relativeB=(uint16_t)(origin->positionB-anchor.positionB);
-        uint16_t relativeC=(uint16_t)(origin->positionC-anchor.positionC);
+        uint16_t relativeA=origin->positionA-anchor.positionA;
+        uint16_t relativeB=origin->positionB-anchor.positionB;
+        uint16_t relativeC=origin->positionC-anchor.positionC;
         vertices[2][0]=relativeA;vertices[2][1]=relativeB;vertices[2][2]=relativeC-halfWidth;
         vertices[3][0]=relativeA;vertices[3][1]=relativeB;vertices[3][2]=relativeC+halfWidth;
         vertices[4][0]=relativeA+widthA;vertices[4][1]=relativeB+widthB;vertices[4][2]=relativeC;
@@ -139,10 +139,10 @@ void BtechRotateSignedWordPair(int16_t *componentA,int16_t *componentB,uint16_t 
     int16_t cosine=(int16_t)BtechLookupCosine(angle);
     uint32_t difference=(uint32_t)BtechMultiplySignedWords(*componentA,cosine)
         -(uint32_t)BtechMultiplySignedWords(*componentB,sine);
-    int16_t rotatedA=(int16_t)(uint16_t)BtechShiftSignedDwordRight(difference,ORIENTATION_FRACTION_BITS);
+    int16_t rotatedA=(int16_t)BtechShiftSignedDwordRight(difference,ORIENTATION_FRACTION_BITS);
     uint32_t sum=(uint32_t)BtechMultiplySignedWords(*componentA,sine)
         +(uint32_t)BtechMultiplySignedWords(*componentB,cosine);
-    int16_t rotatedB=(int16_t)(uint16_t)BtechShiftSignedDwordRight(sum,ORIENTATION_FRACTION_BITS);
+    int16_t rotatedB=(int16_t)BtechShiftSignedDwordRight(sum,ORIENTATION_FRACTION_BITS);
     *componentA=rotatedA;*componentB=rotatedB;
 }
 
@@ -167,8 +167,8 @@ BtechPosition3D *BtechGetUnitBodyReferencePosition(uint16_t unitSlot,int16_t ref
         heading+=binding->torso->object.prefix.orientationC;
     }
     BtechRotateSignedWordPair(&componentA,&componentB,heading);
-    bodyReferenceWorldPosition.positionA+=(uint32_t)(int32_t)componentA;
-    bodyReferenceWorldPosition.positionB+=(uint32_t)(int32_t)componentB;
-    bodyReferenceWorldPosition.positionC+=(uint32_t)(int32_t)reference->componentC;
+    bodyReferenceWorldPosition.positionA+=(uint32_t)componentA;
+    bodyReferenceWorldPosition.positionB+=(uint32_t)componentB;
+    bodyReferenceWorldPosition.positionC+=(uint32_t)reference->componentC;
     return &bodyReferenceWorldPosition;
 }

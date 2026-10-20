@@ -16,9 +16,9 @@ uint8_t BtechTestPatchBoundaryHalfPlanes(const BtechSurfacePatch *patch,uint16_t
     {
         const BtechSurfaceBoundary *boundary=&patch->boundaries[index];
         int16_t coefficientB=boundary->coefficientB;
-        int16_t differenceB=coefficientB?(int16_t)(uint16_t)(queryB-(uint16_t)boundary->anchorB):0;
+        int16_t differenceB=coefficientB?(int16_t)(queryB-(uint16_t)boundary->anchorB):0;
         int16_t coefficientA=boundary->coefficientA;
-        int16_t differenceA=coefficientA?(int16_t)(uint16_t)(queryA-(uint16_t)boundary->anchorA):0;
+        int16_t differenceA=coefficientA?(int16_t)(queryA-(uint16_t)boundary->anchorA):0;
         uint8_t positiveA=(coefficientA>0)==(differenceA>0);
         uint8_t positiveB=(coefficientB>0)==(differenceB>0);
         int32_t result;
@@ -44,9 +44,9 @@ uint16_t BtechEvaluateSurfacePatchHeight(const BtechSurfacePatch *patch,uint16_t
     const BtechSurfaceBoundary *boundary=&patch->heightBoundary;
     uint32_t products=0;
     if (boundary->coefficientA)
-        products=(uint32_t)BtechMultiplySignedWords(boundary->coefficientA,(int16_t)(uint16_t)((uint16_t)boundary->anchorA-queryA));
+        products=(uint32_t)BtechMultiplySignedWords(boundary->coefficientA,(int16_t)((uint16_t)boundary->anchorA-queryA));
     if (boundary->coefficientB)
-        products+=(uint32_t)BtechMultiplySignedWords(boundary->coefficientB,(int16_t)(uint16_t)((uint16_t)boundary->anchorB-queryB));
+        products+=(uint32_t)BtechMultiplySignedWords(boundary->coefficientB,(int16_t)((uint16_t)boundary->anchorB-queryB));
     uint16_t scaledHeight=products?(uint16_t)((products*patch->heightProductScale)>>16):0;
     return (uint16_t)((uint16_t)patch->baseHeight+scaledHeight);
 }
@@ -57,10 +57,10 @@ uint16_t BtechTestSurfacePatches(BtechSurfaceQueryResult *result,const BtechPosi
     const BtechSurfaceDefinition *surface,BtechWorldObjectPrefix *object,uint16_t cachedPatchFirst)
 {
     uint32_t relativeA=BtechShiftSignedDwordRight(position->positionA-object->position.positionA,(uint8_t)resourceScaleShift);
-    uint16_t queryA=(uint16_t)relativeA;
+    uint16_t queryA=relativeA;
     uint32_t magnitudeA=(int32_t)relativeA<0?0-relativeA:relativeA;
     uint32_t relativeB=BtechShiftSignedDwordRight(position->positionB-object->position.positionB,(uint8_t)resourceScaleShift);
-    uint16_t queryB=(uint16_t)relativeB;
+    uint16_t queryB=relativeB;
     uint32_t magnitudeB=(int32_t)relativeB<0?0-relativeB:relativeB;
     if ((int32_t)(int16_t)surface->extentA<(int32_t)magnitudeA
         || (int32_t)(int16_t)surface->extentB<(int32_t)magnitudeB) return 0;
@@ -97,7 +97,7 @@ uint16_t BtechTestSurfacePatches(BtechSurfaceQueryResult *result,const BtechPosi
     {
         if (!patch) abort();
         uint16_t height=BtechEvaluateSurfacePatchHeight(patch,queryA,queryB);
-        result->surfacePositionC=(uint32_t)(int32_t)(int16_t)height;
+        result->surfacePositionC=(int16_t)height;
         result->surfacePositionC=BtechShiftDwordLeft(result->surfacePositionC,(uint8_t)resourceScaleShift);
         result->surfacePositionC+=object->position.positionC;
     }
@@ -147,7 +147,7 @@ uint8_t BtechCalculateByteOrientationStep(uint16_t target,uint16_t current,uint1
     int16_t magnitude=difference<0?-difference:difference;
     int16_t stepLimit=(int8_t)(uint8_t)limit;
     if (magnitude>stepLimit) magnitude=stepLimit;
-    uint8_t step=(uint8_t)magnitude;
+    uint8_t step=magnitude;
     return difference<0?(uint8_t)(0x100-(int8_t)step):step;
 }
 
@@ -158,8 +158,8 @@ uint16_t BtechResolveGroundSurfaceAndSlope(BtechPooledWorldObject *object,int16_
 {
     BtechWorldObjectPrefix *pose=&object->object.prefix;
     uint8_t pitch=(uint8_t)(pose->orientationA>>8),roll=(uint8_t)(pose->orientationB>>8);
-    uint8_t heading=(uint8_t)(pose->orientationC>>8);
-    pose->position.positionC=(uint32_t)(int32_t)startingHeight;
+    uint8_t heading=pose->orientationC>>8;
+    pose->position.positionC=(uint32_t)startingHeight;
     uint8_t responseA=0,responseB=0;
     const BtechSurfaceDefinition *surface=NULL;
     if (BtechQueryWorldSurface(&object->surfaceQuery,&pose->position,objects,objectCount))
@@ -171,10 +171,10 @@ uint16_t BtechResolveGroundSurfaceAndSlope(BtechPooledWorldObject *object,int16_
             uint16_t patchIndex=object->surfaceQuery.patchIndex;
             if (patchIndex>=surface->patchCount || !surface->patches) abort();
             const BtechSurfacePatch *patch=&surface->patches[patchIndex];
-            uint8_t difference=(uint8_t)(patch->orientationResponseHeading-heading);
+            uint8_t difference=patch->orientationResponseHeading-heading;
             if (difference>=0x80) difference=(uint8_t)(0-difference);
-            uint16_t weight=(uint16_t)(SURFACE_RESPONSE_QUARTER_TURN-difference);
-            uint16_t product=(uint16_t)(weight*patch->orientationResponseMagnitude);
+            uint16_t weight=SURFACE_RESPONSE_QUARTER_TURN-difference;
+            uint16_t product=weight*patch->orientationResponseMagnitude;
             responseA=(uint8_t)(product>>SURFACE_RESPONSE_FRACTION_BITS);
             difference=(uint8_t)(patch->orientationResponseHeading-heading-SURFACE_RESPONSE_QUARTER_TURN);
             if (difference>=0x80) difference=(uint8_t)(0-difference);

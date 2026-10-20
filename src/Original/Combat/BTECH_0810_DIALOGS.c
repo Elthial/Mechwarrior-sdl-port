@@ -44,10 +44,10 @@ uint16_t BtechShowCapturedTwoLineDialog(const BtechDialogMessagePair *message)
         textForegroundColour=hudColourSchemeIndex?DIALOG_MONOCHROME_TEXT_COLOUR:DIALOG_TEXT_COLOUR;
         if (!promptBitmaps || !promptBitmaps->images || !promptBitmaps->imageCount) abort();
         BtechDrawBitmap(&promptBitmaps->images[0],DIALOG_LEFT,DIALOG_TOP);
-        uint16_t textHalfWidth=(uint16_t)(strlen(message->firstText)*DIALOG_HALF_CHARACTER_WIDTH);
-        BtechDrawNearText(message->firstText,(int16_t)(uint16_t)(DIALOG_CENTRE_X-textHalfWidth),DIALOG_FIRST_TEXT_Y);
+        uint16_t textHalfWidth=strlen(message->firstText)*DIALOG_HALF_CHARACTER_WIDTH;
+        BtechDrawNearText(message->firstText,(int16_t)(DIALOG_CENTRE_X-textHalfWidth),DIALOG_FIRST_TEXT_Y);
         textHalfWidth=(uint16_t)(strlen(message->secondText)*DIALOG_HALF_CHARACTER_WIDTH);
-        BtechDrawNearText(message->secondText,(int16_t)(uint16_t)(DIALOG_CENTRE_X-textHalfWidth),DIALOG_SECOND_TEXT_Y);
+        BtechDrawNearText(message->secondText,(int16_t)(DIALOG_CENTRE_X-textHalfWidth),DIALOG_SECOND_TEXT_Y);
         textTransparentBackground=false;
     }
     BtechWaitForCombatInputReleaseThenPress();
@@ -63,12 +63,12 @@ uint16_t BtechShowCapturedTwoLineDialog(const BtechDialogMessagePair *message)
  * are NOT saved by the original. Keep these independent native owners. */
 void BtechSaveDrawingState(void)
 {
-    savedPolygonFilled=(uint16_t)(int16_t)(int8_t)drawPolygonFilled;
-    savedPolygonClip=(uint16_t)(int16_t)(int8_t)screenPolygonNeedsClip;
-    savedTextBackground=(uint16_t)(int16_t)(int8_t)textBackgroundColour;
-    savedTextForeground=(uint16_t)(int16_t)(int8_t)textForegroundColour;
-    savedFillColour=(uint16_t)(int16_t)(int8_t)drawFillColour;
-    savedLineColour=(uint16_t)(int16_t)(int8_t)drawLineColour;
+    savedPolygonFilled=(int8_t)drawPolygonFilled;
+    savedPolygonClip=(int8_t)screenPolygonNeedsClip;
+    savedTextBackground=(int8_t)textBackgroundColour;
+    savedTextForeground=(int8_t)textForegroundColour;
+    savedFillColour=(int8_t)drawFillColour;
+    savedLineColour=(int8_t)drawLineColour;
     savedCopySourcePage=copySourcePageSelector;savedDrawPage=drawPageSelector;
 }
 

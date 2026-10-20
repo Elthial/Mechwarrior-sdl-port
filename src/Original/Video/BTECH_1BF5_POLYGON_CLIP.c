@@ -38,14 +38,14 @@ void BtechClipScreenPolygonToViewport(void)
                     if (output>=COMBAT_POLYGON_VERTEX_WORDS) abort();
                     int16_t boundary=outside&minimumBit?minimum:maximum;
                     outPlane[output]=boundary; /* Native store precedes IDIV, even on a fault. */
-                    int16_t distance=(int16_t)(uint16_t)(boundary-plane[base]);
-                    int16_t difference=(int16_t)(uint16_t)(other[next]-other[base]);
+                    int16_t distance=boundary-plane[base];
+                    int16_t difference=other[next]-other[base];
                     int32_t product=(int32_t)difference*distance;
-                    int16_t divisor=(int16_t)(uint16_t)(plane[next]-plane[base]);
+                    int16_t divisor=plane[next]-plane[base];
                     if (!divisor || (product==INT32_MIN && divisor==-1)) abort();
                     int32_t quotient=product/divisor;
                     if (quotient<INT16_MIN || quotient>INT16_MAX) abort();
-                    outOther[output]=(int16_t)(uint16_t)(quotient+other[base]);++output;
+                    outOther[output]=(int16_t)(quotient+other[base]);++output;
                 }
                 if (!currentOutside)
                 {

@@ -10,7 +10,7 @@ uint32_t MwCalculateUnitConditionPrice(uint8_t condition, uint16_t unitKind, uin
     uint8_t priceMultiplier = unitPriceTierMultipliers[*marketTier];
     priceMultiplier--;
     uint16_t conditionFactor = priceMultiplier * condition;
-    uint16_t kindByteOffset = (uint16_t)(unitKind * sizeof(uint16_t));
+    uint16_t kindByteOffset = unitKind * sizeof(uint16_t);
     if (kindByteOffset >= sizeof(unitBasePrices)) abort();
     uint32_t price = (uint32_t)conditionFactor * unitBasePrices[kindByteOffset / sizeof(uint16_t)];
     price += UNIT_SALE_ROUNDING_CBILLS;
@@ -28,7 +28,7 @@ void MwCalculateMarketPurchasePrice(void)
 {
     if (currentPlanetMarketTier >= UNIT_PRICE_TIER_COUNT) abort();
     uint16_t priceFactor = unitPriceTierMultipliers[currentPlanetMarketTier] * PERCENT_DIVISOR;
-    uint16_t kindByteOffset = (uint16_t)(selectedMarketUnitKind * sizeof(uint16_t));
+    uint16_t kindByteOffset = selectedMarketUnitKind * sizeof(uint16_t);
     if (kindByteOffset >= sizeof(unitBasePrices)) abort();
     uint32_t price = (uint32_t)priceFactor * unitBasePrices[kindByteOffset / sizeof(uint16_t)];
     price -= ((uint32_t)unitRepairQuoteHigh << NATIVE_WORD_BITS) | unitRepairQuoteLow;

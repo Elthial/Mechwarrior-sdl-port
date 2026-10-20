@@ -54,17 +54,17 @@ void BtechUpdateTargetPanelAndReticle(uint16_t targetUnitSlot)
         if (!mech || mech->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
         scale=(int16_t)mechTemplates[mech->templateIndex].displayScale;
     }
-    uint32_t numerator=BtechShiftDwordLeft((uint32_t)(int32_t)scale,(uint8_t)viewScaleShift);
+    uint32_t numerator=BtechShiftDwordLeft((uint32_t)scale,(uint8_t)viewScaleShift);
     int16_t ratio=(int16_t)BtechDivideSignedDword(numerator,distance);
-    int16_t width=(int16_t)(uint16_t)((ratio-(ratio<0))/2+TARGET_RETICLE_MINIMUM_WIDTH);
-    int16_t halfWidth=(int16_t)((width-(width<0))/2);
+    int16_t width=(ratio-(ratio<0))/2+TARGET_RETICLE_MINIMUM_WIDTH;
+    int16_t halfWidth=(width-(width<0))/2;
     /* NativeC958+slot8 aliases the existing C968 special projected object. */
     BtechPooledWorldObject *projected=targetUnitSlot==COMBAT_SPECIAL_TARGET_SLOT?unknownWorldObject:unitLastDrawParts[targetUnitSlot];
     if (!projected) abort();
-    uint16_t x=(uint16_t)(projected->object.projectedScreenA-halfWidth);
-    uint16_t y=(uint16_t)(projected->object.projectedScreenB-width);
-    uint16_t height=(uint16_t)((uint16_t)width*2);
-    if (targetUnitSlot==COMBAT_SPECIAL_TARGET_SLOT) {x-=halfWidth;width=(int16_t)(uint16_t)((uint16_t)width*2);}
+    uint16_t x=projected->object.projectedScreenA-halfWidth;
+    uint16_t y=projected->object.projectedScreenB-width;
+    uint16_t height=(uint16_t)width*2;
+    if (targetUnitSlot==COMBAT_SPECIAL_TARGET_SLOT) {x-=halfWidth;width=(int16_t)((uint16_t)width*2);}
     if ((int16_t)targetUnitSlot<COMBAT_FRIENDLY_SLOTS && (targetUnitSlot!=COMBAT_SPECIAL_TARGET_SLOT || sideObjectiveRules[0]!=OBJECTIVE_SPECIAL_TARGET))
     {
         BtechDrawStyledRectangle(x,y,(uint16_t)width,height);
@@ -82,7 +82,7 @@ void BtechDrawTargetDamagePanel(uint16_t targetUnitSlot,const BtechScreenRectang
     uint16_t diagram;
     if (targetUnitSlot==COMBAT_SPECIAL_TARGET_SLOT)
     {
-        int16_t condition=(int16_t)specialTargetDamageRemaining;
+        int16_t condition=specialTargetDamageRemaining;
         const BtechHudColourScheme *colours=&hudColourSchemes[hudColourSchemeIndex];
         uint16_t colour=condition==SPECIAL_TARGET_INITIAL_DAMAGE?colours->undamaged:
             condition>SPECIAL_TARGET_INITIAL_DAMAGE/2?colours->aboveHalfCondition:condition?colours->damaged:colours->destroyed;
@@ -102,10 +102,10 @@ void BtechDrawTargetDamagePanel(uint16_t targetUnitSlot,const BtechScreenRectang
         {
             if (armor==COMBAT_ARMOR_REAR_CENTER_TORSO) continue;
             uint16_t body=armorToBodyLocations[armor];if (body>=COMBAT_BODY_LOCATIONS) abort();
-            int16_t remaining=(int16_t)(uint16_t)(mech->currentArmor[armor]+mech->currentInternalStructure[body]);
-            int16_t maximum=(int16_t)(uint16_t)(chassis->maximumArmor[armor]+chassis->maximumInternalStructure[body]);
+            int16_t remaining=mech->currentArmor[armor]+mech->currentInternalStructure[body];
+            int16_t maximum=chassis->maximumArmor[armor]+chassis->maximumInternalStructure[body];
             const BtechHudColourScheme *colours=&hudColourSchemes[hudColourSchemeIndex];
-            int16_t halfMaximum=(int16_t)((maximum-(maximum<0))/2);
+            int16_t halfMaximum=(maximum-(maximum<0))/2;
             uint16_t colour=remaining==maximum?colours->undamaged:remaining>halfMaximum?colours->aboveHalfCondition:remaining?colours->damaged:colours->destroyed;
             if (mech->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
             const BtechScreenRectangle *region=&targetDiagramRegions[mech->templateIndex][armor];
@@ -116,6 +116,6 @@ void BtechDrawTargetDamagePanel(uint16_t targetUnitSlot,const BtechScreenRectang
         diagram=mech->templateIndex;
     }
     if (!smallMechPictures || diagram>=smallMechPictures->imageCount) abort();
-    BtechDrawBitmap(&smallMechPictures->images[diagram],(int16_t)(uint16_t)(panel->x+TARGET_PANEL_DRAW_INSET),(int16_t)(uint16_t)(panel->y+TARGET_PANEL_DRAW_INSET));
+    BtechDrawBitmap(&smallMechPictures->images[diagram],(int16_t)(panel->x+TARGET_PANEL_DRAW_INSET),(int16_t)(panel->y+TARGET_PANEL_DRAW_INSET));
     BtechCopyHudRectangleIfReady(panel->x,panel->y,(uint16_t)(panel->width+TARGET_PANEL_COPY_PADDING),(uint16_t)(panel->height+TARGET_PANEL_COPY_PADDING));
 }

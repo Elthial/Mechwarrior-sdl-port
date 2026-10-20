@@ -21,9 +21,9 @@ void BtechOrderMechRenderParts(BtechCameraContext *camera,BtechWorldObjectPrefix
             uint32_t deltaA=position->positionA-camera->viewObject->position.positionA;
             uint32_t deltaB=position->positionB-camera->viewObject->position.positionB;
             uint16_t heading=BtechCalculateVectorHeadingFar(deltaA,deltaB);
-            int16_t relativeHeading=(int16_t)(uint16_t)(heading-binding->torso->object.prefix.orientationC+0x8000);
+            int16_t relativeHeading=heading-binding->torso->object.prefix.orientationC+0x8000;
             if (!binding->mech) abort();
-            int16_t chassis=(int16_t)binding->mech->templateIndex;
+            int16_t chassis=binding->mech->templateIndex;
             if (index+5>=COMBAT_WORLD_OBJECTS) abort(); /* Native following-owner overwrite, not a count-tail guard. */
             if (chassis>=0 && chassis<COMBAT_MECH_TEMPLATES)
             {

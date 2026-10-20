@@ -25,9 +25,9 @@ void BtechSelectPolygonColoursAndShade(const BtechRenderPolygon *polygon)
         {
             polygonShadeClass=shadeClass;
             BtechCachePolygonShadeNormal(polygon->normalVectorIndex);
-            uint16_t dotHigh=(uint16_t)(BtechDotProductSignedWordVectors(transformedReferenceVector,viewVectorCoefficients)>>16);
+            uint16_t dotHigh=BtechDotProductSignedWordVectors(transformedReferenceVector,viewVectorCoefficients)>>16;
             if (dotHigh==0x0010) dotHigh=0x000F;
-            uint16_t shadeOffset=(uint16_t)(dotHigh+0x0010+(uint16_t)(uint8_t)(polygonShadeClass-1)*POLYGON_SHADE_STEPS);
+            uint16_t shadeOffset=dotHigh+0x0010+(uint16_t)(uint8_t)(polygonShadeClass-1)*POLYGON_SHADE_STEPS;
             if (shadeOffset>=sizeof(polygonShadeDeltas)) abort(); /* Native read enters other CS owners, not a ninth shade row. */
             uint8_t originalLineColour=drawLineColour;
             drawLineColour+=polygonShadeDeltas[shadeOffset/POLYGON_SHADE_STEPS][shadeOffset%POLYGON_SHADE_STEPS];

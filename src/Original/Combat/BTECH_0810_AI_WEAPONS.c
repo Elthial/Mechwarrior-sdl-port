@@ -30,9 +30,9 @@ int16_t BtechClassifyWeaponRange(uint16_t firingSlot,uint16_t targetSlot,uint16_
     }
     BtechWeaponDefinition *weapon=&weaponDefinitions[weaponKind];
     uint16_t boundaries[]={weapon->minimumRange,weapon->shortRangeBoundary,weapon->mediumRangeBoundary,weapon->longRangeBoundary};
-    for (int16_t band=0;band<WEAPON_RANGE_BANDS-1;++band)
-        if ((int32_t)(int16_t)(uint16_t)(boundaries[band]*WEAPON_RANGE_WORLD_SCALE)>=(int32_t)distance) return band;
-    return WEAPON_RANGE_BANDS-1;
+    for (int16_t band=0;band<WEAPON_RANGE_BOUNDARIES;++band)
+        if ((int32_t)(int16_t)(boundaries[band]*WEAPON_RANGE_WORLD_SCALE)>=(int32_t)distance) return band;
+    return WEAPON_RANGE_BEYOND_LONG;
 }
 
 /*0810:A66C. Friendly blockers can tighten range while returning false and
@@ -49,9 +49,9 @@ int16_t BtechTestAiFiringCandidate(const BtechPosition3D *position,uint32_t dist
     yaw-=activeUnitPositionedObject->object.prefix.orientationC;
     yaw-=activeUnitTorsoObject->object.prefix.orientationC;
     int16_t lateral=(flags&AI_CANDIDATE_WIDE_ANGLE)?AI_WIDE_LATERAL_ALLOWANCE:AI_NORMAL_LATERAL_ALLOWANCE;
-    int16_t yawLimit=(int16_t)BtechCalculateVectorHeading((uint32_t)(int32_t)lateral,distance);
-    int16_t pitch=(int16_t)(uint16_t)(BtechCalculateVectorHeading(0-invertedHeight,distance)
-        -activeUnitPositionedObject->object.prefix.orientationA);
+    int16_t yawLimit=(int16_t)BtechCalculateVectorHeading((uint32_t)lateral,distance);
+    int16_t pitch=BtechCalculateVectorHeading(0-invertedHeight,distance)
+        -activeUnitPositionedObject->object.prefix.orientationA;
     int16_t absolutePitch=(uint16_t)pitch==0x8000?INT16_MAX:pitch<0?-pitch:pitch;
     if (absolutePitch>=AI_PITCH_LIMIT && !(flags&AI_CANDIDATE_WIDE_ANGLE)) return 0;
     int16_t absoluteYaw=yaw==0x8000?INT16_MAX:(int16_t)yaw<0?-(int16_t)yaw:(int16_t)yaw;
@@ -72,18 +72,18 @@ int16_t BtechSelectAiWeaponMountForDistance(int16_t distance)
         if ((uint16_t)kind>=COMBAT_WEAPON_KINDS) continue;
         int16_t ammoFamily=weaponDefinitions[kind].ammoFamily;
         if (!activeMechState->weapons[mount].operational) continue;
-        if ((uint16_t)ammoFamily!=COMBAT_WEAPON_NONE)
+        if ((uint16_t)ammoFamily!=COMBAT_AMMO_NONE)
         {
             if ((uint16_t)ammoFamily>=COMBAT_AMMO_FAMILIES) abort();
             if (!activeMechState->ammoSalvosRemaining[ammoFamily]) continue;
         }
         if (activeMechState->weapons[mount].reloadTicksRemaining) continue;
         BtechWeaponDefinition *weapon=&weaponDefinitions[kind];
-        if ((int16_t)(uint16_t)(weapon->minimumRange*WEAPON_RANGE_WORLD_SCALE)>=distance
-            || (int16_t)(uint16_t)(weapon->longRangeBoundary*WEAPON_RANGE_WORLD_SCALE)<=distance) continue;
-        if ((int16_t)(uint16_t)(weapon->heatUnits+activeMechState->heatUnits)>=AI_PROJECTED_FIRING_HEAT_LIMIT) continue;
+        if ((int16_t)(weapon->minimumRange*WEAPON_RANGE_WORLD_SCALE)>=distance
+            || (int16_t)(weapon->longRangeBoundary*WEAPON_RANGE_WORLD_SCALE)<=distance) continue;
+        if ((int16_t)(weapon->heatUnits+activeMechState->heatUnits)>=AI_PROJECTED_FIRING_HEAT_LIMIT) continue;
         uint16_t spread=BtechRandomSignedSpread(AI_MOUNT_SCORE_SPREAD);
-        int16_t score=(int16_t)(uint16_t)(weapon->damageOrMissileCount+spread);
+        int16_t score=weapon->damageOrMissileCount+spread;
         if (score>bestScore) {bestScore=score;selected=mount;}
     }
     return selected;
@@ -98,7 +98,7 @@ void BtechFireAiWeaponAtUnit(int16_t targetSlot,int16_t weaponKind,uint16_t body
     BtechPooledWorldObject *target=targetSlot<COMBAT_MECH_SLOTS?unitBindings[targetSlot].positionedLeftLeg:specialTargetObject;
     if (!target) abort();
     uint16_t firingHeading=activeUnitPositionedObject->object.prefix.orientationC+activeUnitTorsoObject->object.prefix.orientationC;
-    int16_t aspect=(int16_t)(uint16_t)(firingHeading-target->object.prefix.orientationC+ATTACK_ASPECT_HEADING_BIAS);
+    int16_t aspect=firingHeading-target->object.prefix.orientationC+ATTACK_ASPECT_HEADING_BIAS;
     int16_t magnitude=(uint16_t)aspect==0x8000?INT16_MAX:aspect<0?-aspect:aspect;
     uint16_t arc=magnitude<FRONT_ATTACK_ARC_LIMIT?ATTACK_ARC_FRONT:magnitude>REAR_ATTACK_ARC_LIMIT?ATTACK_ARC_REAR:aspect>0?ATTACK_ARC_LEFT:ATTACK_ARC_RIGHT;
     BtechPosition3D origin=*BtechGetUnitBodyReferencePosition(activeUnitControl->unitSlot,(int16_t)bodyLocationReferenceIndices[bodyLocation]);
@@ -107,32 +107,32 @@ void BtechFireAiWeaponAtUnit(int16_t targetSlot,int16_t weaponKind,uint16_t body
     {
         int16_t band=BtechClassifyWeaponRange(activeUnitControl->unitSlot,(uint16_t)targetSlot,(uint16_t)weaponKind);
         if (activeUnitControl->unitSlot>=COMBAT_MECH_SLOTS) abort();
-        int16_t targetNumber=(int16_t)(uint16_t)(gunneryTargetNumbers[activeUnitControl->unitSlot]+rangeHitModifiers[band]-TO_HIT_RANGE_BASE_ADJUSTMENT);
+        int16_t targetNumber=gunneryTargetNumbers[activeUnitControl->unitSlot]+rangeHitModifiers[band]-TO_HIT_RANGE_BASE_ADJUSTMENT;
         int16_t speed=activeUnitPositionedObject->forwardStepScale;
         int16_t absoluteSpeed=(uint16_t)speed==0x8000?INT16_MAX:speed<0?-speed:speed;
-        int16_t threshold=(int16_t)activeMechTemplate->firingMovementThreshold;
-        if (absoluteSpeed>threshold) targetNumber=(int16_t)(uint16_t)(targetNumber+TO_HIT_FIRING_MOVEMENT_HIGH);
+        int16_t threshold=activeMechTemplate->firingMovementThreshold;
+        if (absoluteSpeed>threshold) targetNumber+=TO_HIT_FIRING_MOVEMENT_HIGH;
         else
         {
-            int16_t half=(int16_t)((activeMechTemplate->firingMovementThreshold>>1)|(threshold<0?0x8000:0));
-            if (absoluteSpeed>half) targetNumber=(int16_t)(uint16_t)(targetNumber+TO_HIT_FIRING_MOVEMENT_LOW);
+            int16_t half=(activeMechTemplate->firingMovementThreshold>>1)|(threshold<0?0x8000:0);
+            if (absoluteSpeed>half) targetNumber+=TO_HIT_FIRING_MOVEMENT_LOW;
         }
         speed=target->forwardStepScale;
         absoluteSpeed=(uint16_t)speed==0x8000?INT16_MAX:speed<0?-speed:speed;
-        targetNumber=(int16_t)(uint16_t)(targetNumber+absoluteSpeed/TO_HIT_TARGET_MOTION_STEP);
-        if (!speed) targetNumber=(int16_t)(uint16_t)(targetNumber-TO_HIT_STATIONARY_TARGET_BONUS);
-        uint16_t firstDie=BtechRandomBelowBound(6);
-        uint16_t secondDie=BtechRandomBelowBound(6);
-        hit=(int16_t)(uint16_t)(firstDie+secondDie+2)>=targetNumber;
+        targetNumber+=absoluteSpeed/TO_HIT_TARGET_MOTION_STEP;
+        if (!speed) targetNumber-=TO_HIT_STATIONARY_TARGET_BONUS;
+        uint16_t firstDie=BtechRandomBelowBound(DICE_1D6);
+        uint16_t secondDie=BtechRandomBelowBound(DICE_1D6);
+        hit=(int16_t)(firstDie+secondDie+COMBAT_TWO_D6_MINIMUM)>=targetNumber;
     }
     /* Special slot8 compares the same unwritten native WORD with itself:
      * always a hit, without inventing a C value or consuming to-hit dice. */
     if (hit)
     {
-        uint16_t firstDie=BtechRandomBelowBound(6);
-        uint16_t secondDie=BtechRandomBelowBound(6);
+        uint16_t firstDie=BtechRandomBelowBound(DICE_1D6);
+        uint16_t secondDie=BtechRandomBelowBound(DICE_1D6);
         uint16_t armor=hitLocationRows[arc][(uint16_t)(firstDie+secondDie)];
-        if ((uint16_t)weaponDefinitions[weaponKind].ammoFamily==COMBAT_WEAPON_NONE || weaponKind==COMBAT_WEAPON_MACHINE_GUN)
+        if ((uint16_t)weaponDefinitions[weaponKind].ammoFamily==COMBAT_AMMO_NONE || weaponKind==COMBAT_WEAPON_MACHINE_GUN)
         {
             BtechPosition3D endpoint;
             if (targetSlot<COMBAT_MECH_SLOTS) endpoint=*BtechGetUnitBodyReferencePosition((uint16_t)targetSlot,(int16_t)armor);
@@ -154,13 +154,13 @@ void BtechFireAiWeaponAtUnit(int16_t targetSlot,int16_t weaponKind,uint16_t body
     else
     {
         if (weaponKind==COMBAT_WEAPON_MACHINE_GUN) return;
-        if ((uint16_t)weaponDefinitions[weaponKind].ammoFamily==COMBAT_WEAPON_NONE)
+        if ((uint16_t)weaponDefinitions[weaponKind].ammoFamily==COMBAT_AMMO_NONE)
         {
-            int16_t range=(int16_t)(uint16_t)(weaponDefinitions[weaponKind].longRangeBoundary*WEAPON_RANGE_WORLD_SCALE);
+            int16_t range=weaponDefinitions[weaponKind].longRangeBoundary*WEAPON_RANGE_WORLD_SCALE;
             BtechPosition3D endpoint;
             endpoint.positionA=origin.positionA-BtechShiftSignedDwordRight((uint32_t)BtechMultiplySignedWords((int16_t)BtechLookupSine(firingHeading),range),AI_MISS_DIRECTION_PRODUCT_SHIFT);
             endpoint.positionB=origin.positionB+BtechShiftSignedDwordRight((uint32_t)BtechMultiplySignedWords((int16_t)BtechLookupCosine(firingHeading),range),AI_MISS_DIRECTION_PRODUCT_SHIFT);
-            uint32_t cosine=(uint32_t)(int32_t)(int16_t)BtechLookupCosine(activeMechState->aimPitch);
+            uint32_t cosine=(int16_t)BtechLookupCosine(activeMechState->aimPitch);
             uint32_t sineTimesRange=(uint32_t)BtechMultiplySignedWords((int16_t)BtechLookupSine(activeMechState->aimPitch),range);
             endpoint.positionC=origin.positionC+BtechDivideSignedDword(sineTimesRange,cosine);
             BtechBuildWeaponBeamGeometry(&origin,&endpoint,weaponKind);
@@ -216,13 +216,13 @@ void BtechChooseAiTargetAndFire(void)
     activeUnitControl->lastAiFiringTargetSlot=(int16_t)aiCandidateTargetSlot;
     activeMechState->heatUnits+=weapon->heatUnits;
     activeMechState->weapons[mountIndex].reloadTicksRemaining=weapon->reloadTicks;
-    if ((uint16_t)weapon->ammoFamily!=COMBAT_WEAPON_NONE)
+    if ((uint16_t)weapon->ammoFamily!=COMBAT_AMMO_NONE)
     {
         if ((uint16_t)weapon->ammoFamily>=COMBAT_AMMO_FAMILIES) abort();
         --activeMechState->ammoSalvosRemaining[weapon->ammoFamily];
     }
     uint32_t height=position->positionC-activeUnitPositionedObject->object.prefix.position.positionC;
-    uint16_t elevation=BtechCalculateVectorHeading((uint32_t)(int32_t)(int16_t)aiCandidateDistance,height);
+    uint16_t elevation=BtechCalculateVectorHeading((int16_t)aiCandidateDistance,height);
     activeMechState->aimPitch=elevation+AI_AIM_HEADING_BIAS;
     if (activeUnitControl->animationSequence==ANIMATION_SEQUENCE_WALK && (int16_t)activeUnitControl->animationFrame>AI_FIRING_PAUSE_FRAME)
         activeUnitControl->animationRequestFlags|=ANIMATION_REQUEST_FIRING_PAUSE;

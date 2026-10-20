@@ -29,7 +29,7 @@ void BtechEgaDrawBitmap(const BtechBitmap *bitmap,uint16_t x,uint16_t y)
         uint16_t rowY=y;
         if ((int16_t)rowY<clipMinimumY)
         {
-            uint16_t skippedRows=(uint16_t)(clipMinimumY-rowY);
+            uint16_t skippedRows=clipMinimumY-rowY;
             if ((int16_t)rows<=(int16_t)skippedRows) return;
             rows-=skippedRows;sourceSkip=(uint16_t)((uint8_t)skippedRows*(uint8_t)packedWidth);
             rowY=(uint16_t)clipMinimumY;
@@ -45,7 +45,7 @@ void BtechEgaDrawBitmap(const BtechBitmap *bitmap,uint16_t x,uint16_t y)
         uint16_t minimumX=(uint16_t)clipMinimumX&0xFFF8;
         if ((int16_t)leftX<(int16_t)minimumX)
         {
-            uint16_t skippedPixels=(uint16_t)(minimumX-leftX);
+            uint16_t skippedPixels=minimumX-leftX;
             if ((int16_t)clippedWidth<=(int16_t)skippedPixels) return;
             clippedWidth-=skippedPixels;egaBitmapShiftPhase=clippedWidth&7;
             sourceSkip+=(uint16_t)((uint16_t)((clippedWidth&7)+skippedPixels)>>3);
@@ -65,9 +65,9 @@ void BtechEgaDrawBitmap(const BtechBitmap *bitmap,uint16_t x,uint16_t y)
         egaBitmapSourceRowSkip=(originalRowBytes&0xFF00)|(uint8_t)((uint8_t)originalRowBytes-rowBytes);
         egaBitmapDestinationRowSkip=(uint8_t)(COMBAT_SCREEN_ROW_BYTES-rowBytes);
     }
-    uint8_t phase=(uint8_t)egaBitmapShiftPhase;
+    uint8_t phase=egaBitmapShiftPhase;
     uint16_t maskCursor=sourceSkip,destination=rowStart;
-    uint8_t rowsRemaining=(uint8_t)rows;
+    uint8_t rowsRemaining=rows;
     if (!btechHostWritePortWord || !btechHostReadVideoByte || !btechHostWriteVideoByte) abort();
     do
     {
@@ -87,7 +87,7 @@ void BtechEgaDrawBitmap(const BtechBitmap *bitmap,uint16_t x,uint16_t y)
             uint8_t previous=0xFF;
             if (egaBitmapClipSides&1)
             {
-                uint16_t prior=(uint16_t)(maskCursor-1);if (prior>=image.maskStorageBytes) abort();
+                uint16_t prior=maskCursor-1;if (prior>=image.maskStorageBytes) abort();
                 previous=image.preserveMask[prior];
             }
             while ((int8_t)bytesRemaining>0)
@@ -95,14 +95,14 @@ void BtechEgaDrawBitmap(const BtechBitmap *bitmap,uint16_t x,uint16_t y)
                 --bytesRemaining;
                 if (maskCursor>=image.maskStorageBytes) abort();
                 uint8_t current=image.preserveMask[maskCursor++];
-                uint8_t preserve=(uint8_t)((previous<<(8-phase))|(current>>phase));previous=current;
+                uint8_t preserve=(previous<<(8-phase))|(current>>phase);previous=current;
                 btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,COMBAT_EGA_BIT_MASK_REGISTER|((uint16_t)(uint8_t)~preserve<<8));
                 (void)btechHostReadVideoByte(page,destination);btechHostWriteVideoByte(page,destination++,0);
             }
             uint8_t current=0xFF;
             if (egaBitmapClipSides&2)
             {if (maskCursor>=image.maskStorageBytes) abort();current=image.preserveMask[maskCursor];}
-            uint8_t preserve=(uint8_t)((previous<<(8-phase))|(current>>phase));
+            uint8_t preserve=(previous<<(8-phase))|(current>>phase);
             btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,COMBAT_EGA_BIT_MASK_REGISTER|((uint16_t)(uint8_t)~preserve<<8));
             (void)btechHostReadVideoByte(page,destination);btechHostWriteVideoByte(page,destination,0);
         }
@@ -125,7 +125,7 @@ void BtechEgaDrawBitmap(const BtechBitmap *bitmap,uint16_t x,uint16_t y)
             uint8_t previous=0;
             if (phase && (clipSides&1))
             {
-                uint16_t prior=(uint16_t)(cursor-1);if (prior>=image.pixelStorageBytes) abort();
+                uint16_t prior=cursor-1;if (prior>=image.pixelStorageBytes) abort();
                 previous=image.pixelPlanes[prior];
             }
             uint16_t count=!phase?(rowBytes?rowBytes:0x100):((int8_t)rowBytes>0?rowBytes:0);

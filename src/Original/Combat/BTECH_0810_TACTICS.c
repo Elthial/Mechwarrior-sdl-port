@@ -32,7 +32,7 @@ uint16_t BtechShouldDisengageForWeaponsOrStructure(void)
         int16_t kind=activeMechTemplate->weaponMounts[mount].weaponKind;
         if (kind<0 || kind>=COMBAT_WEAPON_KINDS) abort();
         int16_t ammo=weaponDefinitions[kind].ammoFamily;
-        if ((uint16_t)ammo!=COMBAT_WEAPON_NONE)
+        if ((uint16_t)ammo!=COMBAT_AMMO_NONE)
         {
             if ((uint16_t)ammo>=COMBAT_AMMO_FAMILIES) abort();
             if (!activeMechState->ammoSalvosRemaining[ammo]) continue;
@@ -46,7 +46,7 @@ uint16_t BtechShouldDisengageForWeaponsOrStructure(void)
         maximumStructure+=activeMechTemplate->maximumInternalStructure[location];
         currentStructure+=activeMechState->currentInternalStructure[location];
     }
-    int16_t halfMaximum=(int16_t)((maximumStructure>>1)|(maximumStructure&0x8000));
+    int16_t halfMaximum=(maximumStructure>>1)|(maximumStructure&0x8000);
     return halfMaximum>=(int16_t)currentStructure;
 }
 
@@ -112,13 +112,13 @@ void BtechUpdateUnitWeaponRangeThresholds(void)
             if (!mech->weapons[mount].operational || mech->weapons[mount].reloadTicksRemaining) continue;
             int16_t kind=chassis->weaponMounts[mount].weaponKind;
             if (kind<0 || kind>=COMBAT_WEAPON_KINDS) abort();
-            int16_t range=(int16_t)weaponDefinitions[kind].longRangeBoundary;
+            int16_t range=weaponDefinitions[kind].longRangeBoundary;
             if (range>greatestRange) greatestRange=range;
         }
         BtechUnitControlState *control=&unitControls[slot];
         control->doubleWeaponRange=(uint16_t)(greatestRange*TACTICAL_RANGE_SCALE*2);
-        control->weaponRangeMinusMargin=(int16_t)(uint16_t)(greatestRange*TACTICAL_RANGE_SCALE-TACTICAL_RANGE_MARGIN);
-        uint16_t scaledRange=(uint16_t)(greatestRange*TACTICAL_RANGE_SCALE);
+        control->weaponRangeMinusMargin=(int16_t)(greatestRange*TACTICAL_RANGE_SCALE-TACTICAL_RANGE_MARGIN);
+        uint16_t scaledRange=greatestRange*TACTICAL_RANGE_SCALE;
         control->quarterWeaponRange=(int16_t)((scaledRange>>TACTICAL_QUARTER_RANGE_SHIFT)|((scaledRange&0x8000)?0xC000:0));
     }
 }

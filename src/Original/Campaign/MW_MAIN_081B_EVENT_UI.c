@@ -199,7 +199,7 @@ void MwEventSubstitutePlanetName(const MwEventCommand *command)
 {
     if (eventConditionResult==1)
     {
-        uint16_t reference=(uint16_t)(int16_t)command->operand.planetSelector^UINT16_MAX;
+        uint16_t reference=(uint16_t)command->operand.planetSelector^UINT16_MAX;
         if (reference>=6 || currentEventId>=EVENT_TEXT_DIRECTORY_COUNT
             || !eventTextRecords[currentEventId]) abort();
         uint16_t planetIndex=campaignEventPlanetSelectors[reference]-1;

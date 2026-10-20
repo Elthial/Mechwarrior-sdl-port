@@ -10,9 +10,9 @@ void BtechSetCockpitCameraViewport(BtechCameraContext *camera)
     if (activeCockpitLayoutIndex>=COMBAT_COCKPIT_LAYOUTS || !camera) abort();
     const BtechCockpitLayout *layout=&cockpitLayouts[activeCockpitLayoutIndex];
     camera->clipMinimumB=layout->viewport.y;
-    camera->clipMaximumB=(int16_t)(uint16_t)((uint16_t)layout->viewport.y+(uint16_t)layout->viewport.height);
+    camera->clipMaximumB=(int16_t)((uint16_t)layout->viewport.y+(uint16_t)layout->viewport.height);
     camera->clipMinimumA=layout->viewport.x;
-    camera->clipMaximumA=(int16_t)(uint16_t)((uint16_t)layout->viewport.width+(uint16_t)layout->viewport.x-1);
+    camera->clipMaximumA=(int16_t)((uint16_t)layout->viewport.width+(uint16_t)layout->viewport.x-1);
 }
 
 /*0810:6094. The third cache WORD has no proved consumer/meaning yet. */

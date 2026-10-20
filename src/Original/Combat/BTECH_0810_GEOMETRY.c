@@ -6,7 +6,7 @@ void BtechPrepareResourceCoordinatePaths(void)
 {
     if (projectionScaleMultiplier!=0x100)
     {
-        uint32_t product=(uint32_t)((int32_t)(int16_t)projectionScaleMultiplier*(int16_t)objectProjectionScale);
+        uint32_t product=(int32_t)(int16_t)projectionScaleMultiplier*(int16_t)objectProjectionScale;
         for (uint8_t shifts=8;shifts;--shifts) product=(product>>1)|(product&0x80000000);
         objectProjectionScale=(int32_t)product<0?0:(int32_t)product>0x100?0x100:(uint16_t)product;
     }
@@ -45,7 +45,7 @@ void BtechPrepareResourceCoordinatePaths(void)
     for (uint16_t component=0;component<3;++component)
     {
         uint32_t value=*components[component];
-        for (uint8_t shifts=(uint8_t)coordinateShift;shifts;--shifts) value=(value>>1)|(value&0x80000000);
+        for (uint8_t shifts=coordinateShift;shifts;--shifts) value=(value>>1)|(value&0x80000000);
         resourceReferenceVector[component]+=(uint16_t)value;
     }
     skipWordPolygonRenderer=0;

@@ -234,7 +234,7 @@ void MwEventTestControllingHouseStanding(const MwEventCommand *command)
     if (house==currentPlanetHouseIndex)
     {
         if (house>=CAMPAIGN_HOUSE_COUNT) abort();
-        int16_t standing=(int16_t)(uint16_t)(houseFavorPoints[house]-houseGrievancePoints[house]);
+        int16_t standing=houseFavorPoints[house]-houseGrievancePoints[house];
         matches=standing<threshold;
     }
     MwCombineEventCondition(matches);

@@ -351,9 +351,9 @@ beginDebrief:
             elapsedUnits=SPECIAL_ASSAULT_DEPLOYMENT_UNITS;
         else
         {
-            uint16_t planetIndex=(uint16_t)((uint16_t)combatPlanetSelector-1);
+            uint16_t planetIndex=(uint16_t)combatPlanetSelector-1;
             uint16_t distance=MwCalculatePlanetTravelDistance(planetIndex);
-            uint16_t travelUnits=(uint16_t)((uint16_t)(distance*DEPLOYMENT_TRAVEL_MULTIPLIER)<<1);
+            uint16_t travelUnits=(uint16_t)(distance*DEPLOYMENT_TRAVEL_MULTIPLIER)<<1;
             MwAdvanceCampaignTimeAndChargeWages(travelUnits);
             planetIndex=currentPlanetIndex;
             if (planetIndex>=CAMPAIGN_PLANET_COUNT) abort();

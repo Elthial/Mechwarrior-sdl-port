@@ -29,7 +29,7 @@ void BtechTransformWordVectorToDword(const uint16_t source[3],const BtechOrienta
     {
         if (!mode || (mode==1 && output==2))
         {
-            uint32_t value=(uint32_t)(int32_t)(int16_t)source[output];
+            uint32_t value=(int16_t)source[output];
             for (uint16_t shifts=resourceScaleShift;shifts;--shifts) value<<=1;
             *components[output]=value;
             geometryTransformFractions[output]=0;
@@ -39,7 +39,7 @@ void BtechTransformWordVectorToDword(const uint16_t source[3],const BtechOrienta
             uint32_t product=0;
             for (uint16_t input=0;input<(mode==1?2:3);++input)
                 product+=(uint32_t)((int32_t)(int16_t)source[input]*(int16_t)basis->coefficients[input*3+output]);
-            uint64_t shifted=(uint64_t)(int64_t)(int32_t)product;
+            uint64_t shifted=(int32_t)product;
             shifted=(shifted<<2)&UINT64_C(0xFFFFFFFFFFFF);
             for (uint16_t shifts=resourceScaleShift;shifts;--shifts) shifted=(shifted<<1)&UINT64_C(0xFFFFFFFFFFFF);
             *components[output]=(uint32_t)(shifted>>16);
@@ -87,7 +87,7 @@ uint64_t BtechGetWidePolygonFacingDotHighWord(uint8_t normalIndex,uint8_t firstV
         const uint32_t *relative[]={&cameraRelativePosition.positionA,&cameraRelativePosition.positionB,&cameraRelativePosition.positionC};
         for (uint16_t axis=0;axis<3;++axis)
         {
-            uint32_t value=(uint32_t)(int32_t)(int16_t)renderGeometry[firstVertexIndex][axis];
+            uint32_t value=(int16_t)renderGeometry[firstVertexIndex][axis];
             for (uint16_t shifts=resourceScaleShift;shifts;--shifts) value<<=1;
             *position[axis]=value+*relative[axis];
         }

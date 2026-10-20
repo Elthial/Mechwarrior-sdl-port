@@ -26,7 +26,7 @@ enum { TRAVEL_NAME_PANEL_X=0x0008, TRAVEL_HEADER_PANEL_Y=0x0006,
  * existing0018-byte mutable owner. This is not a new string-cache policy. */
 void MwCopyTravelDestinationName(void)
 {
-    uint16_t directoryByteOffset=(uint16_t)(travelDestinationPlanetIndex*sizeof(uint16_t));
+    uint16_t directoryByteOffset=travelDestinationPlanetIndex*sizeof(uint16_t);
     if (directoryByteOffset>=sizeof(planetRecordOffsets)) abort();
     uint16_t planetOffset=planetRecordOffsets[directoryByteOffset/sizeof(uint16_t)];
     if (planetOffset<PLANET_RECORDS_START || planetOffset>=PLANET_RECORDS_END) abort();
@@ -59,8 +59,8 @@ void MwRestoreTravelMarkerRegion(void)
  * test is inclusive against the marker's four-pixel box. */
 int16_t MwFindPlanetAtTravelMarker(void)
 {
-    uint16_t right=(uint16_t)(travelMarkerX+TRAVEL_MARKER_HIT_SIZE);
-    uint16_t bottom=(uint16_t)(travelMarkerY+TRAVEL_MARKER_HIT_SIZE);
+    uint16_t right=travelMarkerX+TRAVEL_MARKER_HIT_SIZE;
+    uint16_t bottom=travelMarkerY+TRAVEL_MARKER_HIT_SIZE;
     for (uint16_t planetIndex=0;planetIndex<TRAVEL_PLANET_DIRECTORY_COUNT;++planetIndex)
     {
         uint16_t planetOffset=planetRecordOffsets[planetIndex];
@@ -182,7 +182,7 @@ void MwDrawTravelDestinationDetails(void)
     EgaFillDisplayPageRectangle(TRAVEL_LANDSCAPE_PANEL_X,TRAVEL_HEADER_PANEL_Y,TRAVEL_LANDSCAPE_PANEL_WIDTH,TRAVEL_HEADER_PANEL_HEIGHT,Campaign_Pal_EGA_LightGrey);
     EgaFillDisplayPageRectangle(TRAVEL_POPULATION_PANEL_X,TRAVEL_HEADER_PANEL_Y,TRAVEL_POPULATION_PANEL_WIDTH,TRAVEL_HEADER_PANEL_HEIGHT,Campaign_Pal_EGA_LightGrey);
     EgaFillDisplayPageRectangle(TRAVEL_NAME_PANEL_X,TRAVEL_DESCRIPTION_PANEL_Y,TRAVEL_DESCRIPTION_PANEL_WIDTH,TRAVEL_HEADER_PANEL_HEIGHT,Campaign_Pal_EGA_LightGrey);
-    uint16_t directoryByteOffset=(uint16_t)(travelDestinationPlanetIndex*sizeof(uint16_t));
+    uint16_t directoryByteOffset=travelDestinationPlanetIndex*sizeof(uint16_t);
     if (directoryByteOffset>=sizeof(planetRecordOffsets)) abort();
     uint16_t planetOffset=planetRecordOffsets[directoryByteOffset/sizeof(uint16_t)];
     travelDestinationPlanetOffset=planetOffset;
@@ -197,7 +197,7 @@ void MwDrawTravelDestinationDetails(void)
     EgaDrawTransparentText(TRAVEL_DESTINATION_TEXT_X,TRAVEL_HEADER_TEXT_Y,Campaign_Pal_EGA_White,&nameView,0);
     uint16_t pictureSelector=MwLoadIndexedPicture((uint16_t)(TRAVEL_HOUSE_PICTURE_BASE+planet->houseIndex));
     EgaDrawPackedSprite(TRAVEL_HOUSE_PICTURE_X,TRAVEL_HOUSE_PICTURE_Y,EGA_DISPLAY_PAGE,0,pictureSelector);
-    uint8_t classification=(uint8_t)(planet->landscapeAndMarketCode-1);
+    uint8_t classification=planet->landscapeAndMarketCode-1;
     const char *landscape=travelLandscapeLabels[classification%TRAVEL_LANDSCAPE_LABEL_COUNT];
     MwNativeByteView landscapeView={(const uint8_t *)landscape,0,(uint32_t)strlen(landscape)+1};
     EgaDrawTransparentText(TRAVEL_LANDSCAPE_TEXT_X,TRAVEL_HEADER_TEXT_Y,Campaign_Pal_EGA_White,&landscapeView,0);
@@ -258,7 +258,7 @@ void MwDrawPlanetTravelQuote(void)
         uint16_t distance=MwCalculatePlanetTravelDistance(travelDestinationPlanetIndex);
         if (ownedUnitCount==0)
         {
-            uint16_t passengerBase=(uint16_t)(pilotRosterCount*PASSENGER_TRAVEL_CBILLS_PER_DISTANCE_UNIT);
+            uint16_t passengerBase=pilotRosterCount*PASSENGER_TRAVEL_CBILLS_PER_DISTANCE_UNIT;
             uint32_t quote=(uint32_t)passengerBase*distance;
             travelQuoteCbillsLow=(uint16_t)quote;
             travelQuoteCbillsHigh=(uint16_t)(quote>>NATIVE_WORD_BITS);
@@ -280,7 +280,7 @@ void MwDrawPlanetTravelQuote(void)
             else
             {
                 uint32_t base=(uint32_t)ownedUnitCount*HIRED_MECH_TRAVEL_BASE_CBILLS;
-                uint16_t unitDistance=(uint16_t)((uint8_t)ownedUnitCount*(uint8_t)travelDistanceUnits);
+                uint16_t unitDistance=(uint8_t)ownedUnitCount*(uint8_t)travelDistanceUnits;
                 uint32_t quote=(uint32_t)unitDistance*HIRED_MECH_TRAVEL_CBILLS_PER_DISTANCE_UNIT+base;
                 travelQuoteCbillsLow=(uint16_t)quote;
                 travelQuoteCbillsHigh=(uint16_t)(quote>>NATIVE_WORD_BITS);
@@ -307,7 +307,7 @@ uint16_t MwOpenTravelScreenContinuation(void)
     MwDrawActivePicture(0,0,EGA_DRAW_PAGE,TRAVEL_MAP_PICTURE);
     MwDrawIndexedPicture(0x00EF,0x0021,(uint16_t)(TRAVEL_HOUSE_PICTURE_BASE+currentPlanetHouseIndex));
     EgaFlipPages();
-    uint16_t directoryByteOffset=(uint16_t)(currentPlanetIndex*sizeof(uint16_t));
+    uint16_t directoryByteOffset=currentPlanetIndex*sizeof(uint16_t);
     if (directoryByteOffset>=sizeof(planetRecordOffsets)) abort();
     uint16_t planetOffset=planetRecordOffsets[directoryByteOffset/sizeof(uint16_t)];
     if (planetOffset<PLANET_RECORDS_START || (uint32_t)planetOffset+sizeof(MwPlanetHeader)>PLANET_RECORDS_END) abort();
@@ -451,7 +451,7 @@ void MwRestoreTravelHousePlanetListRegion(void)
 uint16_t MwSelectHousePlanetContinuation(void)
 {
     MwRestoreTravelHousePlanetListRegion();
-    uint16_t alphabeticIndex=(uint16_t)(travelHousePlanetStart+selectedUiRecordIndex);
+    uint16_t alphabeticIndex=travelHousePlanetStart+selectedUiRecordIndex;
     if (alphabeticIndex>=TRAVEL_PLANET_DIRECTORY_COUNT) abort();
     uint16_t planetOffset=alphabeticPlanetRecordOffsets[alphabeticIndex];
     if (planetOffset<PLANET_RECORDS_START || planetOffset>=PLANET_RECORDS_END) abort();
@@ -493,18 +493,18 @@ uint16_t MwConfirmPlanetTravelContinuation(void)
  * deltas toward zero. Calendar calls reload live planet indices afterwards. */
 uint16_t MwAdvancePaidTravelAndJoinPlanetArrivalContinuation(void)
 {
-    int16_t distance=(int16_t)travelDistanceUnits;
-    int16_t deltaX=(int16_t)travelMapDeltaX;
+    int16_t distance=travelDistanceUnits;
+    int16_t deltaX=travelMapDeltaX;
     if (distance==0 || (deltaX==INT16_MIN && distance==-1)) abort();
     travelMapDeltaX=(uint16_t)(deltaX/distance);
     distance=(int16_t)travelDistanceUnits;
-    int16_t deltaY=(int16_t)travelMapDeltaY;
+    int16_t deltaY=travelMapDeltaY;
     if (distance==0 || (deltaY==INT16_MIN && distance==-1)) abort();
     travelMapDeltaY=(uint16_t)(deltaY/distance);
     EgaDrawLine(TRAVEL_ROUTE_COLOUR,currentPlanetMapPositionY,
         travelDestinationMapPositionX,currentPlanetMapPositionX,
         travelDestinationMapPositionY);
-    uint16_t elapsedUnits=(uint16_t)((uint16_t)(travelDistanceUnits-1)*TRAVEL_DISTANCE_TIME_UNITS);
+    uint16_t elapsedUnits=(uint16_t)(travelDistanceUnits-1)*TRAVEL_DISTANCE_TIME_UNITS;
     MwAdvanceCampaignTimeAndChargeWages(elapsedUnits);
     uint16_t planetIndex=currentPlanetIndex;
     if (planetIndex>=TRAVEL_PLANET_DIRECTORY_COUNT) abort();
@@ -547,7 +547,7 @@ void MwPlayHiredTransportAnimation(void)
     uint16_t frameIndex=0x0020;
     MwDrawIndexedPicture(0,0,HIRED_TRANSPORT_BACKGROUND_PICTURE);
     EgaCopyDrawPageToDisplay(0,0,EGA_COLUMNS,EGA_ROWS);
-    uint16_t nextFrameTick=(uint16_t)(campaignTimerTicks+1);
+    uint16_t nextFrameTick=campaignTimerTicks+1;
     for (;;)
     {
         for (;;)
@@ -571,7 +571,7 @@ void MwPlayHiredTransportAnimation(void)
         EgaFlipPages();
         frameIndex=(uint16_t)(frameIndex+travelAnimationFrameStep);
     }
-    uint16_t finalTick=(uint16_t)(campaignTimerTicks+TRAVEL_ANIMATION_FINAL_TICKS);
+    uint16_t finalTick=campaignTimerTicks+TRAVEL_ANIMATION_FINAL_TICKS;
     while (finalTick>campaignTimerTicks)
     {
         if (!mwCampaignInput.waitForInterrupt) abort();
@@ -587,7 +587,7 @@ void MwPlayOwnedDropShipAnimation(void)
     MwDrawAlternateBankPicture(DROPSHIP_X,DROPSHIP_Y,EGA_DRAW_PAGE,DROPSHIP_INITIAL_PICTURE);
     EgaCopyDrawPageToDisplay(0,0,EGA_COLUMNS,EGA_ROWS);
     uint16_t frameIndex=0;
-    uint16_t nextFrameTick=(uint16_t)(campaignTimerTicks+1);
+    uint16_t nextFrameTick=campaignTimerTicks+1;
     for (;;)
     {
         while (nextFrameTick>campaignTimerTicks)
@@ -603,7 +603,7 @@ void MwPlayOwnedDropShipAnimation(void)
         EgaFlipPages();
         ++frameIndex;
     }
-    uint16_t finalTick=(uint16_t)(campaignTimerTicks+TRAVEL_ANIMATION_FINAL_TICKS);
+    uint16_t finalTick=campaignTimerTicks+TRAVEL_ANIMATION_FINAL_TICKS;
     while (finalTick>campaignTimerTicks)
     {
         if (!mwCampaignInput.waitForInterrupt) abort();
@@ -615,7 +615,7 @@ void MwPlayOwnedDropShipAnimation(void)
  * Both SHL and the final near address wrap before resolving owned storage. */
 uint16_t MwLookupScaledSquareRoot(uint16_t tableIndex)
 {
-    uint16_t byteOffset = (uint16_t)(tableIndex * sizeof(uint16_t));
+    uint16_t byteOffset = tableIndex * sizeof(uint16_t);
     uint16_t nativeOffset = TRAVEL_ROOT_TABLE_START + byteOffset;
     uint16_t tableByteOffset = nativeOffset - TRAVEL_ROOT_TABLE_START;
     if (tableByteOffset >= sizeof(travelSquareRootValues)) abort();
@@ -626,7 +626,7 @@ uint16_t MwLookupScaledSquareRoot(uint16_t tableIndex)
  * precision. Large inputs use consecutive DIV FFFF/DIV0099, not ten million. */
 uint16_t MwApproximateSquareRoot(uint32_t squaredMagnitude)
 {
-    uint16_t highWord = (uint16_t)(squaredMagnitude >> NATIVE_WORD_BITS);
+    uint16_t highWord = squaredMagnitude >> NATIVE_WORD_BITS;
     if (highWord == 0)
     {
         if (squaredMagnitude >= TRAVEL_ROOT_MEDIUM_BOUNDARY)
@@ -651,7 +651,7 @@ uint16_t MwApproximateSquareRoot(uint32_t squaredMagnitude)
  * days or a tabletop movement cost. Destination snapshots precede division. */
 uint16_t MwCalculatePlanetTravelDistance(uint16_t destinationPlanetIndex)
 {
-    uint16_t directoryByteOffset = (uint16_t)(destinationPlanetIndex * sizeof(uint16_t));
+    uint16_t directoryByteOffset = destinationPlanetIndex * sizeof(uint16_t);
     if (directoryByteOffset >= sizeof(planetRecordOffsets)) abort();
     uint16_t planetOffset = planetRecordOffsets[directoryByteOffset / sizeof(uint16_t)];
     travelDestinationPlanetOffset = planetOffset;
@@ -661,10 +661,10 @@ uint16_t MwCalculatePlanetTravelDistance(uint16_t destinationPlanetIndex)
     travelDestinationMapPositionX = planet->mapPositionX;
     travelDestinationMapPositionY = planet->mapPositionY;
     travelDestinationTimeWeight = planet->travelTimeWeight;
-    uint16_t deltaX = (uint16_t)(planet->mapPositionX - currentPlanetMapPositionX);
+    uint16_t deltaX = planet->mapPositionX - currentPlanetMapPositionX;
     travelMapDeltaX = deltaX;
     if (planet->mapPositionX < currentPlanetMapPositionX) deltaX = (uint16_t)(0 - deltaX);
-    uint16_t deltaY = (uint16_t)(planet->mapPositionY - currentPlanetMapPositionY);
+    uint16_t deltaY = planet->mapPositionY - currentPlanetMapPositionY;
     travelMapDeltaY = deltaY;
     if (planet->mapPositionY < currentPlanetMapPositionY) deltaY = (uint16_t)(0 - deltaY);
     uint32_t scaledY = (uint32_t)deltaY * TRAVEL_MAP_Y_SCALE_NUMERATOR / TRAVEL_MAP_Y_SCALE_DENOMINATOR;

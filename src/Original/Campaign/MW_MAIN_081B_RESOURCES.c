@@ -38,7 +38,7 @@ uint16_t MwLoadIndexedPicture(uint16_t pictureIndex)
     indexedPictureCachedIndex = pictureIndex;
     for (;;)
     {
-        uint16_t offsetEntry = (uint16_t)(indexedPictureCachedIndex * PICTURE_OFFSET_ENTRY_BYTES);
+        uint16_t offsetEntry = indexedPictureCachedIndex * PICTURE_OFFSET_ENTRY_BYTES;
         /* Outside this proved directory object is unresolved live DS storage,
          * not a safe out-of-bounds C access or a silently clamped index. */
         if (offsetEntry + PICTURE_OFFSET_ENTRY_BYTES > INDEXED_PICTURE_DIRECTORY_BYTES) abort();
@@ -49,7 +49,7 @@ uint16_t MwLoadIndexedPicture(uint16_t pictureIndex)
     }
     for (;;)
     {
-        uint16_t sizeEntry = (uint16_t)(INDEXED_PICTURE_SIZE_TABLE + (uint16_t)(indexedPictureCachedIndex * 2));
+        uint16_t sizeEntry = INDEXED_PICTURE_SIZE_TABLE + (uint16_t)(indexedPictureCachedIndex * 2);
         if (sizeEntry + PICTURE_BANK_LOW_OFFSET_WORD > INDEXED_PICTURE_DIRECTORY_BYTES) abort();
         indexedPictureStoredBytes = MwReadNativeWord(indexedPictureDirectory, sizeEntry);
         if (!MwDosReadFile(MwResolveNativeSegment(compressedPictureBufferSelector),

@@ -18,7 +18,7 @@ void BtechBuildTemplateMaximumCombatScores(void)
             if (mount>=COMBAT_WEAPON_MOUNTS) abort(); /* Native adjacent-template alias. */
             int16_t kind=mech->weaponMounts[mount].weaponKind;
             if (kind<0 || kind>=COMBAT_WEAPON_KINDS) abort(); /* Native adjacent-definition alias. */
-            templateMaximumCombatScores[templateIndex]+=(uint16_t)(weaponDefinitions[kind].damageOrMissileCount<<1);
+            templateMaximumCombatScores[templateIndex]+=(uint16_t)(weaponDefinitions[kind].damageOrMissileCount<<COMBAT_WEAPON_CONDITION_SCORE_SHIFT);
         }
     }
 }

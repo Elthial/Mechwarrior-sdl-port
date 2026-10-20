@@ -19,9 +19,9 @@ uint16_t BtechSampleTerrainOrSurfaceHeight(const BtechPosition3D *position)
     if ((int32_t)magnitudeA<COMBAT_BOUNDARY_LIMIT_A && (int32_t)magnitudeB<COMBAT_BOUNDARY_LIMIT_B)
     {
         uint32_t numerator=position->positionA+COMBAT_BOUNDARY_LIMIT_A;
-        uint16_t row=(uint16_t)((int32_t)numerator/TERRAIN_WORLD_CELL_SIZE);
+        uint16_t row=(int32_t)numerator/TERRAIN_WORLD_CELL_SIZE;
         numerator=COMBAT_BOUNDARY_LIMIT_B-position->positionB;
-        uint16_t column=(uint16_t)((int32_t)numerator/TERRAIN_WORLD_CELL_SIZE);
+        uint16_t column=(int32_t)numerator/TERRAIN_WORLD_CELL_SIZE;
         if (row>=TERRAIN_GRID_ROWS || column>=TERRAIN_GRID_COLUMNS) abort(); /* Adjacent-owner wrapping alias. */
         return (uint16_t)(terrainHeightGrid[row][column]<<TERRAIN_HEIGHT_SHIFT);
     }
@@ -50,19 +50,19 @@ uint8_t BtechTestTerrainLineOfSight(const BtechPosition3D *start,const BtechPosi
     if (!distance) abort(); /* Native division fault. */
     int16_t stepA,stepB;
     if (dominantA)
-    {stepA=TERRAIN_WORLD_CELL_SIZE;numerator=deltaB<<TERRAIN_WORLD_CELL_SHIFT;stepB=(int16_t)(uint16_t)((int64_t)(int32_t)numerator/(int32_t)distance);}
+    {stepA=TERRAIN_WORLD_CELL_SIZE;numerator=deltaB<<TERRAIN_WORLD_CELL_SHIFT;stepB=(int16_t)((int64_t)(int32_t)numerator/(int32_t)distance);}
     else
-    {numerator=deltaA<<TERRAIN_WORLD_CELL_SHIFT;stepA=(int16_t)(uint16_t)((int64_t)(int32_t)numerator/(int32_t)distance);stepB=(int32_t)deltaB<0?-TERRAIN_WORLD_CELL_SIZE:TERRAIN_WORLD_CELL_SIZE;}
+    {numerator=deltaA<<TERRAIN_WORLD_CELL_SHIFT;stepA=(int16_t)((int64_t)(int32_t)numerator/(int32_t)distance);stepB=(int32_t)deltaB<0?-TERRAIN_WORLD_CELL_SIZE:TERRAIN_WORLD_CELL_SIZE;}
     numerator=deltaC<<TERRAIN_WORLD_CELL_SHIFT;
-    int16_t stepC=(int16_t)(uint16_t)((int64_t)(int32_t)numerator/(int32_t)distance);
+    int16_t stepC=(int64_t)(int32_t)numerator/(int32_t)distance;
     BtechPosition3D probe=*start;
     uint32_t endA=end->positionA,endB=end->positionB;
     uint8_t reached=0;
     while (!reached)
     {
-        probe.positionA+=(uint32_t)(int32_t)stepA;
-        probe.positionB+=(uint32_t)(int32_t)stepB;
-        probe.positionC+=(uint32_t)(int32_t)stepC;
+        probe.positionA+=(uint32_t)stepA;
+        probe.positionB+=(uint32_t)stepB;
+        probe.positionC+=(uint32_t)stepC;
         reached=dominantA?(int32_t)probe.positionA>=(int32_t)endA:
             (int32_t)deltaB>0?(int32_t)probe.positionB>=(int32_t)endB:(int32_t)probe.positionB<=(int32_t)endB;
         int32_t height=(int16_t)BtechSampleTerrainOrSurfaceHeight(&probe);
@@ -172,19 +172,19 @@ void BtechRecalculateUnitCombatValuesAndBoundaries(void)
         BtechMechTemplate *chassis=&mechTemplates[mech->templateIndex];
         if (mech->gyroHits!=COMBAT_GYRO_DESTROYED_HITS)
             for (uint16_t location=0;location<COMBAT_ARMOR_LOCATIONS;++location)
-                control->combatValueOrBoundaryCode=(int16_t)(uint16_t)((uint16_t)control->combatValueOrBoundaryCode+mech->currentArmor[location]);
+                control->combatValueOrBoundaryCode=(int16_t)((uint16_t)control->combatValueOrBoundaryCode+mech->currentArmor[location]);
         for (uint16_t location=0;location<COMBAT_BODY_LOCATIONS;++location)
-            control->combatValueOrBoundaryCode=(int16_t)(uint16_t)((uint16_t)control->combatValueOrBoundaryCode+mech->currentInternalStructure[location]);
+            control->combatValueOrBoundaryCode=(int16_t)((uint16_t)control->combatValueOrBoundaryCode+mech->currentInternalStructure[location]);
         if (mech->sensorHits!=COMBAT_SENSORS_DESTROYED_HITS)
             for (uint16_t mount=0;mount<COMBAT_WEAPON_MOUNTS;++mount)
                 if (mech->weapons[mount].operational)
                 {
                     int16_t kind=chassis->weaponMounts[mount].weaponKind;
                     if (kind<0 || kind>=COMBAT_WEAPON_KINDS) abort();
-                    control->combatValueOrBoundaryCode=(int16_t)(uint16_t)((uint16_t)control->combatValueOrBoundaryCode
-                        +(uint16_t)(weaponDefinitions[kind].damageOrMissileCount<<1));
+                    control->combatValueOrBoundaryCode=(int16_t)((uint16_t)control->combatValueOrBoundaryCode
+                        +(uint16_t)(weaponDefinitions[kind].damageOrMissileCount<<COMBAT_WEAPON_CONDITION_SCORE_SHIFT));
                 }
-        if (!BtechIsMechOperational(mech)) control->combatValueOrBoundaryCode=-1;
+        if (!BtechIsMechOperational(mech)) control->combatValueOrBoundaryCode=COMBAT_MECH_DISABLED_VALUE;
         uint8_t boundary=BtechClassifyUnitWorldBoundary(slot);
         if (boundary<COMBAT_BOUNDARY_INSIDE)
         {

@@ -176,24 +176,24 @@ void BtechSelectUnitTacticalState(void)
     uint16_t threatCount=0,strongestHeadingIndex=0,selectedHeading=root->orientationC;
     int16_t combinedThreatValue=0,strongestThreat=-1;
     int16_t savedPlayerValue=unitControls[0].combatValueOrBoundaryCode;
-    int16_t halfPlayerValue=(int16_t)(((uint16_t)savedPlayerValue>>1)|((uint16_t)savedPlayerValue&0x8000));
-    unitControls[0].combatValueOrBoundaryCode=(int16_t)(uint16_t)(savedPlayerValue+halfPlayerValue);
+    int16_t halfPlayerValue=((uint16_t)savedPlayerValue>>1)|((uint16_t)savedPlayerValue&0x8000);
+    unitControls[0].combatValueOrBoundaryCode=(int16_t)(savedPlayerValue+halfPlayerValue);
     if (control->unitSlot>=COMBAT_MECH_SLOTS) abort();
     for (uint16_t slot=0;slot<COMBAT_MECH_SLOTS;++slot)
     {
         if (!unitBindings[slot].mech) continue;
         BtechUnitControlState *enemy=&unitControls[slot];
         if (enemy->sideIndex==control->sideIndex || enemy->combatValueOrBoundaryCode<=0 || !unitVisibility[slot][control->unitSlot]) continue;
-        int16_t halfRange=(int16_t)(((uint16_t)enemy->weaponRangeMinusMargin>>1)|((uint16_t)enemy->weaponRangeMinusMargin&0x8000));
-        int16_t range=(int16_t)(uint16_t)(halfRange+enemy->weaponRangeMinusMargin);
+        int16_t halfRange=((uint16_t)enemy->weaponRangeMinusMargin>>1)|((uint16_t)enemy->weaponRangeMinusMargin&0x8000);
+        int16_t range=halfRange+enemy->weaponRangeMinusMargin;
         if (range<=(int32_t)unitDistances[slot][control->unitSlot]) continue;
         uint16_t heading=BtechCalculateVectorHeading((uint32_t)enemy->lastVisiblePosition[0]-root->position.positionA,(uint32_t)enemy->lastVisiblePosition[1]-root->position.positionB);
         BtechPooledWorldObject *enemyRoot=unitBindings[slot].positionedLeftLeg,*enemyTorso=unitBindings[slot].torso;
         if (!enemyRoot || !enemyTorso) abort();
-        int16_t facing=(int16_t)(uint16_t)(enemyRoot->object.prefix.orientationC+enemyTorso->object.prefix.orientationC-heading+AVOIDANCE_HALF_TURN);
+        int16_t facing=enemyRoot->object.prefix.orientationC+enemyTorso->object.prefix.orientationC-heading+AVOIDANCE_HALF_TURN;
         if (facing>=TACTICAL_THREAT_FACING_LIMIT) continue; /* Signed one-sided, not abs(angle). */
         tacticalThreatUnitSlots[threatCount]=slot;tacticalThreatHeadings[threatCount]=heading;
-        combinedThreatValue=(int16_t)(uint16_t)(combinedThreatValue+enemy->combatValueOrBoundaryCode);
+        combinedThreatValue=(int16_t)(combinedThreatValue+enemy->combatValueOrBoundaryCode);
         if (strongestThreat<0 || unitControls[strongestThreat].combatValueOrBoundaryCode<enemy->combatValueOrBoundaryCode)
         {strongestHeadingIndex=threatCount;strongestThreat=slot;}
         ++threatCount;
@@ -205,14 +205,14 @@ void BtechSelectUnitTacticalState(void)
         {
             if (!specialTargetObject) abort();
             int32_t distance=(int32_t)BtechApproximatePlanarDistance(&root->position,&specialTargetObject->object.prefix.position);
-            if (distance<=TACTICAL_OBJECTIVE_COMMIT_RANGE && (int16_t)(uint16_t)(BtechRandomBelowBound(TACTICAL_OBJECTIVE_COMMIT_ROLL)+TACTICAL_OBJECTIVE_COMMIT_ROLL)>=(int16_t)specialTargetDamageRemaining) goto steer;
+            if (distance<=TACTICAL_OBJECTIVE_COMMIT_RANGE && (int16_t)(BtechRandomBelowBound(TACTICAL_OBJECTIVE_COMMIT_ROLL)+TACTICAL_OBJECTIVE_COMMIT_ROLL)>=(int16_t)specialTargetDamageRemaining) goto steer;
         }
         if (control->controlState==TACTICAL_CHARGING_BASE || control->controlState==TACTICAL_DEFENDING) control->controlState=TACTICAL_CHARGING;
         control->targetUnitSlot=strongestThreat;selectedHeading=tacticalThreatHeadings[strongestHeadingIndex];
         if (control->controlState!=TACTICAL_WANDERING)
         {
-            if ((int16_t)(uint16_t)(control->combatValueOrBoundaryCode*3)<combinedThreatValue) control->controlState=TACTICAL_FLEEING;
-            else if (unitControls[strongestThreat].combatValueOrBoundaryCode>(int16_t)(uint16_t)(control->combatValueOrBoundaryCode*2)) control->controlState=TACTICAL_AVOIDING;
+            if ((int16_t)(control->combatValueOrBoundaryCode*3)<combinedThreatValue) control->controlState=TACTICAL_FLEEING;
+            else if (unitControls[strongestThreat].combatValueOrBoundaryCode>(int16_t)(control->combatValueOrBoundaryCode*2)) control->controlState=TACTICAL_AVOIDING;
         }
     }
     else if (control->controlState==TACTICAL_CHARGING_BASE)
@@ -257,12 +257,12 @@ steer:
 void BtechSteerActiveUnitHeading(uint16_t desiredHeading)
 {
     if (!activeUnitTorsoObject || !activeUnitPositionedObject || !activeUnitControl) abort();
-    int16_t relativeHeading=(int16_t)activeUnitTorsoObject->object.prefix.orientationC;
-    int16_t error=(int16_t)(uint16_t)(activeUnitPositionedObject->object.prefix.orientationC+relativeHeading-desiredHeading);
+    int16_t relativeHeading=activeUnitTorsoObject->object.prefix.orientationC;
+    int16_t error=activeUnitPositionedObject->object.prefix.orientationC+relativeHeading-desiredHeading;
     int16_t magnitude=(uint16_t)error==0x8000?INT16_MAX:error<0?-error:error;
     int16_t direction=error<0?-1:error!=0;
     if (magnitude>TACTICAL_TORSO_TURN_STEP) magnitude=TACTICAL_TORSO_TURN_STEP;
-    relativeHeading=(int16_t)(uint16_t)(relativeHeading-magnitude*direction);
+    relativeHeading=(int16_t)(relativeHeading-magnitude*direction);
     magnitude=(uint16_t)relativeHeading==0x8000?INT16_MAX:relativeHeading<0?-relativeHeading:relativeHeading;
     if (magnitude<TACTICAL_TORSO_TURN_LIMIT) activeUnitTorsoObject->object.prefix.orientationC=(uint16_t)relativeHeading;
     BtechUnitControlState *control=activeUnitControl;
@@ -271,7 +271,7 @@ void BtechSteerActiveUnitHeading(uint16_t desiredHeading)
     case TACTICAL_CHARGING:
     {
         if (control->unitSlot>=COMBAT_MECH_SLOTS || (uint16_t)control->targetUnitSlot>=COMBAT_MECH_SLOTS) abort();
-        int32_t distance=(int32_t)unitDistances[control->unitSlot][control->targetUnitSlot];
+        int32_t distance=unitDistances[control->unitSlot][control->targetUnitSlot];
         (void)BtechRandomBelowBound((uint16_t)(((uint16_t)control->targetUnitSlot<<4)+1));
         if (control->quarterWeaponRange>distance) control->maneuverFlags&=(uint8_t)~TACTICAL_OUTER_RANGE;
         else if (control->weaponRangeMinusMargin<distance) control->maneuverFlags|=TACTICAL_OUTER_RANGE;

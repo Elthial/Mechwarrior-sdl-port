@@ -10,7 +10,7 @@ void BtechDrawClippedLine(int16_t firstX,int16_t firstY,int16_t secondX,int16_t 
         for (uint16_t boundary=0;boundary<4;++boundary)
         {
             bool vertical=!(boundary&1),upper=boundary>=2;
-            uint16_t limit=(uint16_t)(vertical?(upper?clipMaximumY:clipMinimumY):(upper?clipMaximumX:clipMinimumX));
+            uint16_t limit=vertical?(upper?clipMaximumY:clipMinimumY):(upper?clipMaximumX:clipMinimumX);
             uint16_t start=vertical?y0:x0,end=vertical?y1:x1;
             bool startOutside=upper?start>limit:(int16_t)start<(int16_t)limit;
             bool endOutside=upper?end>limit:(int16_t)end<(int16_t)limit;
@@ -21,10 +21,10 @@ void BtechDrawClippedLine(int16_t firstX,int16_t firstY,int16_t secondX,int16_t 
             }
             else if (endOutside) return;
             start=vertical?y0:x0;end=vertical?y1:x1;
-            int16_t difference=(int16_t)(uint16_t)(vertical?x1-x0:y1-y0);
-            int16_t distance=(int16_t)(uint16_t)(limit-start);
+            int16_t difference=vertical?x1-x0:y1-y0;
+            int16_t distance=limit-start;
             int32_t product=(int32_t)difference*distance;
-            int16_t divisor=(int16_t)(uint16_t)(end-start);
+            int16_t divisor=end-start;
             if (!divisor || (product==INT32_MIN && divisor==-1)) abort();
             int32_t quotient=product/divisor;
             if (quotient<INT16_MIN || quotient>INT16_MAX) abort();

@@ -13,7 +13,7 @@ void BtechEgaCaptureScreenRectangle(BtechResourceAllocation buffer,uint16_t x,ui
     btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,COMBAT_EGA_ALL_PIXEL_BITS);
     btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,EGA_CLEAR_SET_RESET_COLOUR);
     uint16_t leftByte=x>>3;
-    uint16_t coveredBytes=(uint16_t)(((uint16_t)(x+width)>>3)-leftByte+1);
+    uint16_t coveredBytes=((uint16_t)(x+width)>>3)-leftByte+1;
     uint16_t wordsPerRow=(coveredBytes>>1)+(coveredBytes&1);
     if (y>=COMBAT_SCREEN_HEIGHT) abort(); /* Adjacent row-owner aliases not represented. */
     uint16_t screenStart=graphicsRowOffsets[y]+leftByte;
@@ -50,7 +50,7 @@ void BtechEgaRestoreScreenRectangle(BtechResourceAllocation buffer,uint16_t x,ui
     btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,COMBAT_EGA_ALL_PIXEL_BITS);
     btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,EGA_CLEAR_SET_RESET_COLOUR);
     uint16_t leftByte=x>>3;
-    uint16_t coveredBytes=(uint16_t)(((uint16_t)(x+width)>>3)-leftByte+1);
+    uint16_t coveredBytes=((uint16_t)(x+width)>>3)-leftByte+1;
     uint16_t wordsPerRow=(coveredBytes>>1)+(coveredBytes&1);
     if (y>=COMBAT_SCREEN_HEIGHT) abort();
     uint16_t screenStart=graphicsRowOffsets[y]+leftByte;

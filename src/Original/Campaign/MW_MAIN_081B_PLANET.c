@@ -69,7 +69,7 @@ selectHubMenu:
  * further offers/recruits are generated. Two RNG draws, in the native order. */
 void MwApplyCurrentPlanetState(void)
 {
-    uint16_t directoryByteOffset = (uint16_t)(currentPlanetIndex * sizeof(uint16_t));
+    uint16_t directoryByteOffset = currentPlanetIndex * sizeof(uint16_t);
     if (directoryByteOffset >= sizeof(planetRecordOffsets)) abort(); /* Unmapped adjacent DS, not a clamp. */
     uint16_t planetOffset = planetRecordOffsets[directoryByteOffset / sizeof(uint16_t)];
     if (planetOffset < PLANET_RECORDS_START

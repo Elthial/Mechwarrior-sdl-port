@@ -49,7 +49,7 @@ void MwGenerateUnitStock(uint16_t stockKindRangeIndex, uint16_t tierThreeRolls,
     do
     {
         uint16_t bodyLocation = MwRandomUpTo(CAMPAIGN_BODY_LOCATION_COUNT - 1);
-        uint8_t damageTier = (uint8_t)((MwRandomUpTo(STOCK_BODY_TIER_MAXIMUM) | 1) & STOCK_BODY_TIER_MAXIMUM);
+        uint8_t damageTier = (MwRandomUpTo(STOCK_BODY_TIER_MAXIMUM) | 1) & STOCK_BODY_TIER_MAXIMUM;
         generatedMechDamage.bodyDamageTiers[bodyLocation] = damageTier;
     } while (--bodyRollsRemaining != 0);
     if (generateStartingJenner == STOCK_FORCE_STARTER_MECH)
@@ -73,7 +73,7 @@ void MwRefreshMarketUnitStock(void)
         uint8_t *damageBytes = (uint8_t *)&marketUnitDamage[marketSlot];
         for (uint16_t index = 0; index < sizeof(CampaignUnitDamage); ++index) damageBytes[index] = 0;
     }
-    uint8_t stockDivisor = (uint8_t)(currentPlanetMarketTier + 1);
+    uint8_t stockDivisor = currentPlanetMarketTier + 1;
     if (stockDivisor == 0) abort(); /* Native DIV fault AFTER the clear. */
     marketUnitCount = MwRandomUpTo(CAMPAIGN_MARKET_UNIT_SLOTS / stockDivisor);
     if (marketUnitCount == 0) return;
@@ -186,7 +186,7 @@ bool MwGenerateMissionOffer(uint16_t missionOfferSlot)
         }
         rosterByteOffset += sizeof(uint16_t);
     } while (--pilotsRemaining != 0);
-    uint16_t baseForceBudget = (uint16_t)((combatCreditBand + assignedForceWeight) * MISSION_FORCE_BUDGET_SCALE);
+    uint16_t baseForceBudget = (combatCreditBand + assignedForceWeight) * MISSION_FORCE_BUDGET_SCALE;
     missionForceBudget = baseForceBudget;
     if (generatingMissionOfferSlot == 1 || generatingMissionOfferSlot == 4)
         missionForceBudget += baseForceBudget >> 1;
@@ -200,7 +200,7 @@ bool MwGenerateMissionOffer(uint16_t missionOfferSlot)
     for (;;)
     {
         missionEnemyLightCounts[offerSlot] = lightEnemies;
-        int16_t enemyCount = (int16_t)(uint16_t)(lightEnemies + missionEnemyMediumCounts[offerSlot] + missionEnemyHeavyCounts[offerSlot]);
+        int16_t enemyCount = lightEnemies + missionEnemyMediumCounts[offerSlot] + missionEnemyHeavyCounts[offerSlot];
         if (enemyCount <= 0) { missionEnemyLightCounts[offerSlot] = 1; break; }
         if (enemyCount <= MISSION_ENEMY_COUNT_LIMIT) break;
         if (missionEnemyLightCounts[offerSlot] != 0) --lightEnemies;
@@ -226,10 +226,10 @@ bool MwGenerateMissionOffer(uint16_t missionOfferSlot)
     uint16_t paymentRoll = MwRandomUpTo(MISSION_PAYMENT_ROLL_MAXIMUM);
     employerHouse = currentPlanetHouseIndex;
     uint16_t biasedPaymentRoll = paymentRoll + 1 + housePaymentRollBias[employerHouse];
-    uint16_t paymentProductLow = (uint16_t)((uint32_t)biasedPaymentRoll * missionPaymentBaseThousands);
+    uint16_t paymentProductLow = (uint32_t)biasedPaymentRoll * missionPaymentBaseThousands;
     int32_t paymentAdjustment = (int32_t)(int16_t)paymentProductLow * housePaymentAdjustmentPercent[employerHouse] / PERCENT_DIVISOR;
     if (paymentAdjustment < INT16_MIN || paymentAdjustment > INT16_MAX) abort(); /* Native IDIV overflow, before terms. */
-    uint16_t paymentCeiling = (uint16_t)(paymentAdjustment + missionPaymentBaseThousands);
+    uint16_t paymentCeiling = paymentAdjustment + missionPaymentBaseThousands;
     paymentCeiling = paymentCeiling / MISSION_PAYMENT_ROUNDING_THOUSANDS * MISSION_PAYMENT_ROUNDING_THOUSANDS;
     if (paymentCeiling < MISSION_PAYMENT_MINIMUM_THOUSANDS) paymentCeiling = MISSION_PAYMENT_MINIMUM_THOUSANDS;
     if (paymentCeiling > MISSION_PAYMENT_MAXIMUM_THOUSANDS) paymentCeiling = MISSION_PAYMENT_MAXIMUM_THOUSANDS;
@@ -238,7 +238,7 @@ bool MwGenerateMissionOffer(uint16_t missionOfferSlot)
     if (openingPayment < MISSION_PAYMENT_MINIMUM_THOUSANDS) openingPayment = MISSION_PAYMENT_MINIMUM_THOUSANDS;
     missionPaymentThousands[offerSlot] = openingPayment;
     uint16_t relationshipDifference = houseFavorPoints[employerHouse] - houseGrievancePoints[employerHouse];
-    int16_t relationshipAdjustment = (int16_t)(uint16_t)(relationshipDifference << 2);
+    int16_t relationshipAdjustment = relationshipDifference << 2;
     if (relationshipAdjustment > MISSION_RELATIONSHIP_LIMIT) relationshipAdjustment = MISSION_RELATIONSHIP_LIMIT;
     if (relationshipAdjustment < -MISSION_RELATIONSHIP_LIMIT) relationshipAdjustment = -MISSION_RELATIONSHIP_LIMIT;
     uint16_t salvageCeiling = relationshipAdjustment + houseSalvageBasePercent[employerHouse];
@@ -263,7 +263,7 @@ retryTarget:
     }
     uint16_t targetColumn = policyOffset - policyStart;
     missionTargetHouseIndices[offerSlot] = targetColumn;
-    uint16_t categoryRollMaximum = (uint16_t)((houseMissionTypeLimits[policyOffset] - 1) << 2);
+    uint16_t categoryRollMaximum = (houseMissionTypeLimits[policyOffset] - 1) << 2;
     uint16_t category = (MwRandomUpTo(categoryRollMaximum) >> 2) + 1;
     for (;;)
     {
@@ -307,7 +307,7 @@ retryTarget:
         uint16_t rangeMaximum = housePlanetRangeCounts[targetColumn];
         for (;;)
         {
-            uint16_t directoryByteOffset = (uint16_t)((uint16_t)(MwRandomUpTo(rangeMaximum) + rangeStart) << 1);
+            uint16_t directoryByteOffset = (uint16_t)(MwRandomUpTo(rangeMaximum) + rangeStart) << 1;
             uint16_t planetIndex = directoryByteOffset / sizeof(uint16_t);
             if (planetIndex >= CAMPAIGN_PLANET_COUNT) abort();
             uint16_t planetOffset = planetRecordOffsets[planetIndex];
@@ -431,7 +431,7 @@ void MwAdvanceCampaignTimeAndChargeWages(uint16_t elapsedUnits)
             monthlyWages += pilotWageAmounts[payTier];
             ++rosterSlot;
         } while (--pilotsRemaining != 0);
-        uint16_t wageDebit = (uint16_t)((uint32_t)monthlyWages * elapsedBillingMonths);
+        uint16_t wageDebit = (uint32_t)monthlyWages * elapsedBillingMonths;
         uint16_t fundsLow = campaignFundsLow, fundsHigh = campaignFundsHigh;
         if (fundsHigh == 0 && fundsLow < wageDebit)
         {
@@ -466,7 +466,7 @@ void MwAdvanceCampaignTimeAndChargeWages(uint16_t elapsedUnits)
             /* Paid wages do NOT clear the earlier warning or unpaid marker. */
         }
     }
-    uint16_t upkeepDebit = (uint16_t)((uint32_t)DROPSHIP_MONTHLY_UPKEEP_CBILLS * elapsedBillingMonths);
+    uint16_t upkeepDebit = (uint32_t)DROPSHIP_MONTHLY_UPKEEP_CBILLS * elapsedBillingMonths;
     for (uint16_t ownedSlot = 0; ownedSlot < CAMPAIGN_OWNED_UNIT_SLOTS; ++ownedSlot)
     {
         if (ownedUnitKinds[ownedSlot] != CAMPAIGN_UNIT_DROPSHIP) continue;

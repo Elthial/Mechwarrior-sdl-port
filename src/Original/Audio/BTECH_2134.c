@@ -141,7 +141,7 @@ void BtechAdvanceToneChannel(BtechToneChannelState *state,MwNativeByteView event
         state->modulationPhase=phase;
         uint16_t shiftedPhase=(phase>>4)|((phase&0x8000)?0xF000:0);
         uint16_t entry=shiftedPhase+state->modulationTableOffset;
-        int16_t modulation=(int16_t)((uint16_t)MwReadNativeViewByte(&toneFallbackData[channel],entry)<<8);
+        int16_t modulation=(uint16_t)MwReadNativeViewByte(&toneFallbackData[channel],entry)<<8;
         int32_t product=(int32_t)modulation*state->modulationScale;
         modulationHigh=(uint16_t)((uint32_t)product>>16);
     }

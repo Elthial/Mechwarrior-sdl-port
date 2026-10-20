@@ -38,7 +38,7 @@ uint32_t BtechDivideSignedDwordNormalized(uint16_t numeratorLow, int16_t numerat
         quotientLow=(uint16_t)(numerator/(uint16_t)denominator);
         quotientHigh=0x0000;
     }
-    else if ((int16_t)(uint16_t)denominator>(int16_t)(uint16_t)(numerator>>0x0010))
+    else if ((int16_t)denominator>(int16_t)(numerator>>0x0010))
     {
         // 6636 JLE is SIGNED WORD comparison, not unsigned quotient-fit reasoning.
         if (!(uint16_t)denominator || numerator/(uint16_t)denominator>UINT16_MAX) abort();
@@ -48,11 +48,11 @@ uint32_t BtechDivideSignedDwordNormalized(uint16_t numeratorLow, int16_t numerat
     else
     {
         // 6641..664A: two actual WORD DIVs, high numerator first then remainder:low.
-        uint16_t divisor=(uint16_t)denominator;
-        uint16_t numeratorHigh=(uint16_t)(numerator>>0x0010);
+        uint16_t divisor=denominator;
+        uint16_t numeratorHigh=numerator>>0x0010;
         if (!divisor) abort();
         quotientHigh=(uint16_t)(numeratorHigh/divisor);
-        uint16_t firstRemainder=(uint16_t)((uint32_t)numeratorHigh-(uint32_t)quotientHigh*divisor);
+        uint16_t firstRemainder=(uint32_t)numeratorHigh-(uint32_t)quotientHigh*divisor;
         uint32_t remainingNumerator=((uint32_t)firstRemainder<<0x0010)|(uint16_t)numerator;
         if (remainingNumerator/divisor>UINT16_MAX) abort();
         quotientLow=(uint16_t)(remainingNumerator/divisor);
@@ -72,7 +72,7 @@ uint32_t BtechDivideSignedWideNumerator(int16_t numeratorHighest, uint16_t numer
     // do NOT replace this approximation with a host 64/32 quotient.
     uint16_t numeratorWords[0x0004]={numeratorLow,numeratorMiddle,numeratorUpper,(uint16_t)numeratorHighest};
     uint16_t foldedDenominatorLow=denominatorLow;
-    uint16_t foldedDenominatorHigh=(uint16_t)denominatorHigh;
+    uint16_t foldedDenominatorHigh=denominatorHigh;
     if (numeratorHighest<0x0000)
     {
         // 6679..668A NOT/ADD/ADC across four WORDs; 668D..6691 negates denominator too.
@@ -117,7 +117,7 @@ uint32_t BtechDivideSignedWideNumerator(int16_t numeratorHighest, uint16_t numer
     if ((int16_t)middle<0x0000) // 66DF..66E6: one more shift to keep normalized numerator signed-positive.
     {
         ++normalizationShift;
-        uint16_t middleCarry=(uint16_t)(middle&0x0001);
+        uint16_t middleCarry=middle&0x0001;
         middle=(uint16_t)(middle>>0x0001);
         low=(uint16_t)((low>>0x0001)|(middleCarry<<0x000F));
     }
@@ -131,7 +131,7 @@ uint32_t BtechDivideSignedWideNumerator(int16_t numeratorHighest, uint16_t numer
     uint16_t remainderHigh=divisionResult->remainderHigh; // 66F4..66FC: four ordered WORD reads.
     for (uint16_t shifts=normalizationShift; shifts!=0x0000; --shifts)
     {
-        uint16_t carry=(uint16_t)(quotientLow>>0x000F);
+        uint16_t carry=quotientLow>>0x000F;
         quotientLow=(uint16_t)(quotientLow<<0x0001);
         quotientHigh=(uint16_t)((quotientHigh<<0x0001)|carry); // Modulo DWORD, even for counts >=32.
     }
@@ -144,14 +144,14 @@ uint32_t BtechDivideSignedWideNumerator(int16_t numeratorHighest, uint16_t numer
         {
             while (correctionShifts!=0x0000)
             {
-                uint16_t carry=(uint16_t)(correctionDenominatorHigh&0x0001);
+                uint16_t carry=correctionDenominatorHigh&0x0001;
                 correctionDenominatorHigh=(uint16_t)((correctionDenominatorHigh>>0x0001)|(correctionDenominatorHigh&0x8000));
                 correctionDenominatorLow=(uint16_t)((correctionDenominatorLow>>0x0001)|(carry<<0x000F));
                 --correctionShifts; // 671B SAR BX / 671D RCR BP, preserves signed denominator.
             }
             break;
         }
-        uint16_t carry=(uint16_t)(remainderLow>>0x000F);
+        uint16_t carry=remainderLow>>0x000F;
         remainderLow=(uint16_t)(remainderLow<<0x0001);
         remainderHigh=(uint16_t)((remainderHigh<<0x0001)|carry);
         if (--correctionShifts==0x0000) break;
@@ -159,7 +159,7 @@ uint32_t BtechDivideSignedWideNumerator(int16_t numeratorHighest, uint16_t numer
     uint32_t correction=BtechDivideSignedDwordNormalized(remainderLow,(int16_t)remainderHigh,
         correctionDenominatorLow,(int16_t)correctionDenominatorHigh,cxOut);
     uint32_t lowSum=(uint32_t)(uint16_t)correction+quotientLow;
-    uint16_t resultLow=(uint16_t)lowSum;
-    uint16_t resultHigh=(uint16_t)((correction>>0x0010)+quotientHigh+(lowSum>>0x0010));
+    uint16_t resultLow=lowSum;
+    uint16_t resultHigh=(correction>>0x0010)+quotientHigh+(lowSum>>0x0010);
     return ((uint32_t)resultHigh<<0x0010)|resultLow; // 672B ADD / 672D ADC; NEAR RET 6732.
 }

@@ -20,33 +20,33 @@ void BtechDrawWeaponStatusList(uint16_t selectedMountIndex,uint16_t targetUnitSl
     if (layout>=COMBAT_COCKPIT_LAYOUTS) abort();
     const BtechCockpitLayout *cockpit=&cockpitLayouts[layout];
     textTransparentBackground=false;textBackgroundColour=Combat_Pal_EGA_DarkGrey;
-    uint16_t rowY=(uint16_t)cockpit->weaponListY;
+    uint16_t rowY=cockpit->weaponListY;
     uint16_t mount;
     for (mount=0;mount<COMBAT_WEAPON_MOUNTS;++mount,rowY+=WEAPON_HUD_ROW_HEIGHT)
     {
         if (mount==WEAPON_HUD_ROWS_PER_BANK) rowY+=WEAPON_HUD_BANK_GAP;
         if (playerMechState->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
-        uint16_t weaponKind=(uint16_t)mechTemplates[playerMechState->templateIndex].weaponMounts[mount].weaponKind;
+        uint16_t weaponKind=mechTemplates[playerMechState->templateIndex].weaponMounts[mount].weaponKind;
         if (weaponKind==COMBAT_WEAPON_NONE) continue;
         if (weaponKind>=COMBAT_WEAPON_KINDS || hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES) abort();
         int16_t ammoFamily=weaponDefinitions[weaponKind].ammoFamily;
         textForegroundColour=(uint8_t)(playerMechState->weapons[mount].reloadTicksRemaining?
             hudColourSchemes[hudColourSchemeIndex].weaponReloading:hudColourSchemes[hudColourSchemeIndex].weaponReady);
-        if (ammoFamily!=-1 && (uint16_t)ammoFamily>=COMBAT_AMMO_FAMILIES) abort();
-        if ((ammoFamily!=-1 && !playerMechState->ammoSalvosRemaining[ammoFamily]) || !playerMechState->weapons[mount].operational)
+        if (ammoFamily!=(int16_t)COMBAT_AMMO_NONE && (uint16_t)ammoFamily>=COMBAT_AMMO_FAMILIES) abort();
+        if ((ammoFamily!=(int16_t)COMBAT_AMMO_NONE && !playerMechState->ammoSalvosRemaining[ammoFamily]) || !playerMechState->weapons[mount].operational)
             textForegroundColour=(uint8_t)hudColourSchemes[hudColourSchemeIndex].weaponUnavailable;
         BtechDrawNearText(weaponLabels[weaponKind],cockpit->weaponListX,(int16_t)rowY);
         textForegroundColour=(uint8_t)hudColourSchemes[hudColourSchemeIndex].ammoText;
-        const char *ammoText=ammoFamily==-1?energyAmmoPlaceholder:
+        const char *ammoText=ammoFamily==(int16_t)COMBAT_AMMO_NONE?energyAmmoPlaceholder:
             BtechFormatSignedDecimalField((int16_t)playerMechState->ammoSalvosRemaining[ammoFamily],WEAPON_HUD_AMMO_DIGITS,' ');
-        BtechDrawNearText(ammoText,(int16_t)(uint16_t)(cockpit->weaponListX+WEAPON_HUD_AMMO_COLUMN),(int16_t)rowY);
+        BtechDrawNearText(ammoText,(int16_t)(cockpit->weaponListX+WEAPON_HUD_AMMO_COLUMN),(int16_t)rowY);
         int16_t rangeBucket=targetUnitSlot?BtechClassifyWeaponRange(0,targetUnitSlot,weaponKind):4;
         if ((uint16_t)rangeBucket>=5) abort();
         textForegroundColour=(uint8_t)hudColourSchemes[hudColourSchemeIndex].rangeBuckets[rangeBucket];
         uint16_t rangeClass=weaponDefinitions[weaponKind].rangeClass;
         if (rangeClass>=4) abort();
-        BtechDrawNearText(weaponRangeClassLabels[rangeClass],(int16_t)(uint16_t)(cockpit->weaponListX+WEAPON_HUD_RANGE_COLUMN),(int16_t)rowY);
-        uint16_t markerX=(uint16_t)(cockpit->weaponListX-WEAPON_HUD_MARKER_INSET);
+        BtechDrawNearText(weaponRangeClassLabels[rangeClass],(int16_t)(cockpit->weaponListX+WEAPON_HUD_RANGE_COLUMN),(int16_t)rowY);
+        uint16_t markerX=cockpit->weaponListX-WEAPON_HUD_MARKER_INSET;
         rowY=(uint16_t)(cockpit->weaponListY+mount*WEAPON_HUD_ROW_HEIGHT+(mount>WEAPON_HUD_FIRST_BANK_LAST_ROW?WEAPON_HUD_BANK_GAP:0));
         drawFillColour=(uint8_t)(mount==selectedMountIndex?hudColourSchemes[hudColourSchemeIndex].selectedMount:
             hudColourSchemes[hudColourSchemeIndex].unselectedMount);

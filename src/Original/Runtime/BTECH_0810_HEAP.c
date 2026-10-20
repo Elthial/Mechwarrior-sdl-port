@@ -94,8 +94,8 @@ static bool GrowNearHeap(uint16_t requested,uint16_t *position,uint16_t *payload
         uint32_t end=(uint32_t)needed+*position;
         if (end<=UINT16_MAX && end+mask<=UINT16_MAX)
         {
-            uint16_t rounded=(uint16_t)((end+mask)&(uint16_t)~mask);
-            uint16_t bytes=(uint16_t)(rounded-*position);
+            uint16_t rounded=(end+mask)&(uint16_t)~mask;
+            uint16_t bytes=rounded-*position;
             if (bytes && ExtendNearHeap(bytes,position,payload,oldPayload)) return true;
         }
         if (!mask) return false;
@@ -121,7 +121,7 @@ uint16_t BtechAllocateNearHeapBlock(uint16_t bytes)
  * demand-driven; releasing a block alone does not merge it with its neighbour. */
 static uint16_t FindNearHeapBlock(uint16_t bytes)
 {
-    uint16_t requested=(uint16_t)(bytes+1);
+    uint16_t requested=bytes+1;
     if (!requested || (requested&0xFFFE)>=0xFFEE) {nearHeapSearchHeader=nearHeapFirstHeader;return 0;}
     requested&=0xFFFE;
     uint16_t position=nearHeapSearchHeader,payload=position+2;
@@ -132,7 +132,7 @@ static uint16_t FindNearHeapBlock(uint16_t bytes)
     {
         if (header&1)
         {
-            uint16_t available=(uint16_t)(header-1);
+            uint16_t available=header-1;
             if (available>=requested)
             {
                 uint16_t next=position+requested;
@@ -170,7 +170,7 @@ static uint16_t FindNearHeapBlock(uint16_t bytes)
         if (!ExtendNearHeap(0,&position,&payload,&oldEnd)) {nearHeapSearchHeader=nearHeapFirstHeader;return 0;}
         if (oldEnd!=position)
         {
-            uint16_t alignmentBytes=(uint16_t)((oldEnd&1)+2);
+            uint16_t alignmentBytes=(oldEnd&1)+2;
             if (!ExtendNearHeap(alignmentBytes,&position,&payload,&oldEnd)) {nearHeapSearchHeader=nearHeapFirstHeader;return 0;}
             uint16_t at=(uint16_t)(payload-2),value=BtechNearHeapHeader(at);
             BtechSetNearHeapHeader(at,(value&0xFF00)|(uint8_t)(value-1));
@@ -276,7 +276,7 @@ void BtechReleaseNearHeapBlock(void *object)
             /* E978 is OR BYTE [BX-2],1, even when BX is no longer an
              * allocation base. Check the write address itself: a newer owner
              * can end exactly at BX while still covering its preceding byte. */
-            uint16_t address=(uint16_t)(record->offset-2);
+            uint16_t address=record->offset-2;
             for (NearHeapRecord *current=records;current!=record;current=current->next)
             {
                 if (current->offset<=address && (uint32_t)address<(uint32_t)current->offset+current->bytes)

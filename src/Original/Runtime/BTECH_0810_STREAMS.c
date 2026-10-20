@@ -57,7 +57,7 @@ int16_t BtechRuntimeStreamClose(BtechRuntimeStream *stream)
         else
         {
             if (!btechHostCloseHandle) abort();
-            closed=btechHostCloseHandle((uint16_t)(int16_t)(int8_t)stream->dosHandle);
+            closed=btechHostCloseHandle((int8_t)stream->dosHandle);
         }
         if (closed<0) closeStatus=-1;
         else

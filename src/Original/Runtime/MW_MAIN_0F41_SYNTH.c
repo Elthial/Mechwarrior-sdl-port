@@ -38,7 +38,7 @@ void MwSelectAndInitializeMidiBackend(MwCampaignAudioBackend *backend)
          * After BTECH returns,0106 aliases two AdLib frequency WORDs rather
          * than the runtime header. Apply the native byte write to that actual
          * owner; do not zero the retained IRQ or change MPU voice capacity. */
-        uint16_t previousOffset=(uint16_t)mpuPreviousIrq;
+        uint16_t previousOffset=mpuPreviousIrq;
         uint16_t source=(uint16_t)(previousOffset+3),destination=(uint16_t)(previousOffset+0x17);
         if (source<sizeof(musicRuntimeHeader) && destination<sizeof(musicRuntimeHeader))
             musicRuntimeHeader[destination]=musicRuntimeHeader[source];
@@ -47,7 +47,7 @@ void MwSelectAndInitializeMidiBackend(MwCampaignAudioBackend *backend)
             && destination-MIDI_ADLIB_NOTE_FREQUENCIES_OFFSET<sizeof(adlibPackedNoteFrequencies))
         {
             source-=MIDI_ADLIB_NOTE_FREQUENCIES_OFFSET;destination-=MIDI_ADLIB_NOTE_FREQUENCIES_OFFSET;
-            uint8_t value=(uint8_t)(adlibPackedNoteFrequencies[source/2]>>((source&1)*8));
+            uint8_t value=adlibPackedNoteFrequencies[source/2]>>((source&1)*8);
             uint8_t shift=(destination&1)*8;
             adlibPackedNoteFrequencies[destination/2]=(uint16_t)((adlibPackedNoteFrequencies[destination/2]
                 &~(UINT16_C(0xFF)<<shift))|((uint16_t)value<<shift));
@@ -223,7 +223,7 @@ void MwSetCampaignMidiProgram(uint16_t channelIndex,uint16_t instrumentId)
 void MwDispatchMidiByte(uint16_t midiWord)
 {
     if (MwSendMidiByteToSelectedBackend(midiWord)) return;
-    uint8_t midiByte=(uint8_t)midiWord;
+    uint8_t midiByte=midiWord;
     if (midiByte>=MIDI_STATUS_BYTE)
     {
         if (midiByte<MIDI_SYSTEM_STATUS)
@@ -282,7 +282,7 @@ void MwDispatchMidiByte(uint16_t midiWord)
  * a malformed cursor outside that owned workspace is unsupported execution. */
 void MwDispatchMidiByteAndSysexState(uint16_t midiWord)
 {
-    uint8_t midiByte=(uint8_t)midiWord;
+    uint8_t midiByte=midiWord;
     if (midiByte==0xF0) {midiSysex.parserOffset=0x0D58;return;}
     if (midiByte==0xF7) {midiSysex.parserOffset=0x0DB0;return;}
     switch (midiSysex.parserOffset)
@@ -483,7 +483,7 @@ uint16_t MwIgnoreSpeakerRawMidiByte(void) {return 0;}
 /* MW_MAIN0F41:0F0D..0F2C. Higher BYTE notes read adjacent authored WORDs. */
 uint16_t MwStartSpeakerVoice(MwMidiVoice *voice)
 {
-    uint16_t noteIndex=(uint16_t)(voice->translatedNote-SPEAKER_FIRST_NOTE);
+    uint16_t noteIndex=voice->translatedNote-SPEAKER_FIRST_NOTE;
     uint16_t period=(noteIndex&0x8000)?SPEAKER_SILENT_PERIOD:midiSysex.tonePeriodsAndAdjacentWords[noteIndex];
     voice->pitPeriod=period;
     if (speakerVoiceCount<=1) return MwWriteSpeakerPeriod(period);

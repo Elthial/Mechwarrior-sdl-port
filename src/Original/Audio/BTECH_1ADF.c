@@ -275,7 +275,7 @@ BtechSoundAllocationNode *BtechLoadTaggedSoundAllocation(BtechSoundBank *bank,Bt
     uint32_t cursor=0;
     while (!failed && remaining)
     {
-        uint16_t chunk=(uint16_t)(remaining>COMBAT_SOUND_CHUNK_BYTES?COMBAT_SOUND_CHUNK_BYTES:remaining);
+        uint16_t chunk=remaining>COMBAT_SOUND_CHUNK_BYTES?COMBAT_SOUND_CHUNK_BYTES:remaining;
         if (!allocation.bytes || cursor+chunk>allocation.byteCount) abort(); /* Native NULL/foreign writes are not host memory. */
         failed=BtechReadArchiveIntoFarBuffer((uint16_t)archive,allocation.bytes+cursor,chunk)!=chunk;
         remaining-=chunk;cursor+=chunk;
@@ -348,7 +348,7 @@ uint16_t BtechLoadMusicBank(const char *filename,BtechRuntimeStream *stream)
     uint16_t trackCount=MwReadNativeWord(header,0);
     for (int16_t track=0;track<(int16_t)trackCount;++track)
     {
-        uint16_t sequenceWord=(uint16_t)(bankIndex*COMBAT_MUSIC_SEQUENCE_WORDS+track);
+        uint16_t sequenceWord=bankIndex*COMBAT_MUSIC_SEQUENCE_WORDS+track;
         if (sequenceWord>=COMBAT_MUSIC_SEQUENCE_ROWS*COMBAT_MUSIC_SEQUENCE_WORDS) abort();
         /* Native unchecked counts can spill into the next represented row. */
         int16_t *next=&musicSequences[sequenceWord/COMBAT_MUSIC_SEQUENCE_WORDS][sequenceWord%COMBAT_MUSIC_SEQUENCE_WORDS];
@@ -527,7 +527,7 @@ uint16_t BtechDispatchSoundBankEvent(int16_t soundEventIndex,uint16_t priority)
     if ((int16_t)activeSoundBankIndex<0) return 0;
     if (activeSoundBankIndex>=COMBAT_SOUND_BANKS) abort();
     BtechSoundBank *bank=&soundBanks[activeSoundBankIndex];
-    if ((int16_t)(uint16_t)(bank->eventCount-1)<soundEventIndex) return 0;
+    if ((int16_t)(bank->eventCount-1)<soundEventIndex) return 0;
     if (soundEventIndex<0 || (uint16_t)soundEventIndex>=bank->eventReferenceCapacity || !bank->events) abort();
     BtechSoundEvent event=bank->events[soundEventIndex];
     uint16_t type=MwReadNativeViewWord(&event.data,event.offset);

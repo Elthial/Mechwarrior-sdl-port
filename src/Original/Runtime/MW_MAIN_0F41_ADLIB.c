@@ -39,7 +39,7 @@ uint16_t MwProbeAdlibAndCalibrateDelays(void)
     while (remaining && status!=OPL_TIMER_ONE_OVERFLOW);
     mwMusicHardware.setInterruptsEnabled(true);
     if (status!=OPL_TIMER_ONE_OVERFLOW) return 0;
-    uint16_t measuredReads=(uint16_t)(0-remaining);
+    uint16_t measuredReads=0-remaining;
     adlibDataDelayReads=measuredReads/OPL_DATA_CALIBRATION_SCALE+1;
     adlibAddressDelayReads=measuredReads/OPL_ADDRESS_CALIBRATION_SCALE+1;
     return 1;

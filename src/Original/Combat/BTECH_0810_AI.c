@@ -31,7 +31,7 @@ void BtechUpdateAiMechUnits(void)
         if (!activeUnitPositionedObject) abort();
         if (activeUnitControl->movementMode==MOVEMENT_MODE_JUMP)
         {
-            if (activeUnitControl->combatValueOrBoundaryCode!=-1
+            if (activeUnitControl->combatValueOrBoundaryCode!=COMBAT_MECH_DISABLED_VALUE
                 && activeMechState->currentInternalStructure[COMBAT_BODY_RIGHT_LEG]
                 && activeMechState->currentInternalStructure[COMBAT_BODY_LEFT_LEG]) goto tacticalUpdate;
             BtechSetActiveUnitGroundOrJumpMotion(activeUnitPositionedObject->object.prefix.orientationC,MOTION_DIRECTION_STOP);
@@ -44,7 +44,7 @@ void BtechUpdateAiMechUnits(void)
             activeUnitControl->biasedHeadingSnapshot=activeUnitPositionedObject->object.prefix.orientationC+AVOIDANCE_HALF_TURN;
         }
 tacticalUpdate:
-        if (activeUnitControl->combatValueOrBoundaryCode!=-1)
+        if (activeUnitControl->combatValueOrBoundaryCode!=COMBAT_MECH_DISABLED_VALUE)
         {
             uint16_t mode=activeUnitControl->movementMode;
             if (mode!=MOVEMENT_MODE_FALLEN_POSE && mode!=MOVEMENT_MODE_FALLING && mode!=MOVEMENT_MODE_RECOVERING)
@@ -122,7 +122,7 @@ void BtechCoordinateSpecialObjectiveUnits(void)
             }
             if (!alreadyCovered && nearestDefender!=OBJECTIVE_CANDIDATE_DISTANCE_LIMIT)
             {
-                int32_t doubledDistance=(int32_t)((uint32_t)unitDistancesToSpecialTarget[defender]<<1);
+                int32_t doubledDistance=(uint32_t)unitDistancesToSpecialTarget[defender]<<1;
                 if (unitDistancesToSpecialTarget[threat]<doubledDistance)
                 {
                     unitControls[defender].targetUnitSlot=threat;unitControls[defender].controlState=TACTICAL_CHARGING;
@@ -147,7 +147,7 @@ void BtechCoordinateSpecialObjectiveUnits(void)
         {
             destination.positionA=unitFormationPositions[slot].positionA;
             destination.positionB=unitFormationPositions[slot].positionB;
-            destination.positionC=(uint32_t)(int32_t)(int16_t)BtechSampleTerrainOrSurfaceHeight(&destination);
+            destination.positionC=(int16_t)BtechSampleTerrainOrSurfaceHeight(&destination);
         }
         else
         {

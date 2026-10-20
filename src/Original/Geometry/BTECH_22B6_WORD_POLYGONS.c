@@ -59,14 +59,14 @@ int16_t BtechGetPolygonFacingDotHighWord(uint8_t normalIndex,uint8_t firstVertex
 void BtechIntersectWordEdgeWithNearPlane(uint16_t outsideVertex,uint16_t insideVertex)
 {
     if (outsideVertex>=GEOMETRY_CACHE_VERTICES || insideVertex>=GEOMETRY_CACHE_VERTICES) abort();
-    int16_t denominator=(int16_t)(uint16_t)(geometryViewDepth.words[insideVertex]-geometryViewDepth.words[outsideVertex]);
-    int16_t planeDistance=(int16_t)(uint16_t)(nearClipDepth-geometryViewDepth.words[outsideVertex]);
+    int16_t denominator=geometryViewDepth.words[insideVertex]-geometryViewDepth.words[outsideVertex];
+    int16_t planeDistance=nearClipDepth-geometryViewDepth.words[outsideVertex];
     BtechGeometryCoordinateCache *source[]={&geometryViewX,&geometryViewZ};
     BtechGeometryCoordinateCache *destination[]={&geometryProjectedX,&geometryProjectedY};
     for (uint16_t axis=0;axis<2;++axis)
     {
-        int16_t difference=(int16_t)(uint16_t)(source[axis]->words[insideVertex]-source[axis]->words[outsideVertex]);
-        uint32_t product=(uint32_t)((int32_t)difference*planeDistance);
+        int16_t difference=source[axis]->words[insideVertex]-source[axis]->words[outsideVertex];
+        uint32_t product=(int32_t)difference*planeDistance;
         if (!denominator) abort(); /* Native zero-divisor retries forever. */
         int64_t quotient=(int64_t)(int32_t)product/denominator;
         while (quotient<INT16_MIN || quotient>INT16_MAX)
@@ -96,8 +96,8 @@ void BtechClipWordPolygonNearPlane(void)
         for (uint16_t index=0;index<emitted;++index)
         {
             if (output>=COMBAT_POLYGON_VERTEX_WORDS) abort();
-            screenPolygonX[output]=(int16_t)(uint16_t)((uint16_t)screenCentreA+geometryProjectedX.words[emit[index]]);
-            screenPolygonY[output]=(int16_t)(uint16_t)((uint16_t)screenCentreB-geometryProjectedY.words[emit[index]]);
+            screenPolygonX[output]=(int16_t)((uint16_t)screenCentreA+geometryProjectedX.words[emit[index]]);
+            screenPolygonY[output]=(int16_t)((uint16_t)screenCentreB-geometryProjectedY.words[emit[index]]);
             ++output;
         }
         previous=current;++input;
@@ -136,10 +136,10 @@ void BtechDrawPolygonPayload(const BtechRenderPolygonPayload *payload)
                 {
                     BtechGeometryCoordinateCache *source[]={&geometryViewX,&geometryViewZ};
                     BtechGeometryCoordinateCache *destination[]={&geometryProjectedX,&geometryProjectedY};
-                    int16_t depth=(int16_t)geometryViewDepth.words[vertex];
+                    int16_t depth=geometryViewDepth.words[vertex];
                     for (uint16_t axis=0;axis<2;++axis)
                     {
-                        uint32_t numerator=(uint32_t)(int32_t)(int16_t)source[axis]->words[vertex];
+                        uint32_t numerator=(int16_t)source[axis]->words[vertex];
                         uint16_t shifts=combatProjectionShift;
                         if ((int8_t)(uint8_t)shifts>=8)
                         {
@@ -168,8 +168,8 @@ divideCoordinate:
             {
                 if (index>=COMBAT_POLYGON_VERTEX_WORDS) abort();
                 uint8_t vertex=polygonVertexIndices[index];
-                screenPolygonX[index]=(int16_t)(uint16_t)((uint16_t)screenCentreA+geometryProjectedX.words[vertex]);
-                screenPolygonY[index]=(int16_t)(uint16_t)((uint16_t)screenCentreB-geometryProjectedY.words[vertex]);
+                screenPolygonX[index]=(int16_t)((uint16_t)screenCentreA+geometryProjectedX.words[vertex]);
+                screenPolygonY[index]=(int16_t)((uint16_t)screenCentreB-geometryProjectedY.words[vertex]);
             }
         }
         screenPolygonNeedsClip=objectNeedsScreenClip;

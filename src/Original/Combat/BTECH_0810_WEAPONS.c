@@ -21,16 +21,16 @@ void BtechFirePlayerDirectWeapon(uint16_t mountIndex)
     if (!selectedHitObject)
     {
         if (!playerPoseObject || !playerMechState) abort();
-        int16_t pitch=(int16_t)(uint16_t)(playerPoseObject->object.prefix.orientationA-playerMechState->aimPitch);
-        distance=(int16_t)(uint16_t)((uint16_t)(weapon->longRangeBoundary<<DIRECT_SHOT_RANGE_SHIFT)*DIRECT_SHOT_RANGE_MULTIPLIER);
+        int16_t pitch=playerPoseObject->object.prefix.orientationA-playerMechState->aimPitch;
+        distance=(int16_t)((uint16_t)(weapon->longRangeBoundary<<DIRECT_SHOT_RANGE_SHIFT)*DIRECT_SHOT_RANGE_MULTIPLIER);
         if (pitch<0)
         {
-            int16_t negativeSine=(int16_t)(uint16_t)(0-BtechLookupSine((uint16_t)pitch));
+            int16_t negativeSine=0-BtechLookupSine((uint16_t)pitch);
             if (negativeSine)
             {
                 if (!playerUnitBinding || !playerUnitBinding->positionedLeftLeg) abort();
                 uint32_t numerator=playerUnitBinding->positionedLeftLeg->object.prefix.position.positionC<<ORIENTATION_FRACTION_BITS;
-                int16_t groundDistance=(int16_t)(uint16_t)BtechDivideSignedDword(numerator,(uint32_t)(int32_t)negativeSine);
+                int16_t groundDistance=(int16_t)BtechDivideSignedDword(numerator,(uint32_t)negativeSine);
                 if ((int32_t)groundDistance<distance)
                 {BtechBuildPlayerDirectShotGeometry(groundDistance,mount,1);return;}
             }
@@ -41,12 +41,12 @@ void BtechFirePlayerDirectWeapon(uint16_t mountIndex)
         if (!playerUnitBinding || !playerUnitBinding->torso) abort();
         distance=(int32_t)BtechApproximatePlanarDistance(&playerUnitBinding->torso->object.prefix.position,&selectedHitObject->position);
         uint32_t scaled=BtechShiftSignedDwordRight((uint32_t)distance,DIRECT_SHOT_RANGE_SHIFT);
-        int16_t range=(int16_t)(uint16_t)BtechDivideSignedDword(scaled,DIRECT_SHOT_RANGE_MULTIPLIER);
+        int16_t range=(int16_t)BtechDivideSignedDword(scaled,DIRECT_SHOT_RANGE_MULTIPLIER);
         const uint16_t boundaries[]={weapon->minimumRange,weapon->shortRangeBoundary,weapon->mediumRangeBoundary,weapon->longRangeBoundary};
         uint16_t boundary=0;
-        while (boundary<4 && (int16_t)boundaries[boundary]<range) ++boundary;
-        if (boundary==4)
-            distance=(int16_t)(uint16_t)((uint16_t)(weaponDefinitions[mount->weaponKind].longRangeBoundary<<DIRECT_SHOT_RANGE_SHIFT)*DIRECT_SHOT_RANGE_MULTIPLIER);
+        while (boundary<WEAPON_RANGE_BOUNDARIES && (int16_t)boundaries[boundary]<range) ++boundary;
+        if (boundary==WEAPON_RANGE_BEYOND_LONG)
+            distance=(int16_t)((uint16_t)(weaponDefinitions[mount->weaponKind].longRangeBoundary<<DIRECT_SHOT_RANGE_SHIFT)*DIRECT_SHOT_RANGE_MULTIPLIER);
         else
         {
             uint16_t targetUnit,targetArmor;
@@ -74,7 +74,7 @@ void BtechFirePlayerDirectWeapon(uint16_t mountIndex)
             }
         }
     }
-    BtechBuildPlayerDirectShotGeometry((int16_t)(uint16_t)distance,mount,impactEffect);
+    BtechBuildPlayerDirectShotGeometry((int16_t)distance,mount,impactEffect);
 }
 
 /*0810:4803. Armour output precedes unit output. Slot0 means no other Mech. */
@@ -122,7 +122,7 @@ uint8_t BtechIsPlayerWeaponMountReady(uint16_t mountIndex)
     if (!playerMechState->weapons[mountIndex].operational
         || playerMechState->weapons[mountIndex].reloadTicksRemaining) return 0;
     int16_t family=weaponDefinitions[kind].ammoFamily;
-    if ((uint16_t)family==COMBAT_WEAPON_NONE) return 1;
+    if ((uint16_t)family==COMBAT_AMMO_NONE) return 1;
     if ((uint16_t)family>=COMBAT_AMMO_FAMILIES) abort();
     return playerMechState->ammoSalvosRemaining[family]!=0;
 }

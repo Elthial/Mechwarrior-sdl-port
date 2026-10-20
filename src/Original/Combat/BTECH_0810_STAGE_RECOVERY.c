@@ -12,10 +12,10 @@ uint8_t BtechCalculateSalvageConditionPercent(const BtechMechState *mech)
 {
     if (!mech || mech->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
     const BtechMechTemplate *chassis=&mechTemplates[mech->templateIndex];
-    int16_t engine=(int16_t)(uint16_t)((COMBAT_ENGINE_HIT_LIMIT-mech->engineHits)*SALVAGE_ENGINE_WEIGHT)/COMBAT_ENGINE_HIT_LIMIT;
-    int16_t sensors=(int16_t)(uint16_t)((COMBAT_SENSORS_DESTROYED_HITS-mech->sensorHits)*SALVAGE_SENSOR_WEIGHT)/COMBAT_SENSORS_DESTROYED_HITS;
-    int16_t gyro=(int16_t)(uint16_t)((COMBAT_GYRO_DESTROYED_HITS-mech->gyroHits)*SALVAGE_GYRO_WEIGHT)/COMBAT_GYRO_DESTROYED_HITS;
-    uint16_t subtotal=(uint16_t)(engine+sensors+(uint16_t)((1-mech->cockpitDisabled)*SALVAGE_COCKPIT_WEIGHT)+gyro);
+    int16_t engine=(int16_t)((COMBAT_ENGINE_HIT_LIMIT-mech->engineHits)*SALVAGE_ENGINE_WEIGHT)/COMBAT_ENGINE_HIT_LIMIT;
+    int16_t sensors=(int16_t)((COMBAT_SENSORS_DESTROYED_HITS-mech->sensorHits)*SALVAGE_SENSOR_WEIGHT)/COMBAT_SENSORS_DESTROYED_HITS;
+    int16_t gyro=(int16_t)((COMBAT_GYRO_DESTROYED_HITS-mech->gyroHits)*SALVAGE_GYRO_WEIGHT)/COMBAT_GYRO_DESTROYED_HITS;
+    uint16_t subtotal=engine+sensors+(uint16_t)((1-mech->cockpitDisabled)*SALVAGE_COCKPIT_WEIGHT)+gyro;
     int16_t operationalMounts=0;
     for (int16_t mount=0;mount<(int16_t)chassis->weaponMountCount;++mount)
     {
@@ -23,14 +23,14 @@ uint8_t BtechCalculateSalvageConditionPercent(const BtechMechState *mech)
         if (mech->weapons[mount].operational) ++operationalMounts;
     }
     if (!chassis->weaponMountCount) abort(); /* Native divide fault, not invented zero score. */
-    subtotal+=(int16_t)(uint16_t)(operationalMounts*SALVAGE_WEAPON_WEIGHT)/(int16_t)chassis->weaponMountCount;
+    subtotal+=(int16_t)(operationalMounts*SALVAGE_WEAPON_WEIGHT)/(int16_t)chassis->weaponMountCount;
     uint16_t remaining=0,maximum=0;
     for (uint16_t armor=0;armor<COMBAT_ARMOR_LOCATIONS;++armor)
     {maximum+=chassis->maximumArmor[armor];remaining+=mech->currentArmor[armor];}
     for (uint16_t body=0;body<COMBAT_BODY_LOCATIONS;++body)
     {maximum+=chassis->maximumInternalStructure[body];remaining+=mech->currentInternalStructure[body];}
     if (!maximum) abort();
-    int32_t protection=(int16_t)(uint16_t)(remaining*SALVAGE_ARMOR_STRUCTURE_WEIGHT)/(int16_t)maximum;
+    int32_t protection=(int16_t)(remaining*SALVAGE_ARMOR_STRUCTURE_WEIGHT)/(int16_t)maximum;
     if (protection<INT16_MIN || protection>INT16_MAX) abort(); /* Native IDIV overflow. */
     return (uint8_t)(subtotal+protection);
 }
@@ -42,7 +42,7 @@ void BtechDistributeCampaignReserveAmmo(void)
     for (uint16_t family=0;family<COMBAT_AMMO_FAMILIES;++family)
     {
         MwTransferWord *reserve=&campaignResultExchange.reserveAmmo[family];
-        uint16_t remaining=(uint16_t)(reserve->low|((uint16_t)reserve->high<<8));
+        uint16_t remaining=reserve->low|((uint16_t)reserve->high<<8);
         uint16_t distributed;
         do
         {
@@ -72,16 +72,16 @@ void BtechRecoverFriendlyMechCondition(void)
         if (!mech) continue;
         if (mech->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
         const BtechMechTemplate *chassis=&mechTemplates[mech->templateIndex];
-        mech->destroyedHeatSinks=(uint16_t)((int16_t)(uint16_t)(mech->destroyedHeatSinks*STAGE_RECOVERY_NUMERATOR)/STAGE_RECOVERY_DENOMINATOR);
-        mech->lifeSupportHits=(uint16_t)((int16_t)(uint16_t)(mech->lifeSupportHits*STAGE_RECOVERY_NUMERATOR)/STAGE_RECOVERY_DENOMINATOR);
-        mech->gyroHits=(uint16_t)((int16_t)(uint16_t)(mech->gyroHits*STAGE_RECOVERY_NUMERATOR)/STAGE_RECOVERY_DENOMINATOR);
-        mech->engineHits=(uint16_t)((int16_t)(uint16_t)(mech->engineHits*STAGE_RECOVERY_NUMERATOR)/STAGE_RECOVERY_DENOMINATOR);
-        mech->cockpitDisabled=(uint16_t)((int16_t)(uint16_t)(mech->cockpitDisabled*STAGE_RECOVERY_NUMERATOR)/STAGE_RECOVERY_DENOMINATOR);
-        mech->sensorHits=(uint16_t)((int16_t)(uint16_t)(mech->sensorHits*STAGE_RECOVERY_NUMERATOR)/STAGE_RECOVERY_DENOMINATOR);
+        mech->destroyedHeatSinks=(uint16_t)((int16_t)(mech->destroyedHeatSinks*STAGE_RECOVERY_NUMERATOR)/STAGE_RECOVERY_DENOMINATOR);
+        mech->lifeSupportHits=(uint16_t)((int16_t)(mech->lifeSupportHits*STAGE_RECOVERY_NUMERATOR)/STAGE_RECOVERY_DENOMINATOR);
+        mech->gyroHits=(uint16_t)((int16_t)(mech->gyroHits*STAGE_RECOVERY_NUMERATOR)/STAGE_RECOVERY_DENOMINATOR);
+        mech->engineHits=(uint16_t)((int16_t)(mech->engineHits*STAGE_RECOVERY_NUMERATOR)/STAGE_RECOVERY_DENOMINATOR);
+        mech->cockpitDisabled=(uint16_t)((int16_t)(mech->cockpitDisabled*STAGE_RECOVERY_NUMERATOR)/STAGE_RECOVERY_DENOMINATOR);
+        mech->sensorHits=(uint16_t)((int16_t)(mech->sensorHits*STAGE_RECOVERY_NUMERATOR)/STAGE_RECOVERY_DENOMINATOR);
         for (uint16_t actuator=0;actuator<COMBAT_ACTUATORS;++actuator)
         {
-            uint16_t deficit=(uint16_t)(COMBAT_ACTUATOR_CONDITION_FULL-mech->actuatorCondition[actuator]);
-            int16_t remaining=(int16_t)(uint16_t)(deficit*STAGE_RECOVERY_NUMERATOR)/STAGE_RECOVERY_DENOMINATOR;
+            uint16_t deficit=COMBAT_ACTUATOR_CONDITION_FULL-mech->actuatorCondition[actuator];
+            int16_t remaining=(int16_t)(deficit*STAGE_RECOVERY_NUMERATOR)/STAGE_RECOVERY_DENOMINATOR;
             mech->actuatorCondition[actuator]=(uint16_t)(COMBAT_ACTUATOR_CONDITION_FULL-remaining);
         }
         for (int16_t mount=0;(int16_t)chassis->weaponMountCount>mount;++mount)
@@ -92,14 +92,14 @@ void BtechRecoverFriendlyMechCondition(void)
         }
         for (uint16_t armor=0;armor<COMBAT_ARMOR_LOCATIONS;++armor)
         {
-            uint16_t deficit=(uint16_t)(chassis->maximumArmor[armor]-mech->currentArmor[armor]);
-            int16_t restored=(int16_t)(uint16_t)(deficit*STAGE_RECOVERY_NUMERATOR)/STAGE_RECOVERY_DENOMINATOR;
+            uint16_t deficit=chassis->maximumArmor[armor]-mech->currentArmor[armor];
+            int16_t restored=(int16_t)(deficit*STAGE_RECOVERY_NUMERATOR)/STAGE_RECOVERY_DENOMINATOR;
             mech->currentArmor[armor]+=restored;
         }
         for (uint16_t body=0;body<COMBAT_BODY_LOCATIONS;++body)
         {
-            uint16_t deficit=(uint16_t)(chassis->maximumInternalStructure[body]-mech->currentInternalStructure[body]);
-            int16_t restored=(int16_t)(uint16_t)(deficit*STAGE_RECOVERY_NUMERATOR)/STAGE_RECOVERY_DENOMINATOR;
+            uint16_t deficit=chassis->maximumInternalStructure[body]-mech->currentInternalStructure[body];
+            int16_t restored=(int16_t)(deficit*STAGE_RECOVERY_NUMERATOR)/STAGE_RECOVERY_DENOMINATOR;
             mech->currentInternalStructure[body]+=restored;
         }
     }

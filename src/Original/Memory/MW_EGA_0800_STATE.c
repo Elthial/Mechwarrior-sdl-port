@@ -140,7 +140,7 @@ uint8_t EgaReadOverlayByte(uint16_t offset)
     {
         const EgaOverlayByteSpan *span = &overlayByteSpans[spanIndex];
         if (offset < span->offset || (uint32_t)offset - span->offset >= span->byteCount) continue;
-        uint16_t relativeOffset = (uint16_t)(offset - span->offset);
+        uint16_t relativeOffset = offset - span->offset;
         if (span->words != NULL)
             return (uint8_t)(span->words[relativeOffset / 2] >> ((relativeOffset & 1) * 8));
         return span->bytes[relativeOffset];
@@ -153,11 +153,11 @@ void EgaWriteOverlayByte(uint16_t offset, uint8_t value)
     {
         const EgaOverlayByteSpan *span = &overlayByteSpans[spanIndex];
         if (offset < span->offset || (uint32_t)offset - span->offset >= span->byteCount) continue;
-        uint16_t relativeOffset = (uint16_t)(offset - span->offset);
+        uint16_t relativeOffset = offset - span->offset;
         if (span->words != NULL)
         {
             uint16_t *wordPointer = &span->words[relativeOffset / 2];
-            uint8_t byteShift = (uint8_t)((relativeOffset & 1) * 8);
+            uint8_t byteShift = (relativeOffset & 1) * 8;
             *wordPointer = (uint16_t)((*wordPointer & (uint16_t)~((uint16_t)0xFF << byteShift)) | ((uint16_t)value << byteShift));
         }
         else span->bytes[relativeOffset] = value;

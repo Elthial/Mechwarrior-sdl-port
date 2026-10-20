@@ -8,8 +8,8 @@ uint32_t BtechDotProductSignedWordVectors(const uint16_t first[3],const uint16_t
     uint32_t product=0;
     for (uint16_t component=0;component<3;++component)
     {
-        int16_t firstComponent=(int16_t)first[component];
-        int16_t secondComponent=(int16_t)second[component];
+        int16_t firstComponent=first[component];
+        int16_t secondComponent=second[component];
         product+=(uint32_t)((int32_t)firstComponent*secondComponent);
     }
     return product;
@@ -116,11 +116,11 @@ void BtechDrawReferencePointEllipse(const BtechRenderEllipse *ellipse)
     const uint16_t *reference=activeEntryGeometry[ellipse->referenceVectorIndex];
     for (uint16_t component=0;component<3;++component) viewVectorCoefficients[component]=reference[component];
     BtechTransformWordVectorFar(viewVectorCoefficients,activeRenderBasis,renderTransformedReference);
-    projectionRatio.vector.positionA=transformedViewPosition.positionA+(uint32_t)(int32_t)(int16_t)renderTransformedReference[0];
-    projectionRatio.vector.positionB=transformedViewPosition.positionB+(uint32_t)(int32_t)(int16_t)renderTransformedReference[1];
-    projectionRatio.vector.positionC=transformedViewPosition.positionC+(uint32_t)(int32_t)(int16_t)renderTransformedReference[2];
+    projectionRatio.vector.positionA=transformedViewPosition.positionA+(uint32_t)(int16_t)renderTransformedReference[0];
+    projectionRatio.vector.positionB=transformedViewPosition.positionB+(uint32_t)(int16_t)renderTransformedReference[1];
+    projectionRatio.vector.positionC=transformedViewPosition.positionC+(uint32_t)(int16_t)renderTransformedReference[2];
     if ((int32_t)(int16_t)nearClipDepth>(int32_t)projectionRatio.ratio.denominator) return;
-    projectionVectorScratch.positionA=(uint32_t)(int32_t)ellipse->radiusScale;
+    projectionVectorScratch.positionA=(uint32_t)ellipse->radiusScale;
     projectionVectorScratch.positionB=projectionRatio.ratio.denominator;
     uint32_t radius;
     BtechProjectionRatio radiusProjection={.ratio={projectionVectorScratch.positionA,projectionVectorScratch.positionB,0}};
@@ -128,14 +128,14 @@ void BtechDrawReferencePointEllipse(const BtechRenderEllipse *ellipse)
     if ((int32_t)radius>0x0100) radius=0x0100;
     BtechProjectViewPosition(&projectionRatio.vector,&projectionVectorScratch);
     BtechOffsetProjectedScreenPair(&projectionVectorScratch);
-    if ((int32_t)(int16_t)(uint16_t)(clipMinimumX-0x0100)>(int32_t)projectionVectorScratch.positionA
-        || (int32_t)(int16_t)(uint16_t)(clipMaximumX+0x0100)<(int32_t)projectionVectorScratch.positionA
-        || (int32_t)(int16_t)(uint16_t)(clipMinimumY-0x0100)>(int32_t)projectionVectorScratch.positionB
-        || (int32_t)(int16_t)(uint16_t)(clipMaximumY+0x0100)<(int32_t)projectionVectorScratch.positionB) return;
+    if ((int32_t)(int16_t)(clipMinimumX-0x0100)>(int32_t)projectionVectorScratch.positionA
+        || (int32_t)(int16_t)(clipMaximumX+0x0100)<(int32_t)projectionVectorScratch.positionA
+        || (int32_t)(int16_t)(clipMinimumY-0x0100)>(int32_t)projectionVectorScratch.positionB
+        || (int32_t)(int16_t)(clipMaximumY+0x0100)<(int32_t)projectionVectorScratch.positionB) return;
     screenPolygonNeedsClip=true;drawPolygonFilled=true;
     uint8_t colour=graphicsColourMode?ellipse->colour:ellipse->alternateColour;
     drawLineColour=activePaletteRemap?activePaletteRemap[colour]:colour;
     if (!graphicsColourMode) drawLineColour&=0x1F;
     drawFillColour=drawLineColour;
-    BtechDrawStyledEllipse((int16_t)(uint16_t)radius,(uint16_t)projectionVectorScratch.positionA,(uint16_t)projectionVectorScratch.positionB);
+    BtechDrawStyledEllipse((int16_t)radius,(uint16_t)projectionVectorScratch.positionA,(uint16_t)projectionVectorScratch.positionB);
 }

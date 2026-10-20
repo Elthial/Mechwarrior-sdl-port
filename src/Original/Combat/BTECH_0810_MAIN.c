@@ -63,7 +63,7 @@ void BtechProgramMain(uint16_t argumentCount,const char *const *arguments)
             uint16_t result=UINT16_MAX;
             if (playerValue<-1)
             {
-                uint16_t boundaryIndex=(uint16_t)(-((int32_t)playerValue+2));
+                uint16_t boundaryIndex=-((int32_t)playerValue+2);
                 result=COMBAT_RESULT_RETREAT;
                 if (sideObjectiveRules[0]==OBJECTIVE_WITHDRAW)
                 {
@@ -89,10 +89,10 @@ void BtechProgramMain(uint16_t argumentCount,const char *const *arguments)
         if (combatTickCounter!=UINT16_MAX && (sideCompletionFlags[0] || sideCompletionFlags[1]))
         {
             if (!outcomeCountdownActive) {outcomeStartTick=combatTickCounter;outcomeCountdownActive=1;}
-            uint16_t remaining=(uint16_t)(outcomeStartTick-combatTickCounter+COMBAT_OUTCOME_DELAY_TICKS);
+            uint16_t remaining=outcomeStartTick-combatTickCounter+COMBAT_OUTCOME_DELAY_TICKS;
             if (!remaining || (combatDispatchState==COMBAT_SCREEN_COCKPIT && combatInputScanCode==COMBAT_KEY_ESCAPE))
             {
-                uint16_t result=(uint16_t)(1-(int16_t)(int8_t)sideCompletionFlags[0]);
+                uint16_t result=1-(int16_t)(int8_t)sideCompletionFlags[0];
                 BtechExportCombatResultsAndTransition(result);
                 outcomeCountdownActive=0;combatTickCounter=UINT16_MAX;
             }

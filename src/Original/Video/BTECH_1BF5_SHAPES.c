@@ -18,7 +18,7 @@ uint16_t BtechDrawStyledRectangle(uint16_t left,uint16_t top,uint16_t width,uint
     uint16_t clippedSides=0;
     if (screenPolygonNeedsClip==1)
     {
-        uint16_t margin=(uint16_t)(left-clipMinimumX);
+        uint16_t margin=left-clipMinimumX;
         if ((int16_t)left<clipMinimumX)
         {
             left=(uint16_t)clipMinimumX;
@@ -60,14 +60,14 @@ uint16_t BtechDrawStyledRectangle(uint16_t left,uint16_t top,uint16_t width,uint
         uint8_t savedClip=screenPolygonNeedsClip;screenPolygonNeedsClip=false;
         if (!(clippedSides&1))
         {
-            BtechDrawClippedLine((int16_t)left,(int16_t)top,(int16_t)left,(int16_t)(uint16_t)(top+height-1));
+            BtechDrawClippedLine((int16_t)left,(int16_t)top,(int16_t)left,(int16_t)(top+height-1));
             ++left;--width;
             if ((int16_t)width<0) abort(); /*1E0A native RETF consumes saved clip as ES and corrupts return; clip remains0. */
         }
         if (!(clippedSides&4))
         {
-            uint16_t right=(uint16_t)(left+width-1);
-            BtechDrawClippedLine((int16_t)right,(int16_t)top,(int16_t)right,(int16_t)(uint16_t)(top+height-1));
+            uint16_t right=left+width-1;
+            BtechDrawClippedLine((int16_t)right,(int16_t)top,(int16_t)right,(int16_t)(top+height-1));
             --width;
             if ((int16_t)width<0) abort(); /* Same native broken nonlocal return, not a normal C return. */
         }
@@ -82,7 +82,7 @@ uint16_t BtechDrawStyledRectangle(uint16_t left,uint16_t top,uint16_t width,uint
             }
             if (!(clippedSides&8))
             {
-                uint16_t bottom=(uint16_t)(top+height-1);
+                uint16_t bottom=top+height-1;
                 if (!graphicsFillSolidSpan || bottom>=COMBAT_SCREEN_HEIGHT) abort();
                 graphicsFillSolidSpan(drawColourPattern,left,(int16_t)width,graphicsRowOffsets[bottom],page);
                 --height;

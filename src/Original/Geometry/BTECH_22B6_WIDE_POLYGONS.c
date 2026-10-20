@@ -20,7 +20,7 @@ void BtechCopyRendererWorkingCoordinateArrays(void)
 /*22B6:67E0. Do/while is native: a direct zero-count call still emits vertex0. */
 void BtechOffsetWidePolygonVerticesToScreen(void)
 {
-    uint32_t centreX=(uint32_t)(int32_t)screenCentreA,centreY=(uint32_t)(int32_t)screenCentreB;
+    uint32_t centreX=(uint32_t)screenCentreA,centreY=(uint32_t)screenCentreB;
     uint16_t destination=0;
     do
     {

@@ -49,7 +49,7 @@ void BtechSteerActiveUnitAroundObstacles(uint16_t desiredHeading,uint8_t forward
     if (!forward) desiredHeading+=AVOIDANCE_HALF_TURN;
     uint16_t sine=BtechLookupSine(desiredHeading);
     uint16_t shifted=(sine>>AVOIDANCE_DIRECTION_SHIFT)|((sine&0x8000)?0xF800:0);
-    avoidanceStepX=(int16_t)(uint16_t)(0-shifted);
+    avoidanceStepX=(int16_t)(0-shifted);
     uint16_t cosine=BtechLookupCosine(desiredHeading);
     avoidanceStepY=(int16_t)((cosine>>AVOIDANCE_DIRECTION_SHIFT)|((cosine&0x8000)?0xF800:0));
     if (!BtechIsAvoidanceProbeBlocked(0) && activeUnitControl->avoidanceReverseFlag!=1)
@@ -90,8 +90,8 @@ uint8_t BtechIsAvoidanceProbeBlocked(uint16_t probe)
     avoidancePosition=&activeUnitPositionedObject->object.prefix.position;
     avoidanceOrientation=&activeUnitPositionedObject->object.prefix;
     if (probe>=AVOIDANCE_PROBES || !avoidanceProbeComponentsX[probe] || !avoidanceProbeComponentsY[probe]) abort();
-    int16_t stepX=(int16_t)(uint16_t)((int32_t)*avoidanceProbeComponentsX[probe]*avoidanceProbeSignsX[probe]);
-    int16_t stepY=(int16_t)(uint16_t)((int32_t)*avoidanceProbeComponentsY[probe]*avoidanceProbeSignsY[probe]);
+    int16_t stepX=(int32_t)*avoidanceProbeComponentsX[probe]*avoidanceProbeSignsX[probe];
+    int16_t stepY=(int32_t)*avoidanceProbeComponentsY[probe]*avoidanceProbeSignsY[probe];
     int16_t displacementX=stepX,displacementY=stepY;
     for (uint16_t slot=0;slot<COMBAT_MECH_SLOTS;++slot)
     {
@@ -100,14 +100,14 @@ uint8_t BtechIsAvoidanceProbeBlocked(uint16_t probe)
         if (BtechIsPositionInForwardObstacleCorridor(&unitBindings[slot].positionedLeftLeg->object.prefix.position,AVOIDANCE_UNIT_HALF_WIDTH)) return 1;
     }
     if (activeUnitControl->sideIndex>=2) abort();
-    int16_t rule=(int16_t)sideObjectiveRules[activeUnitControl->sideIndex];
+    int16_t rule=sideObjectiveRules[activeUnitControl->sideIndex];
     if (rule>OBJECTIVE_OPPOSE_WITHDRAWAL && (rule!=OBJECTIVE_SPECIAL_TARGET || !specialTargetInteractionBlocked))
     {
         if (!specialTargetObject) abort();
         if (BtechIsPositionInForwardObstacleCorridor(&specialTargetObject->object.prefix.position,AVOIDANCE_SPECIAL_HALF_WIDTH)) return 1;
     }
-    uint32_t lookX=avoidancePosition->positionA+(uint32_t)(int32_t)(int16_t)(uint16_t)((uint16_t)displacementX<<AVOIDANCE_LOOKAHEAD_SHIFT);
-    uint32_t lookY=avoidancePosition->positionB+(uint32_t)(int32_t)(int16_t)(uint16_t)((uint16_t)displacementY<<AVOIDANCE_LOOKAHEAD_SHIFT);
+    uint32_t lookX=avoidancePosition->positionA+(uint32_t)(int16_t)((uint16_t)displacementX<<AVOIDANCE_LOOKAHEAD_SHIFT);
+    uint32_t lookY=avoidancePosition->positionB+(uint32_t)(int16_t)((uint16_t)displacementY<<AVOIDANCE_LOOKAHEAD_SHIFT);
     uint32_t magnitudeX=lookX,magnitudeY=lookY;
     if (magnitudeX==0x8000) magnitudeX=0x7FFF;else if ((int32_t)magnitudeX<0) magnitudeX=0-magnitudeX;
     if (magnitudeY==0x8000) magnitudeY=0x7FFF;else if ((int32_t)magnitudeY<0) magnitudeY=0-magnitudeY;
@@ -123,8 +123,8 @@ uint8_t BtechIsAvoidanceProbeBlocked(uint16_t probe)
     }
     for (uint16_t sample=0;sample<AVOIDANCE_PROBES;++sample)
     {
-        uint32_t x=avoidancePosition->positionA+(uint32_t)(int32_t)displacementX;
-        uint32_t y=avoidancePosition->positionB+(uint32_t)(int32_t)displacementY;
+        uint32_t x=avoidancePosition->positionA+(uint32_t)displacementX;
+        uint32_t y=avoidancePosition->positionB+(uint32_t)displacementY;
         magnitudeX=x;magnitudeY=y;
         if (magnitudeX==0x8000) magnitudeX=0x7FFF;else if ((int32_t)magnitudeX<0) magnitudeX=0-magnitudeX;
         if (magnitudeY==0x8000) magnitudeY=0x7FFF;else if ((int32_t)magnitudeY<0) magnitudeY=0-magnitudeY;
@@ -144,7 +144,7 @@ uint8_t BtechIsAvoidanceProbeBlocked(uint16_t probe)
                 }
             }
         }
-        displacementX=(int16_t)(uint16_t)(displacementX+stepX);displacementY=(int16_t)(uint16_t)(displacementY+stepY);
+        displacementX=(int16_t)(displacementX+stepX);displacementY=(int16_t)(displacementY+stepY);
     }
     return 0;
 }
@@ -161,8 +161,8 @@ uint16_t BtechIsPositionInForwardObstacleCorridor(const BtechPosition3D *positio
     uint16_t heading=BtechCalculateVectorHeading(x,y)-avoidanceOrientation->orientationC;
     int16_t magnitude=heading==0x8000?INT16_MAX:(int16_t)heading<0?-(int16_t)heading:(int16_t)heading;
     if (magnitude>=AVOIDANCE_CORRIDOR_ANGLE) return 0;
-    uint32_t product=(uint32_t)BtechMultiplySignedWords((int16_t)(uint16_t)distance,(int16_t)BtechLookupSine(heading));
-    int16_t lateral=(int16_t)(uint16_t)BtechShiftSignedDwordRight(product,AVOIDANCE_TRIG_FRACTION_BITS);
+    uint32_t product=(uint32_t)BtechMultiplySignedWords((int16_t)distance,(int16_t)BtechLookupSine(heading));
+    int16_t lateral=(int16_t)BtechShiftSignedDwordRight(product,AVOIDANCE_TRIG_FRACTION_BITS);
     magnitude=(uint16_t)lateral==0x8000?INT16_MAX:lateral<0?-lateral:lateral;
     return magnitude<halfWidth;
 }
@@ -178,10 +178,10 @@ void BtechDampJumpMotion(void)
         if (!motion) abort();
         int16_t turn=motion->orientationSteps[2],magnitude=(uint16_t)turn==0x8000?INT16_MAX:turn<0?-turn:turn;
         if (magnitude<JUMP_TURN_DAMPING) motion->orientationSteps[2]=0;
-        else if (turn<0) motion->orientationSteps[2]=(int16_t)(uint16_t)(turn+JUMP_TURN_DAMPING);
-        else if (turn>0) motion->orientationSteps[2]=(int16_t)(uint16_t)(turn-JUMP_TURN_DAMPING);
+        else if (turn<0) motion->orientationSteps[2]=(int16_t)(turn+JUMP_TURN_DAMPING);
+        else if (turn>0) motion->orientationSteps[2]=(int16_t)(turn-JUMP_TURN_DAMPING);
         if (motion->forwardStepScale<0) ++motion->forwardStepScale;
         else if (motion->forwardStepScale>0) --motion->forwardStepScale;
-        motion->positionSteps[2]=(int16_t)(uint16_t)(motion->positionSteps[2]-JUMP_GRAVITY_STEP);
+        motion->positionSteps[2]=(int16_t)(motion->positionSteps[2]-JUMP_GRAVITY_STEP);
     }
 }

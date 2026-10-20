@@ -19,15 +19,15 @@ void MwDrawPlanetNameCentered(uint16_t panelX, uint16_t y, uint16_t color, uint1
     if (planetIndex >= CAMPAIGN_PLANET_COUNT) abort(); /* Unmapped adjacent DS, not a game validation. */
     uint16_t recordOffset = planetRecordOffsets[planetIndex];
     if (recordOffset < PLANET_RECORDS_START || recordOffset >= PLANET_RECORDS_END) abort();
-    uint16_t nameOffset = (uint16_t)(recordOffset - PLANET_RECORDS_START + PLANET_NAME_HEADER_BYTES);
+    uint16_t nameOffset = recordOffset - PLANET_RECORDS_START + PLANET_NAME_HEADER_BYTES;
     uint16_t nameCursor = nameOffset, nameLength = 0;
     while (planetRecordStorage[nameCursor] != 0)
     {
         nameCursor++; nameLength++;
         if (nameCursor >= sizeof(planetRecordStorage)) abort();
     }
-    uint16_t nameWidth = (uint16_t)((uint8_t)nameLength * CAMPAIGN_GLYPH_ADVANCE);
-    uint16_t textX = (uint16_t)(panelX + ((uint16_t)(PLANET_NAME_PANEL_WIDTH - nameWidth) >> 1));
+    uint16_t nameWidth = (uint8_t)nameLength * CAMPAIGN_GLYPH_ADVANCE;
+    uint16_t textX = panelX + ((uint16_t)(PLANET_NAME_PANEL_WIDTH - nameWidth) >> 1);
     MwNativeByteView text = { planetRecordStorage, 0, sizeof(planetRecordStorage) };
     EgaDrawTransparentText(textX, y, (uint8_t)color, &text, nameOffset);
 }
@@ -80,7 +80,7 @@ void MwBuildDecimalDigitBuffer(uint32_t magnitude)
     numericDecimalDigits[4] = (uint8_t)digit;
     magnitude = MwExtractDecimalDoubleWordPlace(magnitude, DECIMAL_TEN_THOUSAND, &digit);
     numericDecimalDigits[5] = (uint8_t)digit;
-    uint16_t remainder = (uint16_t)magnitude;
+    uint16_t remainder = magnitude;
     numericDecimalDigits[6] = (uint8_t)MwDivideDecimalWordPlace(remainder, DECIMAL_THOUSAND, &remainder);
     numericDecimalDigits[7] = (uint8_t)MwDivideDecimalWordPlace(remainder, DECIMAL_HUNDRED, &remainder);
     numericDecimalDigits[8] = (uint8_t)MwDivideDecimalWordPlace(remainder, DECIMAL_TEN, &remainder);

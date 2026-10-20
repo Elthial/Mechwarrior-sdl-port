@@ -43,11 +43,11 @@ uint16_t BtechGetMechConditionColour(int16_t unitSlot)
     for (uint16_t body=0;body<COMBAT_BODY_LOCATIONS;++body)
     {current+=mech->currentInternalStructure[body];maximum+=chassis->maximumInternalStructure[body];}
     if (!maximum) abort(); /* Native IDIV fault, not an invented empty/healthy state. */
-    int32_t quotient=(int16_t)(uint16_t)(current*ORDER_CONDITION_SCALE)/(int16_t)maximum;
+    int32_t quotient=(int16_t)(current*ORDER_CONDITION_SCALE)/(int16_t)maximum;
     if (quotient<INT16_MIN || quotient>INT16_MAX) abort();
-    int16_t band=(int16_t)quotient;
-    if (mech->sensorHits==COMBAT_SENSORS_DESTROYED_HITS) band=(int16_t)(uint16_t)(band-1);
-    if (mech->lifeSupportHits==1) band=(int16_t)(uint16_t)(band-1);
+    int16_t band=quotient;
+    if (mech->sensorHits==COMBAT_SENSORS_DESTROYED_HITS) band=(int16_t)(band-1);
+    if (mech->lifeSupportHits==1) band=(int16_t)(band-1);
     if (mech->engineHits==COMBAT_ENGINE_HIT_LIMIT || mech->gyroHits==COMBAT_GYRO_DESTROYED_HITS || mech->cockpitDisabled==1) band=0;
     if (band<0 || (uint16_t)unitControls[unitSlot].combatValueOrBoundaryCode==COMBAT_DISABLED_UNIT_VALUE) band=0;
     if (hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES || band>=ORDER_CONDITION_BANDS) abort(); /* Unsupported upper-band adjacent palette alias. */
@@ -236,8 +236,8 @@ navigation:
         {
             uint16_t selectionClass=orderPanelMode!=ORDER_PANEL_SUMMARY;
             int16_t panel=(int16_t)selectedLanceOrderPanel,row=(int16_t)selectedOrderPanelRow;
-            if (!selectionClass) panel=(int16_t)(uint16_t)(panel+orderNavigationPanelDeltas[direction]);
-            row=(int16_t)(uint16_t)(row+orderNavigationRowDeltas[direction]);
+            if (!selectionClass) panel=(int16_t)(panel+orderNavigationPanelDeltas[direction]);
+            row=(int16_t)(row+orderNavigationRowDeltas[direction]);
             int16_t lastPanel=reducedMemoryMode?1:ORDER_WINGMATE_PANELS-1;
             if (panel<0 || panel>lastPanel) panel=(int16_t)selectedLanceOrderPanel;
             if (row<orderSelectionFirstRows[selectionClass]) row=orderSelectionLastRows[selectionClass];
@@ -256,13 +256,13 @@ navigation:
         {
             if (selectedLanceOrderPanel>=ORDER_WINGMATE_PANELS || !lanceOrderControls[selectedLanceOrderPanel]) abort();
             control=lanceOrderControls[selectedLanceOrderPanel];
-            int16_t step=(int16_t)(uint16_t)(orderNavigationPanelDeltas[direction]+orderNavigationRowDeltas[direction]);
+            int16_t step=orderNavigationPanelDeltas[direction]+orderNavigationRowDeltas[direction];
             int16_t candidate=control->trackedUnitOrSpecialSlot,target=-1;
             if (candidate==-1) candidate=control->targetUnitSlot>=0?control->targetUnitSlot:COMBAT_LANCE_SLOTS;
             uint16_t scanned;
             for (scanned=0;scanned<ORDER_TARGET_SCAN_LIMIT;++scanned)
             {
-                candidate=(int16_t)(uint16_t)(candidate+(step<0?-1:step>0?1:0)+ORDER_TARGET_CANDIDATES);
+                candidate=(int16_t)(candidate+(step<0?-1:step>0?1:0)+ORDER_TARGET_CANDIDATES);
                 candidate%=ORDER_TARGET_CANDIDATES;
                 if (candidate==ORDER_SPECIAL_TARGET_SLOT)
                 {if (sideObjectiveRules[0]==OBJECTIVE_SPECIAL_TARGET) target=ORDER_SPECIAL_TARGET_SLOT;}
@@ -288,11 +288,11 @@ navigation:
             else orderDestinationRepeatCountdown=ORDER_DESTINATION_REPEAT_TICKS;
             if (selectedLanceOrderPanel>=ORDER_WINGMATE_PANELS || !lanceOrderControls[selectedLanceOrderPanel] || orderMapScaleIndex>=ORDER_MAP_SCALE_COUNT) abort();
             control=lanceOrderControls[selectedLanceOrderPanel];
-            uint8_t shift=(uint8_t)(orderMapScaleShifts[orderMapScaleIndex]+repeatShift-ORDER_MAP_PROJECTION_BASE_SHIFT);
-            int16_t deltaX=shift<16?(int16_t)(uint16_t)((uint32_t)(uint16_t)orderNavigationPanelDeltas[direction]<<shift):0;
-            int16_t deltaY=shift<16?(int16_t)(uint16_t)((uint32_t)(uint16_t)orderNavigationRowDeltas[direction]<<shift):0;
-            uint32_t x=(uint32_t)control->orderDestinationPosition[0]+(uint32_t)(int32_t)deltaX;
-            uint32_t y=(uint32_t)control->orderDestinationPosition[1]-(uint32_t)(int32_t)deltaY;
+            uint8_t shift=orderMapScaleShifts[orderMapScaleIndex]+repeatShift-ORDER_MAP_PROJECTION_BASE_SHIFT;
+            int16_t deltaX=shift<16?(int16_t)((uint32_t)(uint16_t)orderNavigationPanelDeltas[direction]<<shift):0;
+            int16_t deltaY=shift<16?(int16_t)((uint32_t)(uint16_t)orderNavigationRowDeltas[direction]<<shift):0;
+            uint32_t x=(uint32_t)control->orderDestinationPosition[0]+(uint32_t)deltaX;
+            uint32_t y=(uint32_t)control->orderDestinationPosition[1]-(uint32_t)deltaY;
             uint32_t magnitudeX=x==0x00008000?0x00007FFF:(x&UINT32_C(0x80000000))?0-x:x;
             uint32_t magnitudeY=y==0x00008000?0x00007FFF:(y&UINT32_C(0x80000000))?0-y:y;
             if ((int16_t)(magnitudeX>>16)<0 || magnitudeX<ORDER_DESTINATION_LIMIT_X) control->orderDestinationPosition[0]=(int32_t)x;

@@ -57,7 +57,7 @@ uint8_t BtechSteerProjectileAndTestOvershoot(BtechProjectileState *projectile)
     BtechWorldObjectPrefix *pose=&object->object.prefix;
     uint32_t deltaA=target->positionA-pose->position.positionA,deltaB=target->positionB-pose->position.positionB;
     uint16_t heading=BtechCalculateVectorHeading(deltaA,deltaB);
-    int16_t error=(int16_t)(uint16_t)(heading-pose->orientationC);
+    int16_t error=heading-pose->orientationC;
     uint16_t magnitude=error==INT16_MIN?INT16_MAX:error<0?(uint16_t)(0-(uint16_t)error):(uint16_t)error;
     uint8_t overshoot=magnitude>COMBAT_PROJECTILE_OVERSHOOT_ANGLE;
     uint16_t turn=magnitude>COMBAT_PROJECTILE_TURN_LIMIT?COMBAT_PROJECTILE_TURN_LIMIT:magnitude;
@@ -65,7 +65,7 @@ uint8_t BtechSteerProjectileAndTestOvershoot(BtechProjectileState *projectile)
     uint32_t distance=BtechApproximatePlanarDistance(&pose->position,target);
     uint32_t negativeHeight=0-(target->positionC-pose->position.positionC);
     uint16_t pitch=BtechCalculateVectorHeading(negativeHeight,distance);
-    error=(int16_t)(uint16_t)(pitch-pose->orientationA);
+    error=(int16_t)(pitch-pose->orientationA);
     magnitude=error==INT16_MIN?INT16_MAX:error<0?(uint16_t)(0-(uint16_t)error):(uint16_t)error;
     turn=magnitude>COMBAT_PROJECTILE_TURN_LIMIT?COMBAT_PROJECTILE_TURN_LIMIT:magnitude;
     object->orientationSteps[0]=(int16_t)(error<0?(uint16_t)(0-turn):turn);
@@ -92,10 +92,10 @@ int16_t BtechCalculateProjectileImpactDamage(const BtechProjectileState *project
     if (kind==COMBAT_WEAPON_AC5) return (int16_t)weaponDefinitions[kind].damageOrMissileCount;
     int16_t row=missileClusterRowByWeapon[kind];
     if ((uint16_t)row>=COMBAT_MISSILE_CLUSTER_ROWS) abort();
-    uint16_t firstDie=BtechRandomBelowBound(6);
-    uint16_t secondDie=BtechRandomBelowBound(6);
+    uint16_t firstDie=BtechRandomBelowBound(DICE_1D6);
+    uint16_t secondDie=BtechRandomBelowBound(DICE_1D6);
     uint16_t damage=missileClusterRows[row][firstDie+secondDie];
-    if (kind!=COMBAT_WEAPON_LRM5) damage<<=1;
+    if (kind!=COMBAT_WEAPON_LRM5) damage<<=COMBAT_SRM_DAMAGE_SHIFT;
     return (int16_t)damage;
 }
 

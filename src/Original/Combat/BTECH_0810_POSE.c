@@ -140,9 +140,9 @@ drawPose:;
     BtechOrientationBasis basis;uint16_t rotated[3];
     BtechBuildOrientationMatrix(orientation,&basis,0); /* Incoming CH changes only unused returned CX. */
     BtechTransformWordVectorFar(displacement,&basis,rotated);
-    playerPoseObject->object.prefix.position.positionA=source->position.positionA+(uint32_t)(int32_t)(int16_t)rotated[0];
-    playerPoseObject->object.prefix.position.positionB=source->position.positionB+(uint32_t)(int32_t)(int16_t)rotated[1];
-    playerPoseObject->object.prefix.position.positionC=source->position.positionC+(uint32_t)(int32_t)(int16_t)rotated[2];
+    playerPoseObject->object.prefix.position.positionA=source->position.positionA+(uint32_t)(int16_t)rotated[0];
+    playerPoseObject->object.prefix.position.positionB=source->position.positionB+(uint32_t)(int16_t)rotated[1];
+    playerPoseObject->object.prefix.position.positionC=source->position.positionC+(uint32_t)(int16_t)rotated[2];
     playerPoseObject->object.prefix.orientationA+=keyframe->orientationStepA;
     if (playerImpactThisTick) playerPosePerturbationTicks=0;
     if ((int16_t)playerPosePerturbationTicks<PLAYER_POSE_PERTURBATION_TICKS)
@@ -183,7 +183,7 @@ drawPose:;
             unitControls[0].movementMode=MOVEMENT_MODE_JUMP;
             if (!playerMechState) abort();
             playerMechState->jumpCharge-=JUMP_LAUNCH_CHARGE_COST;
-            playerUnitBinding->positionedLeftLeg->positionSteps[2]=(int16_t)(uint16_t)(playerMechTemplate->jumpSpeedLimit*2);
+            playerUnitBinding->positionedLeftLeg->positionSteps[2]=(int16_t)(playerMechTemplate->jumpSpeedLimit*JUMP_LAUNCH_VERTICAL_SPEED_MULTIPLIER);
             playerPoseFrame=0;
             BtechPlaySoundIfEnabled(PLAYER_JUMP_EVENT,PLAYER_JUMP_SOUND_DELAY);break;
         case ANIMATION_SEQUENCE_FALL:

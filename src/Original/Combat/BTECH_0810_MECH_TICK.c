@@ -6,6 +6,11 @@
 #include "mechwarrior/combat_render.h"
 #include <stdlib.h>
 
+/* Native per-update heat ratios, not tabletop heat per turn. */
+enum { MOVEMENT_HEAT_UPPER_THRESHOLD_MULTIPLIER=2,MOVEMENT_HEAT_THRESHOLD_DIVISOR=3,
+    MOVEMENT_HEAT_UPPER_INCREMENT=2,DOUBLE_COOLING_MULTIPLIER=2,
+    HEAT_SINK_COOLING_NUMERATOR=4,HEAT_SINK_COOLING_DENOMINATOR=3 };
+
 /*0810:AD12. The chassis sentinel, not live operational state, controls which
  * reload timers run. Destroying a weapon does not clear/freeze its timer. */
 void BtechAdvanceWeaponReloadTimers(void)
@@ -16,7 +21,7 @@ void BtechAdvanceWeaponReloadTimers(void)
         if (!mech) continue;
         if (mech->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
         const BtechMechTemplate *chassis=&mechTemplates[mech->templateIndex];
-        int16_t mountCount=(int16_t)chassis->weaponMountCount;
+        int16_t mountCount=chassis->weaponMountCount;
         for (int16_t mount=0;mount<mountCount;++mount)
         {
             if (mount>=COMBAT_WEAPON_MOUNTS) abort(); /* Native neighbouring-owner overrun. */
@@ -35,10 +40,10 @@ void BtechUpdateUnitHeatEffects(void)
     {
         BtechMechState *mech=unitBindings[slot].mech;
         if (!mech) continue; /* Absent slots keep old derived entries. */
-        uint16_t referenceProduct=(uint16_t)(mech->movementReferenceScale*COMBAT_MOVEMENT_HEAT_REFERENCE_MULTIPLIER);
+        uint16_t referenceProduct=mech->movementReferenceScale*COMBAT_MOVEMENT_HEAT_REFERENCE_MULTIPLIER;
         /* Native LOW IMUL word, then SAR7, before either signed division. */
-        int16_t movementThreshold=(int16_t)((referenceProduct>>COMBAT_MOVEMENT_HEAT_REFERENCE_SHIFT)
-            | (referenceProduct&0x8000?0xFE00:0));
+        int16_t movementThreshold=(referenceProduct>>COMBAT_MOVEMENT_HEAT_REFERENCE_SHIFT)
+            | (referenceProduct&0x8000?0xFE00:0);
         if (unitControls[slot].movementMode!=MOVEMENT_MODE_JUMP)
         {
             const BtechPooledWorldObject *body=unitBindings[slot].positionedLeftLeg;
@@ -46,20 +51,20 @@ void BtechUpdateUnitHeatEffects(void)
             int16_t movement=body->forwardStepScale;
             if (movement==INT16_MIN) movement=INT16_MAX;
             else if (movement<0) movement=-movement;
-            int16_t runningThreshold=(int16_t)(uint16_t)((uint16_t)movementThreshold*2);
-            if (movement>runningThreshold/3) mech->heatUnits+=2;
-            else if (movement>movementThreshold/3) ++mech->heatUnits;
+            int16_t runningThreshold=(uint16_t)movementThreshold*MOVEMENT_HEAT_UPPER_THRESHOLD_MULTIPLIER;
+            if (movement>runningThreshold/MOVEMENT_HEAT_THRESHOLD_DIVISOR) mech->heatUnits+=MOVEMENT_HEAT_UPPER_INCREMENT;
+            else if (movement>movementThreshold/MOVEMENT_HEAT_THRESHOLD_DIVISOR) ++mech->heatUnits;
         }
-        mech->heatUnits+=(uint16_t)(mech->engineHits*COMBAT_ENGINE_HIT_HEAT);
+        mech->heatUnits+=mech->engineHits*COMBAT_ENGINE_HIT_HEAT;
         if (mech->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
-        uint16_t sinks=(uint16_t)(mechTemplates[mech->templateIndex].heatSinkCount-mech->destroyedHeatSinks);
-        if (mech->doubleCoolingFlag || combatLandscapeIndex==COMBAT_ARCTIC_LANDSCAPE) sinks*=2;
-        int16_t dissipated=(int16_t)(uint16_t)(sinks*4);
-        mech->heatUnits-=(int16_t)(dissipated/3);
+        uint16_t sinks=mechTemplates[mech->templateIndex].heatSinkCount-mech->destroyedHeatSinks;
+        if (mech->doubleCoolingFlag || combatLandscapeIndex==COMBAT_ARCTIC_LANDSCAPE) sinks*=DOUBLE_COOLING_MULTIPLIER;
+        int16_t dissipated=sinks*HEAT_SINK_COOLING_NUMERATOR;
+        mech->heatUnits-=dissipated/HEAT_SINK_COOLING_DENOMINATOR;
         if ((int16_t)mech->heatUnits<=0) mech->heatUnits=0;
         else if ((int16_t)mech->heatUnits>=COMBAT_HEAT_CLAMP_MAXIMUM) mech->heatUnits=COMBAT_HEAT_CLAMP_MAXIMUM;
         heatSpeedPenalties[slot]=0;
-        int16_t penaltyBudget=(int16_t)(mech->heatUnits-COMBAT_HEAT_SPEED_TIER_STEP);
+        int16_t penaltyBudget=mech->heatUnits-COMBAT_HEAT_SPEED_TIER_STEP;
         while (penaltyBudget>0)
         {
             heatSpeedPenalties[slot]+=COMBAT_HEAT_SPEED_TIER_PENALTY;
@@ -88,7 +93,7 @@ void BtechRechargeJumpCharge(void)
         if (!mechTemplates[mech->templateIndex].jumpJetGroupCount
             || (int16_t)mech->jumpCharge>=COMBAT_JUMP_CHARGE_CAPACITY
             || unitControls[slot].movementMode==MOVEMENT_MODE_JUMP) continue;
-        if ((int16_t)(uint16_t)(mech->jumpCharge+COMBAT_JUMP_RECHARGE_STEP)<=COMBAT_JUMP_CHARGE_CAPACITY)
+        if ((int16_t)(mech->jumpCharge+COMBAT_JUMP_RECHARGE_STEP)<=COMBAT_JUMP_CHARGE_CAPACITY)
             mech->jumpCharge+=COMBAT_JUMP_RECHARGE_STEP;
     }
 }
@@ -104,19 +109,19 @@ void BtechAdvancePooledObjectMotion(BtechPooledWorldObject *object)
     pose->orientationA+=object->orientationSteps[0];
     pose->orientationB+=object->orientationSteps[1];
     pose->orientationC+=object->orientationSteps[2];
-    uint32_t speed=(uint32_t)(int32_t)object->forwardStepScale;
+    uint32_t speed=(uint32_t)object->forwardStepScale;
     if (pose->orientationA || pose->orientationB)
     {
-        int16_t negativeCosine=(int16_t)(uint16_t)(0-BtechLookupCosine(pose->orientationA));
-        uint32_t product=(uint32_t)(int32_t)negativeCosine*speed;
+        int16_t negativeCosine=0-BtechLookupCosine(pose->orientationA);
+        uint32_t product=(uint32_t)negativeCosine*speed;
         uint32_t planarStep=BtechShiftSignedDwordRight(product,ORIENTATION_FRACTION_BITS);
-        product=planarStep*(uint32_t)(int32_t)(int16_t)BtechLookupSine(pose->orientationC);
+        product=planarStep*(uint32_t)(int16_t)BtechLookupSine(pose->orientationC);
         pose->position.positionA+=BtechShiftSignedDwordRight(product,ORIENTATION_FRACTION_BITS);
-        product=(uint32_t)(int32_t)(int16_t)BtechLookupCosine(pose->orientationA)*speed;
+        product=(uint32_t)(int16_t)BtechLookupCosine(pose->orientationA)*speed;
         planarStep=BtechShiftSignedDwordRight(product,ORIENTATION_FRACTION_BITS);
-        product=planarStep*(uint32_t)(int32_t)(int16_t)BtechLookupCosine(pose->orientationC);
+        product=planarStep*(uint32_t)(int16_t)BtechLookupCosine(pose->orientationC);
         pose->position.positionB+=BtechShiftSignedDwordRight(product,ORIENTATION_FRACTION_BITS);
-        product=(uint32_t)(int32_t)(int16_t)BtechLookupSine(pose->orientationA)*speed;
+        product=(uint32_t)(int16_t)BtechLookupSine(pose->orientationA)*speed;
         pose->position.positionC+=BtechShiftSignedDwordRight(product,ORIENTATION_FRACTION_BITS);
     }
     else
@@ -124,15 +129,15 @@ void BtechAdvancePooledObjectMotion(BtechPooledWorldObject *object)
         uint32_t forwardStep=speed;
         if (pose->orientationC)
         {
-            int16_t negativeSine=(int16_t)(uint16_t)(0-BtechLookupSine(pose->orientationC));
-            uint32_t product=(uint32_t)(int32_t)negativeSine*speed;
+            int16_t negativeSine=0-BtechLookupSine(pose->orientationC);
+            uint32_t product=(uint32_t)negativeSine*speed;
             pose->position.positionA+=BtechShiftSignedDwordRight(product,ORIENTATION_FRACTION_BITS);
-            product=(uint32_t)(int32_t)(int16_t)BtechLookupCosine(pose->orientationC)*speed;
+            product=(uint32_t)(int16_t)BtechLookupCosine(pose->orientationC)*speed;
             forwardStep=BtechShiftSignedDwordRight(product,ORIENTATION_FRACTION_BITS);
         }
         pose->position.positionB+=forwardStep;
     }
-    pose->position.positionA+=(uint32_t)(int32_t)object->positionSteps[0];
-    pose->position.positionB+=(uint32_t)(int32_t)object->positionSteps[1];
-    pose->position.positionC+=(uint32_t)(int32_t)object->positionSteps[2];
+    pose->position.positionA+=(uint32_t)object->positionSteps[0];
+    pose->position.positionB+=(uint32_t)object->positionSteps[1];
+    pose->position.positionC+=(uint32_t)object->positionSteps[2];
 }

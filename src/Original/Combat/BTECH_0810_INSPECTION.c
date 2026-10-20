@@ -97,21 +97,21 @@ void BtechDrawMechInspectionStatus(void)
     BtechDrawNearText(inspectionConditionLabels[twoHitSystemConditionLabelIndices[mech->sensorHits]],INSPECTION_STATUS_X,INSPECTION_FIRST_SYSTEM_Y+2*INSPECTION_ROW_STEP);
     if (mech->lifeSupportHits>COMBAT_LIFE_SUPPORT_HIT_LIMIT) abort();
     BtechDrawNearText(inspectionConditionLabels[twoHitSystemConditionLabelIndices[mech->lifeSupportHits]],INSPECTION_STATUS_X,INSPECTION_FIRST_SYSTEM_Y+3*INSPECTION_ROW_STEP);
-    BtechDrawNearText(BtechFormatSignedDecimalField((int16_t)(uint16_t)(chassis->heatSinkCount-mech->destroyedHeatSinks),2,' '),INSPECTION_STATUS_X,INSPECTION_HEAT_ROW_Y);
+    BtechDrawNearText(BtechFormatSignedDecimalField((int16_t)(chassis->heatSinkCount-mech->destroyedHeatSinks),2,' '),INSPECTION_STATUS_X,INSPECTION_HEAT_ROW_Y);
     BtechDrawNearText(BtechFormatSignedDecimalField((int16_t)chassis->heatSinkCount,2,' '),INSPECTION_HEAT_MAXIMUM_X,INSPECTION_HEAT_ROW_Y);
     BtechDrawNearText(heatSinksOfText,INSPECTION_HEAT_OF_X,INSPECTION_HEAT_ROW_Y);
     uint16_t rowY=INSPECTION_FIRST_ACTUATOR_Y;
     for (uint16_t actuator=0;actuator<COMBAT_ACTUATORS;++actuator,rowY+=INSPECTION_ROW_STEP)
     {
         BtechDrawNearText(actuatorLabels[actuator],INSPECTION_LABEL_X,rowY);
-        uint16_t damageCount=(uint16_t)(COMBAT_ACTUATOR_CONDITION_FULL-mech->actuatorCondition[actuator]);
+        uint16_t damageCount=COMBAT_ACTUATOR_CONDITION_FULL-mech->actuatorCondition[actuator];
         if (damageCount>COMBAT_ACTUATOR_CONDITION_FULL) abort();
         BtechDrawNearText(inspectionConditionLabels[actuatorConditionLabelIndices[damageCount]],INSPECTION_STATUS_X,rowY);
     }
     if (chassis->jumpJetGroupCount)
     {
         BtechDrawNearText(jumpJetsText,INSPECTION_LABEL_X,INSPECTION_JUMP_ROW_Y);
-        BtechDrawNearText(BtechFormatSignedDecimalField((int16_t)(uint16_t)(chassis->jumpJetGroupCount-mech->destroyedJumpJetGroups),1,' '),INSPECTION_STATUS_X,INSPECTION_JUMP_ROW_Y);
+        BtechDrawNearText(BtechFormatSignedDecimalField((int16_t)(chassis->jumpJetGroupCount-mech->destroyedJumpJetGroups),1,' '),INSPECTION_STATUS_X,INSPECTION_JUMP_ROW_Y);
         BtechDrawNearText(BtechFormatSignedDecimalField((int16_t)chassis->jumpJetGroupCount,1,' '),INSPECTION_JUMP_MAXIMUM_X,INSPECTION_JUMP_ROW_Y);
         BtechDrawNearText(jumpJetsOfText,INSPECTION_JUMP_OF_X,INSPECTION_JUMP_ROW_Y);
     }
@@ -153,9 +153,9 @@ void BtechDrawMechDamageDiagram(void)
         if (armor==COMBAT_ARMOR_REAR_CENTER_TORSO) continue;
         uint16_t body=armorToBodyLocations[armor];
         if (body>=COMBAT_BODY_LOCATIONS) abort();
-        int16_t maximum=(int16_t)(uint16_t)(inspectionMechTemplate->maximumArmor[armor]+inspectionMechTemplate->maximumInternalStructure[body]);
-        int16_t remaining=(int16_t)(uint16_t)(inspectionMechState->currentArmor[armor]+inspectionMechState->currentInternalStructure[body]);
-        int16_t halfMaximum=(int16_t)((maximum-(maximum<0))/2); /* Native SAR, including negative odd sums. */
+        int16_t maximum=inspectionMechTemplate->maximumArmor[armor]+inspectionMechTemplate->maximumInternalStructure[body];
+        int16_t remaining=inspectionMechState->currentArmor[armor]+inspectionMechState->currentInternalStructure[body];
+        int16_t halfMaximum=(maximum-(maximum<0))/2; /* Native SAR, including negative odd sums. */
         uint8_t colour=remaining==maximum?INSPECTION_UNDAMAGED_COLOUR:remaining>halfMaximum?INSPECTION_ABOVE_HALF_COLOUR:remaining?INSPECTION_DAMAGED_COLOUR:INSPECTION_DESTROYED_COLOUR;
         uint16_t chassis=inspectionMechState->templateIndex;
         if (chassis>=COMBAT_MECH_TEMPLATES) abort();

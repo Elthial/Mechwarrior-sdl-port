@@ -23,7 +23,7 @@ void BtechRefreshCockpitAndSensorTarget(void)
     drawPageSelector=backPageSelector;screenPolygonNeedsClip=false;drawPolygonFilled=true;
     BtechDrawMechSubsystemLamps(playerMechState);
     if (!playerMechState) abort();
-    BtechUpdateHeatGauge((int16_t)playerMechState->heatUnits/0x50);
+    BtechUpdateHeatGauge((int16_t)playerMechState->heatUnits/COMBAT_HEAT_UNITS_PER_DISPLAY_POINT);
     if (!movementObject) abort();
     BtechDrawForwardMovementGauge(movementObject->forwardStepScale);
     if (!playerMechState || playerMechState->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
@@ -55,10 +55,10 @@ void BtechDrawCockpitAimReticle(uint16_t x,uint16_t y)
     drawPageSelector=backPageSelector;
     if (combatLandscapeIndex>=COMBAT_LANDSCAPES || hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES) abort();
     drawFillColour=landscapeCameraColourRows[hudColourSchemeIndex][combatLandscapeIndex].hudReticleColour;
-    BtechDrawClippedLine((int16_t)x,(int16_t)(uint16_t)(y-AIM_RETICLE_OUTER_RADIUS),(int16_t)x,(int16_t)(uint16_t)(y-AIM_RETICLE_INNER_RADIUS));
-    BtechDrawClippedLine((int16_t)x,(int16_t)(uint16_t)(y+AIM_RETICLE_INNER_RADIUS),(int16_t)x,(int16_t)(uint16_t)(y+AIM_RETICLE_OUTER_RADIUS));
-    BtechDrawClippedLine((int16_t)(uint16_t)(x-AIM_RETICLE_OUTER_RADIUS),(int16_t)y,(int16_t)(uint16_t)(x-AIM_RETICLE_INNER_RADIUS),(int16_t)y);
-    BtechDrawClippedLine((int16_t)(uint16_t)(x+AIM_RETICLE_INNER_RADIUS),(int16_t)y,(int16_t)(uint16_t)(x+AIM_RETICLE_OUTER_RADIUS),(int16_t)y);
+    BtechDrawClippedLine((int16_t)x,(int16_t)(y-AIM_RETICLE_OUTER_RADIUS),(int16_t)x,(int16_t)(y-AIM_RETICLE_INNER_RADIUS));
+    BtechDrawClippedLine((int16_t)x,(int16_t)(y+AIM_RETICLE_INNER_RADIUS),(int16_t)x,(int16_t)(y+AIM_RETICLE_OUTER_RADIUS));
+    BtechDrawClippedLine((int16_t)(x-AIM_RETICLE_OUTER_RADIUS),(int16_t)y,(int16_t)(x-AIM_RETICLE_INNER_RADIUS),(int16_t)y);
+    BtechDrawClippedLine((int16_t)(x+AIM_RETICLE_INNER_RADIUS),(int16_t)y,(int16_t)(x+AIM_RETICLE_OUTER_RADIUS),(int16_t)y);
 }
 
 /*0810:0720. Up to six strut placements; sentinel12 and byte-aligned X. */
@@ -80,7 +80,7 @@ void BtechDrawCockpitBitmapPlacements(void)
 void BtechDrawPendingFiringIndicator(void)
 {
     if (!playerMechState) abort();
-    int16_t pitch=(int16_t)playerMechState->aimPitch;
+    int16_t pitch=playerMechState->aimPitch;
     uint16_t pitchClass=(pitch<FIRING_INDICATOR_UPPER_PITCH)+(pitch<(int16_t)FIRING_INDICATOR_LOWER_PITCH);
     if (activeCockpitLayoutIndex>=COMBAT_COCKPIT_LAYOUTS) abort();
     const BtechCockpitLayout *layout=&cockpitLayouts[activeCockpitLayoutIndex];

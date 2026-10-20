@@ -8,9 +8,9 @@
 /*0810:4BB6. Ordered 2d6 roll; failed selection transfers without spending budget. */
 void BtechRollCriticalLosses(BtechMechState *mech,int16_t bodyLocation)
 {
-    uint16_t firstDie=BtechRandomBelowBound(COMBAT_DIE_SIDES);
-    uint16_t secondDie=BtechRandomBelowBound(COMBAT_DIE_SIDES);
-    int16_t budget=(int16_t)(uint16_t)(firstDie+secondDie+COMBAT_CRITICAL_DICE_BASE);
+    uint16_t firstDie=BtechRandomBelowBound(DICE_1D6);
+    uint16_t secondDie=BtechRandomBelowBound(DICE_1D6);
+    int16_t budget=firstDie+secondDie+COMBAT_CRITICAL_DICE_BASE;
     while (budget>COMBAT_CRITICAL_ATTEMPT_THRESHOLD)
     {
         if (BtechSelectAndApplyCriticalLoss(mech,bodyLocation)) budget-=COMBAT_CRITICAL_SUCCESS_COST;
@@ -32,17 +32,17 @@ uint8_t BtechSelectAndApplyCriticalLoss(BtechMechState *mech,int16_t bodyLocatio
 {
     if (mech->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
     BtechMechTemplate *chassis=&mechTemplates[mech->templateIndex];
-    int16_t mountCount=(int16_t)chassis->weaponMountCount;
+    int16_t mountCount=chassis->weaponMountCount;
     for (;;)
     {
-        int16_t roll=(int16_t)(uint16_t)(BtechRandomBelowBound(COMBAT_CRITICAL_SLOT_ROLL_BOUND)+1);
+        int16_t roll=BtechRandomBelowBound(COMBAT_CRITICAL_SLOT_ROLL_BOUND)+1;
         int16_t budget=roll;
         if (bodyLocation==COMBAT_BODY_HEAD || bodyLocation==COMBAT_BODY_LEFT_LEG || bodyLocation==COMBAT_BODY_RIGHT_LEG) budget=(budget+1)/2;
         if (bodyLocation==COMBAT_BODY_CENTER_TORSO)
         {
             if ((int16_t)mech->engineHits<COMBAT_ENGINE_HIT_LIMIT)
             {
-                budget=(int16_t)(uint16_t)(budget-(COMBAT_ENGINE_CRITICAL_WEIGHT-mech->engineHits));
+                budget-=(COMBAT_ENGINE_CRITICAL_WEIGHT-mech->engineHits);
                 if (budget<=0)
                 {
                     ++mech->engineHits;
@@ -57,7 +57,7 @@ uint8_t BtechSelectAndApplyCriticalLoss(BtechMechState *mech,int16_t bodyLocatio
             }
             if ((int16_t)mech->gyroHits<COMBAT_GYRO_DESTROYED_HITS)
             {
-                budget=(int16_t)(uint16_t)(budget-(COMBAT_GYRO_CRITICAL_WEIGHT-mech->gyroHits));
+                budget-=(COMBAT_GYRO_CRITICAL_WEIGHT-mech->gyroHits);
                 if (budget<=0)
                 {
                     if (mech==playerMechState) BtechPlaySoundIfEnabled(COMBAT_CRITICAL_SOUND,COMBAT_CRITICAL_SOUND_PRIORITY);
@@ -69,14 +69,14 @@ uint8_t BtechSelectAndApplyCriticalLoss(BtechMechState *mech,int16_t bodyLocatio
         {
             uint16_t actuator=actuatorIndicesByBodyLocation[bodyLocation];
             if (actuator>=COMBAT_ACTUATORS) abort();
-            budget=(int16_t)(uint16_t)(budget-mech->actuatorCondition[actuator]);
+            budget-=mech->actuatorCondition[actuator];
             if (budget<=0) {--mech->actuatorCondition[actuator];return 1;}
         }
         else if (bodyLocation==COMBAT_BODY_HEAD)
         {
             if ((int16_t)mech->lifeSupportHits<COMBAT_LIFE_SUPPORT_HIT_LIMIT)
             {
-                budget=(int16_t)(uint16_t)(budget-(COMBAT_LIFE_SUPPORT_HIT_LIMIT-mech->lifeSupportHits));
+                budget-=(COMBAT_LIFE_SUPPORT_HIT_LIMIT-mech->lifeSupportHits);
                 if (budget<=0)
                 {
                     if (mech==playerMechState) BtechPlaySoundIfEnabled(COMBAT_CRITICAL_SOUND,COMBAT_CRITICAL_SOUND_PRIORITY);
@@ -85,7 +85,7 @@ uint8_t BtechSelectAndApplyCriticalLoss(BtechMechState *mech,int16_t bodyLocatio
             }
             if ((int16_t)mech->sensorHits<COMBAT_SENSORS_DESTROYED_HITS)
             {
-                budget=(int16_t)(uint16_t)(budget-(COMBAT_SENSORS_DESTROYED_HITS-mech->sensorHits));
+                budget-=(COMBAT_SENSORS_DESTROYED_HITS-mech->sensorHits);
                 if (budget<=0)
                 {
                     if (mech==playerMechState) BtechPlaySoundIfEnabled(COMBAT_CRITICAL_SOUND,COMBAT_CRITICAL_SOUND_PRIORITY);
@@ -94,7 +94,7 @@ uint8_t BtechSelectAndApplyCriticalLoss(BtechMechState *mech,int16_t bodyLocatio
             }
             if ((int16_t)mech->cockpitDisabled<COMBAT_COCKPIT_CRITICAL_WEIGHT)
             {
-                budget=(int16_t)(uint16_t)(budget-(COMBAT_COCKPIT_CRITICAL_WEIGHT-mech->cockpitDisabled));
+                budget-=(COMBAT_COCKPIT_CRITICAL_WEIGHT-mech->cockpitDisabled);
                 if (budget<=0) {++mech->cockpitDisabled;return 1;}
             }
         }
@@ -104,19 +104,19 @@ uint8_t BtechSelectAndApplyCriticalLoss(BtechMechState *mech,int16_t bodyLocatio
             BtechWeaponMount *installation=&chassis->weaponMounts[mount];
             if (!mech->weapons[mount].operational || installation->bodyLocation!=(uint16_t)bodyLocation) continue;
             if ((uint16_t)installation->weaponKind>=COMBAT_WEAPON_KINDS) abort();
-            budget=(int16_t)(uint16_t)(budget-weaponDefinitions[installation->weaponKind].criticalSlots);
+            budget-=weaponDefinitions[installation->weaponKind].criticalSlots;
             if (budget<=0) {mech->weapons[mount].operational=0;return 1;}
         }
         for (uint16_t family=0;family<COMBAT_AMMO_FAMILIES;++family)
         {
             if (chassis->ammoBodyLocations[family]!=bodyLocation || !mech->ammoSalvosRemaining[family]) continue;
-            budget=(int16_t)(uint16_t)(budget-1);
+            budget-=COMBAT_AMMO_CRITICAL_WEIGHT;
             if (!budget) {mech->ammoSalvosRemaining[family]=0;return 1;} /* Equality, not <=; no explosion. */
         }
         for (uint16_t group=0;group<COMBAT_JET_GROUPS;++group)
         {
             if (chassis->jumpJetGroups[group].bodyLocation!=bodyLocation || !mech->jumpJetGroupOperational[group]) continue;
-            budget=(int16_t)(uint16_t)(budget-chassis->jumpJetGroups[group].criticalSlots);
+            budget-=chassis->jumpJetGroups[group].criticalSlots;
             if (budget<=0) {mech->jumpJetGroupOperational[group]=0;++mech->destroyedJumpJetGroups;return 1;}
         }
         if (budget==roll) return 0;
@@ -142,7 +142,7 @@ void BtechApplyArmorAndInternalDamage(uint16_t unitSlot,int16_t armorLocation,in
         if (!mech || (uint16_t)armorLocation>=COMBAT_ARMOR_LOCATIONS) abort();
         uint16_t *armor=&mech->currentArmor[armorLocation];
         if ((int16_t)*armor>damage) {*armor-=(uint16_t)damage;damage=0;continue;}
-        damage=(int16_t)(uint16_t)((uint16_t)damage-*armor);*armor=0;
+        damage=(int16_t)((uint16_t)damage-*armor);*armor=0;
         uint16_t body=armorToBodyLocations[armorLocation];
         if (body>=COMBAT_BODY_LOCATIONS) abort();
         if (!mech->currentInternalStructure[body])
@@ -157,7 +157,7 @@ void BtechApplyArmorAndInternalDamage(uint16_t unitSlot,int16_t armorLocation,in
         BtechPooledWorldObject *part=BtechGetUnitRenderPartByArmorLocation(unitSlot,armorLocation);
         if (part) part->object.prefix.renderFlags|=COMBAT_WORLD_OBJECT_HIDDEN;
         BtechQueueBodyDestructionEmitter(unitSlot,armorLocation);
-        damage=(int16_t)(uint16_t)((uint16_t)damage-*internal);*internal=0;
+        damage=(int16_t)((uint16_t)damage-*internal);*internal=0;
         if (BtechApplyDestroyedBodyLocationEffects(mech,(int16_t)body)) damage=0;
         else armorLocation=(int16_t)damageTransferArmorLocations[body];
     }

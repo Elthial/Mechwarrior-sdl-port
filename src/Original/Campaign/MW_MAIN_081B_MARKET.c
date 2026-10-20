@@ -473,7 +473,7 @@ uint16_t MwRearmSelectedMech(void)
     {
         if (!profile || quantityIndex>=CAMPAIGN_AMMO_GROUPS*CAMPAIGN_OWNED_UNIT_SLOTS) abort();
         uint16_t ammoFamily=profile->ammoFamily;
-        uint16_t purchasesRemaining=(uint16_t)(profile->quantityMaximum-ownedAmmoQuantitiesByGroup[quantityIndex]);
+        uint16_t purchasesRemaining=profile->quantityMaximum-ownedAmmoQuantitiesByGroup[quantityIndex];
         if (purchasesRemaining!=0)
         {
             uint16_t pricePerAmmoUnit=ammunitionTransactionPrices[ammoFamily];
@@ -521,7 +521,7 @@ uint16_t MwQuoteSelectedMechRearm(void)
     {
         if (!profile || quantityIndex>=CAMPAIGN_AMMO_GROUPS*CAMPAIGN_OWNED_UNIT_SLOTS) abort(); /* Unrepresented adjacent reads. */
         uint16_t ammoFamily=profile->ammoFamily;
-        uint16_t quantityToBuy=(uint16_t)(profile->quantityMaximum-ownedAmmoQuantitiesByGroup[quantityIndex]);
+        uint16_t quantityToBuy=profile->quantityMaximum-ownedAmmoQuantitiesByGroup[quantityIndex];
         uint32_t rearmCost=((uint32_t)selectedMechRearmQuoteHigh<<NATIVE_WORD_BITS)|selectedMechRearmQuoteLow;
         rearmCost+=(uint32_t)quantityToBuy*ammunitionTransactionPrices[ammoFamily];
         selectedMechRearmQuoteLow=(uint16_t)rearmCost;
@@ -676,7 +676,7 @@ void MwShowReserveAmmunitionCompatibility(uint16_t family)
 uint16_t MwSellReserveAmmunition(void)
 {
     uiSelectionChangedCodeOffset=CAMPAIGN_CALLBACK_REFRESH_RESERVE_AMMO;MwInitializeMechServiceIdle();
-    uint16_t family=(uint16_t)(selectedUiRecordIndex-CAMPAIGN_AMMO_FAMILY_COUNT);
+    uint16_t family=selectedUiRecordIndex-CAMPAIGN_AMMO_FAMILY_COUNT;
     if (family>=CAMPAIGN_AMMO_FAMILY_COUNT) abort();
     uint16_t remaining=family==RESERVE_AMMO_MACHINE_GUN_FAMILY?RESERVE_AMMO_MACHINE_GUN_BATCH:1;
     do

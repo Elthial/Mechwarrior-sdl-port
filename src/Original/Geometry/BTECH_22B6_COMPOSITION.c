@@ -19,18 +19,18 @@ void BtechComposeTransformBases(uint16_t incomingCx,const BtechOrientationBasis 
     {
         for (uint16_t column=0;column<(rightPlanar?2:3);++column)
         {
-            int16_t firstLeft=(int16_t)left->coefficients[row*3];
-            int16_t firstRight=(int16_t)right->coefficients[column];
-            uint32_t firstProduct=(uint32_t)((int32_t)firstLeft*firstRight);
-            int16_t secondLeft=(int16_t)left->coefficients[row*3+1];
-            int16_t secondRight=(int16_t)right->coefficients[column+3];
-            uint32_t secondProduct=(uint32_t)((int32_t)secondLeft*secondRight);
+            int16_t firstLeft=left->coefficients[row*3];
+            int16_t firstRight=right->coefficients[column];
+            uint32_t firstProduct=(int32_t)firstLeft*firstRight;
+            int16_t secondLeft=left->coefficients[row*3+1];
+            int16_t secondRight=right->coefficients[column+3];
+            uint32_t secondProduct=(int32_t)secondLeft*secondRight;
             uint32_t accumulated;
             if (!leftPlanar && !rightPlanar)
             {
                 accumulated=firstProduct+secondProduct;
-                int16_t thirdLeft=(int16_t)left->coefficients[row*3+2];
-                int16_t thirdRight=(int16_t)right->coefficients[column+6];
+                int16_t thirdLeft=left->coefficients[row*3+2];
+                int16_t thirdRight=right->coefficients[column+6];
                 accumulated+=(uint32_t)((int32_t)thirdLeft*thirdRight);
             }
             else accumulated=((firstProduct&0xFFFF0000)|incomingCx)+secondProduct;
@@ -106,7 +106,7 @@ void BtechExtractOrientationFromBasis(const BtechOrientationBasis *basis,uint16_
     }
     else
     {
-        uint16_t second=(uint16_t)(0-basis->coefficients[2]);
+        uint16_t second=0-basis->coefficients[2];
         uint16_t first=basis->coefficients[8];
         orientation[1]=BtechCalculateWordPairHeading(first,second);
         second=(uint16_t)(0-basis->coefficients[3]);

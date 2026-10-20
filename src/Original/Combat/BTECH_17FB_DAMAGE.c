@@ -21,7 +21,7 @@ uint8_t BtechApplyDestroyedBodyLocationEffects(BtechMechState *mech,int16_t body
         if (chassis->jumpJetGroups[group].bodyLocation==bodyLocation)
         {mech->jumpJetGroupOperational[group]=0;++mech->destroyedJumpJetGroups;}
     if (bodyLocation<COMBAT_BODY_HEAD)
-        mech->destroyedHeatSinks+=(int16_t)(uint16_t)(chassis->heatSinkCount+bodyLocation)/COMBAT_HEAT_SINK_LOCATION_DIVISOR;
+        mech->destroyedHeatSinks+=(int16_t)(chassis->heatSinkCount+bodyLocation)/COMBAT_HEAT_SINK_LOCATION_DIVISOR;
     if (bodyLocation>=COMBAT_BODY_LEFT_ARM && bodyLocation<=COMBAT_BODY_RIGHT_LEG)
     {
         uint16_t actuator=actuatorIndicesByBodyLocation[bodyLocation];
@@ -36,7 +36,7 @@ uint8_t BtechApplyDestroyedBodyLocationEffects(BtechMechState *mech,int16_t body
     else if (bodyLocation==COMBAT_BODY_CENTER_TORSO)
     {
         mech->gyroHits=COMBAT_GYRO_DESTROYED_HITS;mech->engineHits=COMBAT_ENGINE_HIT_LIMIT;terminal=1;
-        if (mech==playerMechState && !(combatTickCounter&7)) mech->cockpitDisabled=1;
+        if (mech==playerMechState && !(combatTickCounter&COMBAT_CENTER_TORSO_COCKPIT_TICK_MASK)) mech->cockpitDisabled=1;
     }
     return terminal;
 }

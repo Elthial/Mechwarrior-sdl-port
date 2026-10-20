@@ -22,7 +22,7 @@ BtechBitmapList *BtechLoadBitmapList(const char *filename,BtechRuntimeStream *st
     if (BtechFindResourceTagPosition(stream,"BMP:INF:",0)==UINT32_MAX) goto cleanup;
     uint8_t countBytes[2];
     if (BtechReadStreamElements(countBytes,2,1,stream->file)!=1) goto cleanup;
-    int16_t count=(int16_t)(countBytes[0]|((uint16_t)countBytes[1]<<8));
+    int16_t count=countBytes[0]|((uint16_t)countBytes[1]<<8);
     if (count<=0 || (uint32_t)(uint16_t)count*0x0A>UINT16_MAX) abort(); // Native wrapped/zero near allocations are not host arrays.
     list=BtechAllocateNearBytes((uint16_t)(((uint16_t)count+1)*BTECH_NEAR_POINTER_BYTES),sizeof(*list),BTECH_NEAR_BITMAP_LIST);
     if (!list) goto cleanup;
@@ -64,7 +64,7 @@ BtechBitmapList *BtechLoadBitmapList(const char *filename,BtechRuntimeStream *st
     {
         if (cursor>primary.byteCount) abort();
         uint32_t remaining=primary.byteCount-cursor;
-        uint16_t preserved=(uint16_t)(remaining<COMBAT_BITMAP_READ_BYTES?remaining:COMBAT_BITMAP_READ_BYTES);
+        uint16_t preserved=remaining<COMBAT_BITMAP_READ_BYTES?remaining:COMBAT_BITMAP_READ_BYTES;
         /* RLE literals account their requested size even after short IO.
          * Seed private staging from the actual destination so its unwritten
          * bytes remain allocation residue, not unrelated host stack residue. */

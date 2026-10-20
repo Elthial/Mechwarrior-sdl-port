@@ -25,7 +25,7 @@ void BtechPrepareCampaignCombatStage(uint16_t inheritedSoundStreamIdentity)
         if (!(savedArgumentCount&0x8000) && savedArgumentCount>2)
         {
             if (!savedArguments || !savedArguments[2]) abort();
-            command=BtechLowercaseCharacterByClassTable((uint16_t)(int16_t)(int8_t)savedArguments[2][0]);
+            command=BtechLowercaseCharacterByClassTable((int8_t)savedArguments[2][0]);
         }
         recordCombatInputRequested=command=='r';playbackCombatInputRequested=command=='p';
         BtechWaitScaledRuntimeDelay(COMBAT_PREPARE_DELAY);
@@ -122,7 +122,7 @@ void BtechPrepareCampaignCombatStage(uint16_t inheritedSoundStreamIdentity)
             uint16_t integrity=CAMPAIGN_FULL_BODY_INTEGRITY-damage->bodyDamageTiers[tier];
             uint16_t maximumStructure=chassis->maximumInternalStructure[body];
             uint16_t maximumSum=chassis->maximumArmor[armor]+maximumStructure;
-            uint16_t product=(uint16_t)((uint32_t)maximumSum*integrity);
+            uint16_t product=(uint32_t)maximumSum*integrity;
             int32_t remaining=(product<0x8000?product:(int32_t)product-0x10000)/CAMPAIGN_FULL_BODY_INTEGRITY;
             int32_t structure=maximumStructure<0x8000?maximumStructure:(int32_t)maximumStructure-0x10000;
             if (remaining>structure)

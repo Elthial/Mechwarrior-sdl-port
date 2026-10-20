@@ -98,7 +98,7 @@ void BtechResetWorldObjectPool(void)
  * Wrapped count+2 and signed loop bound retained. */
 void BtechReleaseCombatChassisResourceBanks(void)
 {
-    for (int16_t bank=0;bank<(int16_t)(uint16_t)(distinctSceneMechChassisCount+2);++bank)
+    for (int16_t bank=0;bank<(int16_t)(distinctSceneMechChassisCount+2);++bank)
         BtechReleaseResourceBankSelector(BtechDetachShapeResourceBank((uint16_t)bank));
     BtechReleaseCollisionBankAllocation();
     BtechReleaseCameraContextFar(orderMapCameraContext);
@@ -273,7 +273,7 @@ void BtechLoadScenarioAndWorld(uint16_t scenarioIndex)
 {
     _Static_assert(sizeof(BtechScenarioSelectors)==0x10,"Native scenario selector IO");
     FILE *stream=BtechOpenStreamWithRetry("snario.dat","rb");
-    uint16_t offset=(uint16_t)(scenarioIndex<<4);
+    uint16_t offset=scenarioIndex<<4;
     fseek(stream,offset<0x8000?offset:(long)offset-0x10000,SEEK_SET);
     BtechReadStreamElements(&scenarioSelectors,1,sizeof(scenarioSelectors),stream);BtechCloseStreamFile(stream);
     BtechLoadTerrainWorldResources();

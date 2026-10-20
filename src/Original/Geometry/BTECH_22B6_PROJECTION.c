@@ -118,8 +118,8 @@ divideNumerator:
 void BtechOffsetProjectedScreenPair(BtechPosition3D *screen)
 {
     uint8_t mirrored=mirrorProjectionA;
-    uint32_t centre=(uint32_t)(int32_t)screenCentreA;
+    uint32_t centre=(uint32_t)screenCentreA;
     screen->positionA=mirrored?centre-screen->positionA:centre+screen->positionA;
-    centre=(uint32_t)(int32_t)screenCentreB;
+    centre=(uint32_t)screenCentreB;
     screen->positionB=centre-screen->positionB;
 }

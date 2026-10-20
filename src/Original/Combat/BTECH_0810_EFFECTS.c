@@ -50,8 +50,8 @@ void BtechUpdateBodyDestructionEffects(void)
         if ((int16_t)emitter->ticksRemaining>=BODY_EMITTER_FIRST_TICK) continue;
         if ((int16_t)emitter->ticksRemaining<=BODY_EMITTER_RANDOM_TICKS && !BtechRandomBelowBound(BODY_EMITTER_RANDOM_BOUND)) continue;
         BtechPosition3D *position=BtechGetUnitBodyReferencePosition(emitter->unitSlot,emitter->armorLocation);
-        int16_t rise=(int16_t)(uint16_t)((COMBAT_DESTRUCTION_EMITTER_TICKS-emitter->ticksRemaining)*2);
-        position->positionC+=(uint32_t)(int32_t)rise;
+        int16_t rise=(COMBAT_DESTRUCTION_EMITTER_TICKS-emitter->ticksRemaining)*2;
+        position->positionC+=(uint32_t)rise;
         BtechSpawnBodyDamageEffect(position);
     }
     for (uint16_t slot=0;slot<COMBAT_BODY_EFFECT_SLOTS;++slot)
@@ -71,13 +71,13 @@ void BtechUpdateBodyDestructionEffects(void)
         uint32_t extent=BtechGetResourceScaledValue(pose->resourceId);
         pose->resourceScaledValue=(pose->resourceScaledValue&0xFFFF0000)|(extent&0xFFFF);
         pose->resourceScaledValue=(pose->resourceScaledValue&0xFFFF)|(extent&0xFFFF0000);
-        int16_t heightStep=(int16_t)(uint16_t)extent;
-        int16_t spread=(int16_t)(uint16_t)BtechShiftSignedDwordRight((uint32_t)(int32_t)heightStep,2);
+        int16_t heightStep=extent;
+        int16_t spread=(int16_t)BtechShiftSignedDwordRight((uint32_t)heightStep,2);
         int16_t offsetA=(int16_t)BtechRandomSignedSpread(spread);
-        pose->position.positionA=effect->anchorPositionA+(uint32_t)(int32_t)offsetA;
+        pose->position.positionA=effect->anchorPositionA+(uint32_t)offsetA;
         int16_t offsetB=(int16_t)BtechRandomSignedSpread(spread);
-        pose->position.positionB=effect->anchorPositionB+(uint32_t)(int32_t)offsetB;
-        pose->position.positionC+=(uint32_t)(int32_t)heightStep;
+        pose->position.positionB=effect->anchorPositionB+(uint32_t)offsetB;
+        pose->position.positionC+=(uint32_t)heightStep;
     }
 }
 

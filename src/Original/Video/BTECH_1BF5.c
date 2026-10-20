@@ -127,7 +127,7 @@ void BtechDrawNearText(const char *text,int16_t x,int16_t y)
     if (screenPolygonNeedsClip)
     {
         if (y<clipMinimumY) return;
-        int16_t bottom=(int16_t)(((uint16_t)y&0xFF00)|(uint8_t)((uint8_t)y+combatFontHeights[0]));
+        int16_t bottom=((uint16_t)y&0xFF00)|(uint8_t)((uint8_t)y+combatFontHeights[0]);
         if (bottom>clipMaximumY) return;
     }
     while (*text)
@@ -136,11 +136,11 @@ void BtechDrawNearText(const char *text,int16_t x,int16_t y)
         if (!screenPolygonNeedsClip || x>=clipMinimumX)
         {
             if (screenPolygonNeedsClip
-                && (int16_t)(uint16_t)(x+fontAdvanceWidths[0]-1)>clipMaximumX) return;
+                && (int16_t)(x+fontAdvanceWidths[0]-1)>clipMaximumX) return;
             if (!graphicsDrawGlyph) abort();
             graphicsDrawGlyph(character,(uint16_t)x,(uint16_t)y,page);
         }
-        x=(int16_t)(uint16_t)(x+fontAdvanceWidths[0]);
+        x=(int16_t)(x+fontAdvanceWidths[0]);
     }
 }
 
@@ -239,7 +239,7 @@ uint16_t BtechLoadPaletteSlot(const char *filename,BtechRuntimeStream *stream)
 /*1BF5:2092. Query sign-extends the active BYTE. Backend precedes ID store. */
 uint16_t BtechSelectPaletteSlot(int16_t slot)
 {
-    if (!slot) return (uint16_t)(int16_t)(int8_t)paletteSlotIds[0];
+    if (!slot) return (int8_t)paletteSlotIds[0];
     if (!BtechIsPaletteSlotLoaded(slot)) return 0;
     if (!graphicsSelectPalette) abort();
     graphicsSelectPalette((uint16_t)slot);

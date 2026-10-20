@@ -60,30 +60,30 @@ void BtechDrawCockpitHeadingStrip(uint16_t bodyHeading,int16_t torsoTwist)
     int16_t y=cockpitLayouts[layoutIndex].headingStripY;
     uint16_t headingDegrees=(uint16_t)(0-bodyHeading)/HEADING_UNITS_PER_DEGREE;
     int16_t torsoMarkerOffset=torsoTwist/HEADING_UNITS_PER_DEGREE;
-    int16_t windowStart=(int16_t)(uint16_t)(headingDegrees-0x29);
-    if (windowStart<0) windowStart=(int16_t)(uint16_t)(windowStart+360);
+    int16_t windowStart=headingDegrees-0x29;
+    if (windowStart<0) windowStart=(int16_t)(windowStart+360);
     int16_t labelIndex=windowStart/HEADING_LABEL_STEP;
-    int16_t labelX=(int16_t)(uint16_t)(labelIndex*HEADING_LABEL_STEP-windowStart-1);
+    int16_t labelX=labelIndex*HEADING_LABEL_STEP-windowStart-1;
     for (uint16_t labelsDrawn=0;labelsDrawn<HEADING_LABELS_DRAWN;++labelsDrawn)
     {
         if (labelIndex==HEADING_LABELS) labelIndex=0;
         if (!hudGlyphPictures || labelIndex<0 || labelIndex>=hudGlyphPictures->imageCount) abort();
-        BtechDrawBitmap(&hudGlyphPictures->images[labelIndex],(int16_t)(uint16_t)(labelX+0x72),(int16_t)(uint16_t)(y+4));
-        BtechDrawClippedLine((int16_t)(uint16_t)(labelX+0x78),(int16_t)(uint16_t)(y+0x0B),(int16_t)(uint16_t)(labelX+0x78),(int16_t)(uint16_t)(y+0x11));
-        BtechWriteClippedPixel((int16_t)(uint16_t)(labelX+0x7D),(int16_t)(uint16_t)(y+0x10),landscapeCameraColourRows[hudColourSchemeIndex][combatLandscapeIndex].headingTickPaletteIndex);
-        BtechDrawClippedLine((int16_t)(uint16_t)(labelX+0x82),(int16_t)(uint16_t)(y+0x0E),(int16_t)(uint16_t)(labelX+0x82),(int16_t)(uint16_t)(y+0x11));
-        BtechWriteClippedPixel((int16_t)(uint16_t)(labelX+0x87),(int16_t)(uint16_t)(y+0x10),landscapeCameraColourRows[hudColourSchemeIndex][combatLandscapeIndex].headingTickPaletteIndex);
-        BtechDrawClippedLine((int16_t)(uint16_t)(labelX+0x8C),(int16_t)(uint16_t)(y+0x0E),(int16_t)(uint16_t)(labelX+0x8C),(int16_t)(uint16_t)(y+0x11));
-        BtechWriteClippedPixel((int16_t)(uint16_t)(labelX+0x91),(int16_t)(uint16_t)(y+0x10),landscapeCameraColourRows[hudColourSchemeIndex][combatLandscapeIndex].headingTickPaletteIndex);
-        labelX=(int16_t)(uint16_t)(labelX+HEADING_LABEL_STEP);++labelIndex;
+        BtechDrawBitmap(&hudGlyphPictures->images[labelIndex],(int16_t)(labelX+0x72),(int16_t)(y+4));
+        BtechDrawClippedLine((int16_t)(labelX+0x78),(int16_t)(y+0x0B),(int16_t)(labelX+0x78),(int16_t)(y+0x11));
+        BtechWriteClippedPixel((int16_t)(labelX+0x7D),(int16_t)(y+0x10),landscapeCameraColourRows[hudColourSchemeIndex][combatLandscapeIndex].headingTickPaletteIndex);
+        BtechDrawClippedLine((int16_t)(labelX+0x82),(int16_t)(y+0x0E),(int16_t)(labelX+0x82),(int16_t)(y+0x11));
+        BtechWriteClippedPixel((int16_t)(labelX+0x87),(int16_t)(y+0x10),landscapeCameraColourRows[hudColourSchemeIndex][combatLandscapeIndex].headingTickPaletteIndex);
+        BtechDrawClippedLine((int16_t)(labelX+0x8C),(int16_t)(y+0x0E),(int16_t)(labelX+0x8C),(int16_t)(y+0x11));
+        BtechWriteClippedPixel((int16_t)(labelX+0x91),(int16_t)(y+0x10),landscapeCameraColourRows[hudColourSchemeIndex][combatLandscapeIndex].headingTickPaletteIndex);
+        labelX=(int16_t)(labelX+HEADING_LABEL_STEP);++labelIndex;
     }
-    BtechDrawClippedLine(HEADING_STRIP_LEFT,(int16_t)(uint16_t)(y+0x11),HEADING_STRIP_RIGHT,(int16_t)(uint16_t)(y+0x11));
-    BtechWriteClippedPixel(0x9F,(int16_t)(uint16_t)(y+0x13),landscapeCameraColourRows[hudColourSchemeIndex][combatLandscapeIndex].headingTickPaletteIndex);
-    BtechDrawClippedLine(0x9E,(int16_t)(uint16_t)(y+0x14),0xA0,(int16_t)(uint16_t)(y+0x14));
-    BtechDrawClippedLine(0x9D,(int16_t)(uint16_t)(y+0x15),0xA1,(int16_t)(uint16_t)(y+0x15));
-    BtechWriteClippedPixel((int16_t)(uint16_t)(0x9F-torsoMarkerOffset),(int16_t)(uint16_t)(y+2),landscapeCameraColourRows[hudColourSchemeIndex][combatLandscapeIndex].headingTickPaletteIndex);
-    BtechDrawClippedLine((int16_t)(uint16_t)(0x9E-torsoMarkerOffset),(int16_t)(uint16_t)(y+1),(int16_t)(uint16_t)(0xA0-torsoMarkerOffset),(int16_t)(uint16_t)(y+1));
-    BtechDrawClippedLine((int16_t)(uint16_t)(0x9D-torsoMarkerOffset),y,(int16_t)(uint16_t)(0xA1-torsoMarkerOffset),y);
+    BtechDrawClippedLine(HEADING_STRIP_LEFT,(int16_t)(y+0x11),HEADING_STRIP_RIGHT,(int16_t)(y+0x11));
+    BtechWriteClippedPixel(0x9F,(int16_t)(y+0x13),landscapeCameraColourRows[hudColourSchemeIndex][combatLandscapeIndex].headingTickPaletteIndex);
+    BtechDrawClippedLine(0x9E,(int16_t)(y+0x14),0xA0,(int16_t)(y+0x14));
+    BtechDrawClippedLine(0x9D,(int16_t)(y+0x15),0xA1,(int16_t)(y+0x15));
+    BtechWriteClippedPixel((int16_t)(0x9F-torsoMarkerOffset),(int16_t)(y+2),landscapeCameraColourRows[hudColourSchemeIndex][combatLandscapeIndex].headingTickPaletteIndex);
+    BtechDrawClippedLine((int16_t)(0x9E-torsoMarkerOffset),(int16_t)(y+1),(int16_t)(0xA0-torsoMarkerOffset),(int16_t)(y+1));
+    BtechDrawClippedLine((int16_t)(0x9D-torsoMarkerOffset),y,(int16_t)(0xA1-torsoMarkerOffset),y);
     clipMinimumX=savedMinimumX;clipMaximumX=savedMaximumX;
     screenPolygonNeedsClip=false;egaBitmapEnabledPlanes=COMBAT_EGA_PLANE_MASK_ALL;
 }

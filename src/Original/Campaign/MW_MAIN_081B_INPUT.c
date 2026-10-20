@@ -40,7 +40,7 @@ bool MwPollNavigationKeyFromMouseOrJoystick(uint16_t *navigationKey)
     if (joystickRepeatActive!=0 && joystickRepeatDeadline>campaignTimerTicks) return false;
     joystickRepeatDeadline=campaignTimerTicks+JOYSTICK_REPEAT_TICKS;
     joystickRepeatActive=1;
-    uint16_t byteOffset=(uint16_t)(joystickDirection*2);
+    uint16_t byteOffset=joystickDirection*2;
     if (byteOffset>=sizeof(joystickNavigationKeys)) abort(); /* Unmapped adjacent input storage. */
     *navigationKey=joystickNavigationKeys[byteOffset/2];
     return *navigationKey!=0;
@@ -189,7 +189,7 @@ uint16_t MwReadCampaignTextInput(uint16_t x,uint16_t y,uint16_t capacity,
             if (mwCampaignInput.readKeyboardShiftFlags()&BIOS_SHIFT_CONTROL) return CAMPAIGN_CONTINUE_CLEANUP;
             continue;
         }
-        uint8_t character=(uint8_t)key;
+        uint8_t character=key;
         if (character<' ' || character>'z') continue;
         if (character>='a') character=(uint8_t)(character-ASCII_CASE_DISTANCE);
         if (textInputLength==textInputMaximumIndex) continue;

@@ -55,7 +55,7 @@ void BtechInitializeCombatRuntime(void)
     for (int16_t mount=0;mount<(int16_t)playerMechTemplate->weaponMountCount;++mount)
     {
         if (mount>=COMBAT_WEAPON_MOUNTS || !playerMechState) abort();
-        playerMountFireFlags[mount]=(uint16_t)(int16_t)(int8_t)playerMechState->weapons[mount].operational;
+        playerMountFireFlags[mount]=(int8_t)playerMechState->weapons[mount].operational;
     }
     activeUnitControl=&unitControls[0];
     BtechSynchronizeMechRenderParts();
@@ -70,7 +70,7 @@ void BtechInitializeVideoAndInput(void)
     uint16_t adapterOverride=COMBAT_VIDEO_AUTO;
     if ((int16_t)savedArgumentCount>1)
     {
-        uint8_t option=(uint8_t)savedArguments[1][0];
+        uint8_t option=savedArguments[1][0];
         /*EAA0 lowercases ASCII upper-case in the shipped character table. */
         if (option>='A' && option<='Z') option+='a'-'A';
         switch (option)

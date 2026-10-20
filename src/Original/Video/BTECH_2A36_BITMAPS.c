@@ -16,16 +16,16 @@ uint32_t BtechEgaBitmapStorageSize(const BtechBitmapList *list,uint16_t *auxilia
  * Each image retains native WORD carry loss before paragraph normalization. */
 void BtechEgaPrepareBitmapList(BtechBitmapList *list,BtechResourceAllocation pixels,uint32_t packedBytes)
 {
-    uint16_t planeBytes=(uint16_t)(packedBytes>>2);
+    uint16_t planeBytes=packedBytes>>2;
     BtechEgaUnpackNibblesToScratchPlanes(pixels,planeBytes);
     uint16_t scratchCursor=0,pixelOffset=0;
     uint32_t paragraphBase=0;
     for (uint16_t image=0;image<list->imageCount;++image)
     {
         BtechBitmap *bitmap=&list->images[image];
-        uint16_t imageBytes=(uint16_t)((bitmap->widthPixels>>1)*bitmap->heightPixels);
+        uint16_t imageBytes=(bitmap->widthPixels>>1)*bitmap->heightPixels;
         planeBytes=imageBytes>>2;
-        uint16_t maskOffset=(uint16_t)(pixelOffset+(uint16_t)(planeBytes*COMBAT_EGA_PLANES));
+        uint16_t maskOffset=pixelOffset+(uint16_t)(planeBytes*COMBAT_EGA_PLANES);
         if (!planeBytes || (uint32_t)pixelOffset+planeBytes*COMBAT_EGA_PLANES>UINT16_MAX
             || paragraphBase+maskOffset+planeBytes>pixels.byteCount) abort(); // Zero DEC loops / per-image RAM wrap remain unconverted.
         bitmap->pixelPlanes=pixels.bytes+paragraphBase+pixelOffset;
@@ -35,7 +35,7 @@ void BtechEgaPrepareBitmapList(BtechBitmapList *list,BtechResourceAllocation pix
         BtechEgaCopyScratchPlanes(scratchCursor,bitmap->pixelPlanes,planeBytes);
         BtechEgaBuildZeroColourMask(scratchCursor,bitmap->preserveMask,planeBytes);
         scratchCursor+=planeBytes;
-        uint16_t nextOffset=(uint16_t)(maskOffset+planeBytes);
+        uint16_t nextOffset=maskOffset+planeBytes;
         paragraphBase+=(uint32_t)(nextOffset>>4)*0x10;
         pixelOffset=nextOffset&0x0F;
     }
@@ -64,7 +64,7 @@ void BtechEgaUnpackNibblesToScratchPlanes(BtechResourceAllocation source,uint16_
         uint8_t planePixels[COMBAT_EGA_PLANES]={0};
         for (uint16_t packedByte=0;packedByte<4;++packedByte)
         {
-            uint8_t pixels=(uint8_t)((packedByte<2?firstPixels:secondPixels)>>((packedByte&1)*8));
+            uint8_t pixels=(packedByte<2?firstPixels:secondPixels)>>((packedByte&1)*8);
             for (uint16_t nibble=0;nibble<2;++nibble)
             {
                 uint8_t colour=nibble==0?pixels>>4:pixels&0x0F;

@@ -17,14 +17,14 @@ void BtechDrawTerrainRadar(void)
     radarPlayerObject=playerUnitBinding->positionedLeftLeg;
     if (activeCockpitLayoutIndex>=COMBAT_COCKPIT_LAYOUTS) abort();
     radarRectangle=&cockpitLayouts[activeCockpitLayoutIndex].radarPanel;
-    int16_t halfWidth=(int16_t)((radarRectangle->width-(radarRectangle->width<0))/2);
-    int16_t halfHeight=(int16_t)((radarRectangle->height-(radarRectangle->height<0))/2);
+    int16_t halfWidth=(radarRectangle->width-(radarRectangle->width<0))/2;
+    int16_t halfHeight=(radarRectangle->height-(radarRectangle->height<0))/2;
     radarCentreX=(uint16_t)(radarRectangle->x+halfWidth-1);
     radarCentreY=(uint16_t)(radarRectangle->y+halfHeight-1);
     if (!radarPlayerObject) abort();
     const BtechPosition3D *player=&radarPlayerObject->object.prefix.position;
-    uint16_t mapX=(uint16_t)(BtechShiftSignedDwordRightLow(player->positionA,TERRAIN_WORLD_CELL_SHIFT)-halfWidth+TERRAIN_TILE_ROWS);
-    uint16_t mapY=(uint16_t)(TERRAIN_TILE_COLUMNS-halfHeight-BtechShiftSignedDwordRightLow(player->positionB,TERRAIN_WORLD_CELL_SHIFT));
+    uint16_t mapX=BtechShiftSignedDwordRightLow(player->positionA,TERRAIN_WORLD_CELL_SHIFT)-halfWidth+TERRAIN_TILE_ROWS;
+    uint16_t mapY=TERRAIN_TILE_COLUMNS-halfHeight-BtechShiftSignedDwordRightLow(player->positionB,TERRAIN_WORLD_CELL_SHIFT);
     if (mapX!=radarMapOriginX || mapY!=radarMapOriginY || cockpitFullRedrawPending || tickDiscontinuity)
     {
         radarMapOriginX=mapX;radarMapOriginY=mapY;drawPolygonFilled=true;
@@ -41,8 +41,8 @@ void BtechDrawTerrainRadar(void)
                 uint16_t height=terrainHeightGrid[mapX][terrainY];
                 if (!height) continue;
                 uint16_t band=height>>5;if (band>3) band=3;
-                BtechWriteClippedPixel((int16_t)(uint16_t)(radarRectangle->x+panelX),
-                    (int16_t)(uint16_t)(radarRectangle->y+panelY),hudColourSchemes[hudColourSchemeIndex].radarTerrainBands[band]);
+                BtechWriteClippedPixel((int16_t)(radarRectangle->x+panelX),
+                    (int16_t)(radarRectangle->y+panelY),hudColourSchemes[hudColourSchemeIndex].radarTerrainBands[band]);
             }
         }
         backdropChanged=1;
@@ -103,12 +103,12 @@ void BtechDrawRadarPositionMarker(const BtechPosition3D *position,uint16_t palet
     if (!radarPlayerObject || !position) abort();
     const BtechPosition3D *player=&radarPlayerObject->object.prefix.position;
     uint16_t playerX=BtechShiftSignedDwordRightLow(player->positionA,TERRAIN_WORLD_CELL_SHIFT);
-    int16_t relativeX=(int16_t)(uint16_t)(BtechShiftSignedDwordRightLow(position->positionA,TERRAIN_WORLD_CELL_SHIFT)-playerX);
+    int16_t relativeX=BtechShiftSignedDwordRightLow(position->positionA,TERRAIN_WORLD_CELL_SHIFT)-playerX;
     uint16_t playerY=BtechShiftSignedDwordRightLow(player->positionB,TERRAIN_WORLD_CELL_SHIFT);
-    int16_t relativeY=(int16_t)(uint16_t)(BtechShiftSignedDwordRightLow(position->positionB,TERRAIN_WORLD_CELL_SHIFT)-playerY);
+    int16_t relativeY=BtechShiftSignedDwordRightLow(position->positionB,TERRAIN_WORLD_CELL_SHIFT)-playerY;
     if (!radarRectangle) abort();
-    int16_t halfWidth=(int16_t)((radarRectangle->width-(radarRectangle->width<0))/2);
-    int16_t halfHeight=(int16_t)((radarRectangle->height-(radarRectangle->height<0))/2);
+    int16_t halfWidth=(radarRectangle->width-(radarRectangle->width<0))/2;
+    int16_t halfHeight=(radarRectangle->height-(radarRectangle->height<0))/2;
     int32_t absoluteX=relativeX==INT16_MIN?INT16_MAX:relativeX<0?-(int32_t)relativeX:relativeX;
     if (absoluteX>=halfWidth) return;
     int32_t absoluteY=relativeY==INT16_MIN?INT16_MAX:relativeY<0?-(int32_t)relativeY:relativeY;

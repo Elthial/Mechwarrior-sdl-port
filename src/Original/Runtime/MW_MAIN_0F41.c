@@ -10,7 +10,7 @@ MwMusicHardwareCalls mwMusicHardware;
 void MwCampaignTimerInterrupt(void)
 {
     uint16_t divisorAndPhase=pitDivisorHigh|((uint16_t)timerPhase<<8);
-    uint8_t previousPhase=(uint8_t)(divisorAndPhase>>8);
+    uint8_t previousPhase=divisorAndPhase>>8;
     timerPhase+=(uint8_t)divisorAndPhase;
     if (!(previousPhase&MUSIC_TIMER_PHASE_MASK))
     {
@@ -121,7 +121,7 @@ uint16_t MwSetMidiTickDenominator(uint16_t denominator)
 /* MW_MAIN0F41:0245..0259. MUL's low WORD becomes the timing numerator. */
 void MwSetMidiTickNumerator(uint16_t division,uint16_t tempo)
 {
-    uint16_t numerator=(uint16_t)((uint32_t)division*tempo);
+    uint16_t numerator=(uint32_t)division*tempo;
     if (!mwMusicHardware.setInterruptsEnabled) abort();
     mwMusicHardware.setInterruptsEnabled(false);
     midiTickNumerator=numerator;
@@ -134,7 +134,7 @@ void MwSetMidiTickNumerator(uint16_t division,uint16_t tempo)
 void MwSetMidiBeatBarDivisions(uint16_t beatScale,uint16_t denominatorScale,uint16_t barDivision)
 {
     midiBarDivision=barDivision;
-    uint16_t divisor=(uint16_t)((uint32_t)barDivision*denominatorScale);
+    uint16_t divisor=(uint32_t)barDivision*denominatorScale;
     uint32_t scaledBeat=(uint32_t)(MIDI_TICKS_PER_QUARTER*4)*beatScale;
     if (!divisor || scaledBeat/divisor>UINT16_MAX) abort();
     midiBeatDivision=(uint16_t)(scaledBeat/divisor);
@@ -337,8 +337,8 @@ metaEvent: ;
     {
         uint8_t numerator=stream[streamOffset];
         uint16_t signature=MwReadNativeWord(stream,(uint16_t)(streamOffset+1));
-        uint8_t exponent=(uint8_t)signature;
-        uint8_t denominator=(uint8_t)(exponent<8 ? 1u<<exponent : 0);
+        uint8_t exponent=signature;
+        uint8_t denominator=exponent<8 ? 1u<<exponent : 0;
         uint16_t signatureDivisor=(uint16_t)denominator*(uint8_t)(signature>>8);
         uint16_t signatureUnits=MIDI_TICKS_PER_QUARTER*numerator;
         if (!signatureDivisor) abort();

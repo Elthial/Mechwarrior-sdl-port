@@ -18,13 +18,13 @@ void BtechDrawStyledEllipse(int16_t radius, uint16_t centerX, uint16_t centerY)
     }
     if ((uint16_t)radius>COMBAT_ELLIPSE_MAX_RADIUS)radius=COMBAT_ELLIPSE_MAX_RADIUS; // Also writes native argument slot.
     uint16_t arcX=0x0000,arcY=(uint16_t)radius;
-    uint16_t diameter=(uint16_t)((arcY+(arcY>>0x0002))<<0x0001);
-    int16_t decision=(int16_t)(0x0003-(arcY<<0x0001));
+    uint16_t diameter=(arcY+(arcY>>0x0002))<<0x0001;
+    int16_t decision=0x0003-(arcY<<0x0001);
     while ((int16_t)arcX<=(int16_t)arcY)
     {
-        uint16_t delta=(uint16_t)((uint16_t)radius-arcX);
-        uint16_t inset=(uint16_t)(delta+(delta>>0x0002));
-        uint16_t rowIndex=(uint16_t)((uint16_t)radius-arcY);
+        uint16_t delta=(uint16_t)radius-arcX;
+        uint16_t inset=delta+(delta>>0x0002);
+        uint16_t rowIndex=(uint16_t)radius-arcY;
         ellipseLeftInsets[rowIndex]=(uint8_t)inset;
         ellipseInteriorWidths[rowIndex]=(uint8_t)(diameter-(inset<<0x0001));
         delta=(uint16_t)((uint16_t)radius-arcY);
@@ -34,10 +34,10 @@ void BtechDrawStyledEllipse(int16_t radius, uint16_t centerX, uint16_t centerY)
         ellipseInteriorWidths[rowIndex]=(uint8_t)(diameter-(inset<<0x0001));
         if (arcX==arcY)break;
         int16_t previousDecision=decision; // XCHG leaves OLD decision in AX.
-        decision=(int16_t)(uint16_t)((arcX<<0x0002)+(uint16_t)decision+0x0006);
+        decision=(int16_t)((arcX<<0x0002)+(uint16_t)decision+0x0006);
         ++arcX;
         if (previousDecision>=0x0000)
-        {decision=(int16_t)(uint16_t)((uint16_t)decision-(arcY<<0x0002)+0x0004);--arcY;}
+        {decision=(int16_t)((uint16_t)decision-(arcY<<0x0002)+0x0004);--arcY;}
     }
     ellipseBorderWidths[0x0000]=ellipseInteriorWidths[0x0000];
     ellipseInteriorWidths[0x0000]=0x00;
@@ -45,10 +45,10 @@ void BtechDrawStyledEllipse(int16_t radius, uint16_t centerX, uint16_t centerY)
     for (uint16_t rowIndex=0x0001,remaining=(uint16_t)radius;remaining!=0x0000;--remaining,++rowIndex)
     {
         uint8_t inset=ellipseLeftInsets[rowIndex];
-        uint8_t borderWidth=(uint8_t)(previousInset-inset+0x01);
+        uint8_t borderWidth=previousInset-inset+0x01;
         ellipseBorderWidths[rowIndex]=borderWidth;
         borderWidth=(uint8_t)(borderWidth<<0x01);
-        uint8_t interiorWidth=(uint8_t)(ellipseInteriorWidths[rowIndex]-borderWidth);
+        uint8_t interiorWidth=ellipseInteriorWidths[rowIndex]-borderWidth;
         if (interiorWidth==0x00)ellipseBorderWidths[rowIndex]=borderWidth;
         ellipseInteriorWidths[rowIndex]=interiorWidth;
         previousInset=inset;
@@ -60,8 +60,8 @@ void BtechDrawStyledEllipse(int16_t radius, uint16_t centerX, uint16_t centerY)
         shapeSpanCallback=(BtechShapeSpanCallback){graphicsFillSolidSpan,NULL};
     else shapeSpanCallback=(BtechShapeSpanCallback){NULL,graphicsFillAlternatingSpan};
     drawColourPattern=palettePrimarySlots[drawFillColour/COMBAT_PALETTE_WORDS][drawFillColour%COMBAT_PALETTE_WORDS];
-    uint16_t horizontalRadius=(uint16_t)((uint16_t)radius+((uint16_t)radius>>0x0002));
-    uint16_t leftX=(uint16_t)(centerX-horizontalRadius);
+    uint16_t horizontalRadius=(uint16_t)radius+((uint16_t)radius>>0x0002);
+    uint16_t leftX=centerX-horizontalRadius;
     uint16_t clipWidth=(uint16_t)(horizontalRadius<<0x0001),leftMargin=0x0000;
     uint8_t clipLeft=0x00,clipRight=(uint8_t)clipWidth;
     if (screenPolygonNeedsClip!=0x00)
@@ -71,23 +71,23 @@ void BtechDrawStyledEllipse(int16_t radius, uint16_t centerX, uint16_t centerY)
             leftMargin=(uint16_t)(clipMinimumX-leftX);
             if ((int16_t)clipWidth<=(int16_t)leftMargin)return;
         }
-        uint16_t rightX=(uint16_t)(leftX+clipWidth);
+        uint16_t rightX=leftX+clipWidth;
         if ((uint16_t)clipMaximumX<rightX) // UNSIGNED JAE, unlike left clipping.
         {
-            uint16_t rightOverflow=(uint16_t)(rightX-clipMaximumX);
-            uint16_t beforeIncrement=(uint16_t)(clipWidth-rightOverflow);
+            uint16_t rightOverflow=rightX-clipMaximumX;
+            uint16_t beforeIncrement=clipWidth-rightOverflow;
             clipWidth=(uint16_t)(beforeIncrement+0x0001);
             if ((int16_t)beforeIncrement<0x0000)return; // INC/JG retains OF.
         }
         clipLeft=(uint8_t)leftMargin;clipRight=(uint8_t)clipWidth;
     }
     uint16_t rows=(uint16_t)radius,tableRow=0x0000;
-    uint16_t firstRow=(uint16_t)(centerY-(uint16_t)radius);
+    uint16_t firstRow=centerY-(uint16_t)radius;
     if (screenPolygonNeedsClip!=0x00)
     {
         if ((int16_t)clipMinimumY>(int16_t)firstRow)
         {
-            uint16_t skippedRows=(uint16_t)(clipMinimumY-firstRow);
+            uint16_t skippedRows=clipMinimumY-firstRow;
             int32_t difference=(int16_t)rows-(int16_t)skippedRows;
             rows=(uint16_t)(rows-skippedRows);
             if (difference<=0x0000)goto lowerHalf;
@@ -95,13 +95,13 @@ void BtechDrawStyledEllipse(int16_t radius, uint16_t centerX, uint16_t centerY)
         }
         if ((uint16_t)(rows+firstRow)>(uint16_t)clipMaximumY)
         {
-            uint16_t beforeIncrement=(uint16_t)(clipMaximumY-firstRow);
+            uint16_t beforeIncrement=clipMaximumY-firstRow;
             rows=(uint16_t)(beforeIncrement+0x0001);
             if ((int16_t)beforeIncrement<0x0000)goto lowerHalf;
         }
     }
     {
-        uint16_t scanlineByteIndex=(uint16_t)(firstRow<<0x0001);
+        uint16_t scanlineByteIndex=firstRow<<0x0001;
         spanAlternationState=firstRow&0x0001;
         uint16_t scanlineOffset;
         if ((scanlineByteIndex>>1)<COMBAT_SCREEN_HEIGHT) scanlineOffset=graphicsRowOffsets[scanlineByteIndex>>1];
@@ -127,7 +127,7 @@ void BtechDrawStyledEllipse(int16_t radius, uint16_t centerX, uint16_t centerY)
             if (width>clipRight)width=clipRight;
             width=(uint8_t)(width-edge);
             {
-                uint16_t startX=(uint16_t)(leftX+(uint16_t)edge);
+                uint16_t startX=leftX+(uint16_t)edge;
                 edge=(uint8_t)(edge+width); // Saved AX contains next edge, not pattern.
                 if (!graphicsFillSolidSpan) abort();
                 graphicsFillSolidSpan(drawColourPattern,startX,(int16_t)width,scanlineOffset,page);
@@ -151,7 +151,7 @@ upperInterior:
             if (width>clipRight)width=clipRight;
             width=(uint8_t)(width-edge);
             {
-                uint16_t startX=(uint16_t)(leftX+(uint16_t)edge);
+                uint16_t startX=leftX+(uint16_t)edge;
                 edge=(uint8_t)(edge+width);
                 // DX receives PRIMARY, AX SECONDARY; do not swap these patterns.
                 if (shapeSpanCallback.alternating)
@@ -196,7 +196,7 @@ lowerHalf:
     {
         if ((int16_t)clipMinimumY>(int16_t)firstRow)
         {
-            uint16_t skippedRows=(uint16_t)(clipMinimumY-firstRow);
+            uint16_t skippedRows=clipMinimumY-firstRow;
             rows=(uint16_t)(rows-skippedRows);
             int32_t difference=(int16_t)tableRow-(int16_t)skippedRows;
             tableRow=(uint16_t)(tableRow-skippedRows);
@@ -205,14 +205,14 @@ lowerHalf:
         }
         if ((uint16_t)(rows+firstRow)>(uint16_t)clipMaximumY)
         {
-            uint16_t beforeIncrement=(uint16_t)(clipMaximumY-firstRow);
+            uint16_t beforeIncrement=clipMaximumY-firstRow;
             rows=(uint16_t)(beforeIncrement+0x0001);
             if ((int16_t)beforeIncrement<0x0000)return;
         }
     }
     // Lower half reseeds parity once; thereafter only alternating spans toggle it.
     {
-        uint16_t scanlineByteIndex=(uint16_t)(firstRow<<0x0001);
+        uint16_t scanlineByteIndex=firstRow<<0x0001;
         spanAlternationState=firstRow&0x0001;
         uint16_t scanlineOffset;
         if ((scanlineByteIndex>>1)<COMBAT_SCREEN_HEIGHT) scanlineOffset=graphicsRowOffsets[scanlineByteIndex>>1];
@@ -238,7 +238,7 @@ lowerHalf:
             if (width>clipRight)width=clipRight;
             width=(uint8_t)(width-edge);
             {
-                uint16_t startX=(uint16_t)(leftX+(uint16_t)edge);
+                uint16_t startX=leftX+(uint16_t)edge;
                 edge=(uint8_t)(edge+width); // Saved AX contains next edge, not pattern.
                 if (!graphicsFillSolidSpan) abort();
                 graphicsFillSolidSpan(drawColourPattern,startX,(int16_t)width,scanlineOffset,page);
@@ -262,7 +262,7 @@ lowerInterior:
             if (width>clipRight)width=clipRight;
             width=(uint8_t)(width-edge);
             {
-                uint16_t startX=(uint16_t)(leftX+(uint16_t)edge);
+                uint16_t startX=leftX+(uint16_t)edge;
                 edge=(uint8_t)(edge+width);
                 // DX receives PRIMARY, AX SECONDARY; do not swap these patterns.
                 if (shapeSpanCallback.alternating)

@@ -22,8 +22,8 @@ void BtechEgaDrawLine(uint16_t firstX,uint16_t firstY,uint16_t secondX,uint16_t 
         btechHostWriteVideoByte(page,cursor,(uint8_t)drawColourPattern); // Pattern reread after OUT.
         return;
     }
-    uint8_t colour=(uint8_t)drawColourPattern;
-    uint16_t horizontalExtent=(uint16_t)(secondX-firstX);
+    uint8_t colour=drawColourPattern;
+    uint16_t horizontalExtent=secondX-firstX;
     if (firstY==secondY)
     {
         //065E horizontal path: initial pixel then exactly DX rotations/writes.
@@ -87,13 +87,13 @@ void BtechEgaDrawLine(uint16_t firstX,uint16_t firstY,uint16_t secondX,uint16_t 
     }
     uint16_t steep=verticalExtent>horizontalExtent; // Unsigned CMP/JB/JZ.
     uint16_t remainingMajorPixels=steep?verticalExtent:horizontalExtent;
-    uint16_t divisor=(uint16_t)((steep?horizontalExtent:verticalExtent)+0x0001);
+    uint16_t divisor=(steep?horizontalExtent:verticalExtent)+0x0001;
     // Major>minor proves divisor nonzero and both DIV results fit WORD here.
     egaLineRunLength=remainingMajorPixels/divisor;
     uint16_t remainder=remainingMajorPixels%divisor;
     egaLineFractionStep=(uint16_t)(((uint32_t)remainder<<0x0010)/divisor);
     egaLineFractionAccumulator=0x0000;
-    uint16_t runPixels=(uint16_t)(egaLineRunLength+0x0001);
+    uint16_t runPixels=egaLineRunLength+0x0001;
     (void)btechHostReadVideoByte(page,cursor);
     btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,COMBAT_EGA_BIT_MASK_REGISTER|((uint16_t)mask<<0x0008));
     btechHostWriteVideoByte(page,cursor,colour);

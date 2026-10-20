@@ -11,7 +11,7 @@ void BtechIntersectWideEdgeWithNearPlane(uint16_t outsideVertex,uint16_t insideV
     BtechGeometryCoordinateCache *projected[]={&geometryProjectedX,&geometryProjectedY};
     for (uint16_t axis=0;axis<2;++axis)
     {
-        uint32_t planeDistance=(uint32_t)(int32_t)(int16_t)nearClipDepth-geometryViewDepth.wide[outsideVertex];
+        uint32_t planeDistance=(uint32_t)(int16_t)nearClipDepth-geometryViewDepth.wide[outsideVertex];
         uint32_t difference=coordinates[axis]->wide[insideVertex]-coordinates[axis]->wide[outsideVertex];
         uint64_t product=BtechMultiplySignedDwordsWide(difference,planeDistance);
         uint32_t displacement=BtechDivideSignedWideNumerator((int16_t)(product>>48),(uint16_t)(product>>32),(uint16_t)(product>>16),(uint16_t)product,(uint16_t)denominator,(int16_t)(denominator>>16),NULL);
@@ -24,14 +24,14 @@ void BtechIntersectWideEdgeWithNearPlane(uint16_t outsideVertex,uint16_t insideV
 void BtechIntersectDwordNearEdgeWithWordProducts(uint16_t outsideVertex,uint16_t insideVertex)
 {
     if (outsideVertex>=GEOMETRY_CACHE_VERTICES || insideVertex>=GEOMETRY_CACHE_VERTICES) abort();
-    int16_t denominator=(int16_t)(uint16_t)(geometryViewDepth.wide[insideVertex]-geometryViewDepth.wide[outsideVertex]);
+    int16_t denominator=geometryViewDepth.wide[insideVertex]-geometryViewDepth.wide[outsideVertex];
     BtechGeometryCoordinateCache *coordinates[]={&geometryViewX,&geometryViewZ};
     BtechGeometryCoordinateCache *projected[]={&geometryProjectedX,&geometryProjectedY};
     for (uint16_t axis=0;axis<2;++axis)
     {
-        uint32_t planeDistance=(uint32_t)(int32_t)(int16_t)nearClipDepth-geometryViewDepth.wide[outsideVertex];
+        uint32_t planeDistance=(uint32_t)(int16_t)nearClipDepth-geometryViewDepth.wide[outsideVertex];
         uint32_t difference=coordinates[axis]->wide[insideVertex]-coordinates[axis]->wide[outsideVertex];
-        uint32_t product=(uint32_t)((int32_t)(int16_t)(uint16_t)difference*(int16_t)(uint16_t)planeDistance);
+        uint32_t product=(int32_t)(int16_t)difference*(int16_t)planeDistance;
         if (!denominator) abort(); /* A zero-divisor IRQ retries forever, not a valid crossing. */
         int64_t quotient=(int64_t)(int32_t)product/denominator;
         while (quotient<INT16_MIN || quotient>INT16_MAX)
@@ -39,7 +39,7 @@ void BtechIntersectDwordNearEdgeWithWordProducts(uint16_t outsideVertex,uint16_t
             product=BtechDivideErrorInterrupt(product);
             quotient=(int64_t)(int32_t)product/denominator;
         }
-        uint32_t displacement=(uint32_t)(int32_t)(int16_t)quotient;
+        uint32_t displacement=(int16_t)quotient;
         projected[axis]->wide[outsideVertex]=coordinates[axis]->wide[outsideVertex]+displacement;
     }
 }
@@ -72,8 +72,8 @@ void BtechClipWidePolygonNearPlane(void)
         for (uint16_t vertex=0;vertex<emitted;++vertex)
         {
             if (output>=WIDE_POLYGON_VERTICES) abort();
-            wideScreenX[output]=(uint32_t)(int32_t)screenCentreA+geometryProjectedX.wide[emit[vertex]];
-            wideScreenY[output]=(uint32_t)(int32_t)screenCentreB-geometryProjectedY.wide[emit[vertex]];
+            wideScreenX[output]=(uint32_t)screenCentreA+geometryProjectedX.wide[emit[vertex]];
+            wideScreenY[output]=(uint32_t)screenCentreB-geometryProjectedY.wide[emit[vertex]];
             ++output;
         }
         previous=current;++input;
@@ -109,8 +109,8 @@ void BtechClipDwordNearPolygonWithWordProducts(void)
         for (uint16_t vertex=0;vertex<emitted;++vertex)
         {
             if (output>=WIDE_POLYGON_VERTICES) abort();
-            wideScreenX[output]=(uint32_t)(int32_t)screenCentreA+geometryProjectedX.wide[emit[vertex]];
-            wideScreenY[output]=(uint32_t)(int32_t)screenCentreB-geometryProjectedY.wide[emit[vertex]];
+            wideScreenX[output]=(uint32_t)screenCentreA+geometryProjectedX.wide[emit[vertex]];
+            wideScreenY[output]=(uint32_t)screenCentreB-geometryProjectedY.wide[emit[vertex]];
             ++output;
         }
         previous=current;++input;
@@ -125,7 +125,7 @@ uint16_t BtechIntersectWideScreenEdgeA(uint16_t base,uint16_t next,uint16_t dest
     if (!(flags&(POLYGON_LEFT|POLYGON_RIGHT))) return destination;
     if (base>=WIDE_POLYGON_VERTICES || next>=WIDE_POLYGON_VERTICES || destination>=WIDE_POLYGON_VERTICES) abort();
     uint32_t denominator=(wideScreenX[next]-wideScreenX[base]);
-    uint32_t boundary=(uint32_t)(int32_t)((flags&POLYGON_LEFT)?clipMinimumX:clipMaximumX);
+    uint32_t boundary=(uint32_t)((flags&POLYGON_LEFT)?clipMinimumX:clipMaximumX);
     widePolygonWorkX[destination]=boundary;
     uint32_t planeDistance=boundary-wideScreenX[base];
     uint32_t difference=wideScreenY[next]-wideScreenY[base];
@@ -142,7 +142,7 @@ uint16_t BtechIntersectWideScreenEdgeB(uint16_t base,uint16_t next,uint16_t dest
     if (!(flags&(POLYGON_TOP|POLYGON_BOTTOM))) return destination;
     if (base>=WIDE_POLYGON_VERTICES || next>=WIDE_POLYGON_VERTICES || destination>=WIDE_POLYGON_VERTICES) abort();
     uint32_t denominator=(widePolygonWorkY[next]-widePolygonWorkY[base]);
-    uint32_t boundary=(uint32_t)(int32_t)((flags&POLYGON_TOP)?clipMinimumY:clipMaximumY);
+    uint32_t boundary=(uint32_t)((flags&POLYGON_TOP)?clipMinimumY:clipMaximumY);
     wideScreenY[destination]=boundary;
     uint32_t planeDistance=boundary-widePolygonWorkY[base];
     uint32_t difference=widePolygonWorkX[next]-widePolygonWorkX[base];
@@ -158,12 +158,12 @@ uint16_t BtechIntersectScreenEdgeWordProductA(uint16_t base,uint16_t next,uint16
 {
     if (!(flags&(POLYGON_LEFT|POLYGON_RIGHT))) return destination;
     if (base>=WIDE_POLYGON_VERTICES || next>=WIDE_POLYGON_VERTICES || destination>=WIDE_POLYGON_VERTICES) abort();
-    int16_t denominator=(int16_t)(uint16_t)(wideScreenX[next]-wideScreenX[base]);
-    uint32_t boundary=(uint32_t)(int32_t)((flags&POLYGON_LEFT)?clipMinimumX:clipMaximumX);
+    int16_t denominator=wideScreenX[next]-wideScreenX[base];
+    uint32_t boundary=(uint32_t)((flags&POLYGON_LEFT)?clipMinimumX:clipMaximumX);
     widePolygonWorkX[destination]=boundary;
     uint32_t planeDistance=boundary-wideScreenX[base];
     uint32_t difference=wideScreenY[next]-wideScreenY[base];
-    uint32_t product=(uint32_t)((int32_t)(int16_t)(uint16_t)difference*(int16_t)(uint16_t)planeDistance);
+    uint32_t product=(int32_t)(int16_t)difference*(int16_t)planeDistance;
     if (!denominator) abort();
     int64_t quotient=(int64_t)(int32_t)product/denominator;
     while (quotient<INT16_MIN || quotient>INT16_MAX)
@@ -171,7 +171,7 @@ uint16_t BtechIntersectScreenEdgeWordProductA(uint16_t base,uint16_t next,uint16
         product=BtechDivideErrorInterrupt(product);
         quotient=(int64_t)(int32_t)product/denominator;
     }
-    uint32_t displacement=(uint32_t)(int32_t)(int16_t)quotient;
+    uint32_t displacement=(int16_t)quotient;
     widePolygonWorkY[destination]=wideScreenY[base]+displacement;
     return destination+1;
 }
@@ -182,12 +182,12 @@ uint16_t BtechIntersectScreenEdgeWordProductB(uint16_t base,uint16_t next,uint16
 {
     if (!(flags&(POLYGON_TOP|POLYGON_BOTTOM))) return destination;
     if (base>=WIDE_POLYGON_VERTICES || next>=WIDE_POLYGON_VERTICES || destination>=WIDE_POLYGON_VERTICES) abort();
-    int16_t denominator=(int16_t)(uint16_t)(widePolygonWorkY[next]-widePolygonWorkY[base]);
-    uint32_t boundary=(uint32_t)(int32_t)((flags&POLYGON_TOP)?clipMinimumY:clipMaximumY);
+    int16_t denominator=widePolygonWorkY[next]-widePolygonWorkY[base];
+    uint32_t boundary=(uint32_t)((flags&POLYGON_TOP)?clipMinimumY:clipMaximumY);
     wideScreenY[destination]=boundary;
     uint32_t planeDistance=boundary-widePolygonWorkY[base];
     uint32_t difference=widePolygonWorkX[next]-widePolygonWorkX[base];
-    uint32_t product=(uint32_t)((int32_t)(int16_t)(uint16_t)difference*(int16_t)(uint16_t)planeDistance);
+    uint32_t product=(int32_t)(int16_t)difference*(int16_t)planeDistance;
     if (!denominator) abort();
     int64_t quotient=(int64_t)(int32_t)product/denominator;
     while (quotient<INT16_MIN || quotient>INT16_MAX)
@@ -195,7 +195,7 @@ uint16_t BtechIntersectScreenEdgeWordProductB(uint16_t base,uint16_t next,uint16
         product=BtechDivideErrorInterrupt(product);
         quotient=(int64_t)(int32_t)product/denominator;
     }
-    uint32_t displacement=(uint32_t)(int32_t)(int16_t)quotient;
+    uint32_t displacement=(int16_t)quotient;
     wideScreenX[destination]=widePolygonWorkX[base]+displacement;
     return destination+1;
 }
@@ -209,7 +209,7 @@ void BtechClipWidePolygonToScreen(void)
     {
         uint16_t previous=polygonVertexCount-1,current=0,output=0;
         uint32_t coordinate=wideScreenX[previous];
-        int16_t upper=(int16_t)(coordinate>>16);
+        int16_t upper=coordinate>>16;
         uint8_t previousFlags=0;
         if (upper<0 || (!upper && (uint16_t)coordinate<(uint16_t)clipMinimumX)) previousFlags|=POLYGON_LEFT;
         if (upper>0 || (!upper && (uint16_t)coordinate>(uint16_t)clipMaximumX)) previousFlags|=POLYGON_RIGHT;
@@ -251,7 +251,7 @@ void BtechClipWidePolygonToScreen(void)
     {
         uint16_t previous=polygonVertexCount-1,current=0,output=0;
         uint32_t coordinate=widePolygonWorkY[previous];
-        int16_t upper=(int16_t)(coordinate>>16);
+        int16_t upper=coordinate>>16;
         uint8_t previousFlags=0;
         if (upper<0 || (!upper && (uint16_t)coordinate<(uint16_t)clipMinimumY)) previousFlags|=POLYGON_TOP;
         if (upper>0 || (!upper && (uint16_t)coordinate>(uint16_t)clipMaximumY)) previousFlags|=POLYGON_BOTTOM;
@@ -296,7 +296,7 @@ void BtechClipPolygonWithWordProducts(void)
     {
         uint16_t previous=polygonVertexCount-1,current=0,output=0;
         uint32_t coordinate=wideScreenX[previous];
-        int16_t upper=(int16_t)(coordinate>>16);
+        int16_t upper=coordinate>>16;
         uint8_t previousFlags=0;
         if (upper<0 || (!upper && (uint16_t)coordinate<(uint16_t)clipMinimumX)) previousFlags|=POLYGON_LEFT;
         if (upper>0 || (!upper && (uint16_t)coordinate>(uint16_t)clipMaximumX)) previousFlags|=POLYGON_RIGHT;
@@ -338,7 +338,7 @@ void BtechClipPolygonWithWordProducts(void)
     {
         uint16_t previous=polygonVertexCount-1,current=0,output=0;
         uint32_t coordinate=widePolygonWorkY[previous];
-        int16_t upper=(int16_t)(coordinate>>16);
+        int16_t upper=coordinate>>16;
         uint8_t previousFlags=0;
         if (upper<0 || (!upper && (uint16_t)coordinate<(uint16_t)clipMinimumY)) previousFlags|=POLYGON_TOP;
         if (upper>0 || (!upper && (uint16_t)coordinate>(uint16_t)clipMaximumY)) previousFlags|=POLYGON_BOTTOM;

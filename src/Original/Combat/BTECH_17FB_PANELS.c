@@ -77,7 +77,7 @@ void BtechDrawUnitOrderPanels(void)
             uint16_t mountedWeight=0,operationalWeight=0;
             for (uint16_t mount=0;mount<COMBAT_WEAPON_MOUNTS;++mount)
             {
-                uint16_t kind=(uint16_t)chassis->weaponMounts[mount].weaponKind;
+                uint16_t kind=chassis->weaponMounts[mount].weaponKind;
                 if (kind==COMBAT_WEAPON_NONE) continue;
                 if (kind>=COMBAT_WEAPON_KINDS) abort();
                 uint16_t weight=weaponDefinitions[kind].damageOrMissileCount;
@@ -85,7 +85,7 @@ void BtechDrawUnitOrderPanels(void)
                 mountedWeight+=weight;
             }
             if (!mountedWeight) abort(); /* Native IDIV fault, after the preceding damage text. */
-            int32_t condition=(int16_t)(uint16_t)(operationalWeight*ORDER_CONDITION_SCALE)/(int16_t)mountedWeight;
+            int32_t condition=(int16_t)(operationalWeight*ORDER_CONDITION_SCALE)/(int16_t)mountedWeight;
             if (condition<0 || condition>=ORDER_CONDITION_BANDS) abort(); /* Unrecovered adjacent palette/IDIV-overflow aliases. */
             BtechSetConditionTextColours(colours->orderConditionColours[condition]);
             BtechDrawNearText(orderWeaponsText,x,ORDER_PANEL_WEAPONS_Y);
@@ -106,7 +106,7 @@ void BtechDrawUnitOrderPanels(void)
             {mountedWeaponCountsByKind[kind]=0;operationalWeaponCountsByKind[kind]=0;}
             for (uint16_t mount=0;mount<COMBAT_WEAPON_MOUNTS;++mount)
             {
-                uint16_t kind=(uint16_t)chassis->weaponMounts[mount].weaponKind;
+                uint16_t kind=chassis->weaponMounts[mount].weaponKind;
                 if (kind==COMBAT_WEAPON_NONE) continue;
                 if (kind>=COMBAT_WEAPON_KINDS) abort();
                 ++mountedWeaponCountsByKind[kind];
@@ -131,7 +131,7 @@ void BtechDrawUnitOrderPanels(void)
             for (uint16_t location=0;location<COMBAT_ARMOR_LOCATIONS;++location)
             {currentArmour+=mech->currentArmor[location];maximumArmour+=chassis->maximumArmor[location];}
             if (!maximumArmour) abort();
-            int32_t armourCondition=(int16_t)(uint16_t)(currentArmour*ORDER_CONDITION_SCALE)/(int16_t)maximumArmour;
+            int32_t armourCondition=(int16_t)(currentArmour*ORDER_CONDITION_SCALE)/(int16_t)maximumArmour;
             if (armourCondition<0 || armourCondition>=ORDER_CONDITION_BANDS) abort();
             BtechSetConditionTextColours(colours->orderConditionColours[armourCondition]);
             BtechDrawNearText(orderDamageLabels[1],x,ORDER_PANEL_DETAIL_FIRST_Y);
@@ -139,7 +139,7 @@ void BtechDrawUnitOrderPanels(void)
             for (uint16_t location=0;location<COMBAT_BODY_LOCATIONS;++location)
             {currentStructure+=mech->currentInternalStructure[location];maximumStructure+=chassis->maximumInternalStructure[location];}
             if (!maximumStructure) abort();
-            int32_t structureCondition=(int16_t)(uint16_t)(currentStructure*ORDER_CONDITION_SCALE)/(int16_t)maximumStructure;
+            int32_t structureCondition=(int16_t)(currentStructure*ORDER_CONDITION_SCALE)/(int16_t)maximumStructure;
             if (structureCondition<0 || structureCondition>=ORDER_CONDITION_BANDS) abort();
             BtechSetConditionTextColours(colours->orderConditionColours[structureCondition]);
             BtechDrawNearText(orderDamageLabels[2],x,ORDER_PANEL_DETAIL_FIRST_Y+ORDER_PANEL_ROW_STEP);

@@ -9,11 +9,11 @@
  * F04E is pure WORD abs; its duplicate call has no observable side effects. */
 int16_t BtechClampSignedDifferenceStep(uint16_t desired,uint16_t current,int16_t maximumStep)
 {
-    int16_t difference=(int16_t)(uint16_t)(desired-current);
+    int16_t difference=desired-current;
     if ((uint16_t)difference==0x8000) difference=(int16_t)0x8001;
     int16_t magnitude=difference<0?-difference:difference;
     if (magnitude>maximumStep) magnitude=maximumStep;
-    return (int16_t)(uint16_t)(difference<0?-magnitude:magnitude);
+    return (int16_t)(difference<0?-magnitude:magnitude);
 }
 
 /*0810:84EA. Ground motion only in idle/walk sequences; jump delegates85BA.
@@ -29,22 +29,22 @@ void BtechSetActiveUnitGroundOrJumpMotion(uint16_t desiredHeading,uint16_t direc
     if (direction!=MOTION_DIRECTION_STOP)
     {
         if (!activeMechState || !activeMechTemplate || activeUnitControl->unitSlot>=COMBAT_MECH_SLOTS) abort();
-        int16_t speed=(int16_t)(uint16_t)(activeMechTemplate->maximumSpeedScale-heatSpeedPenalties[activeUnitControl->unitSlot]);
-        int16_t actuator=(int16_t)activeMechState->actuatorCondition[2];
-        if (actuator>(int16_t)activeMechState->actuatorCondition[3]) actuator=(int16_t)activeMechState->actuatorCondition[3];
+        int16_t speed=activeMechTemplate->maximumSpeedScale-heatSpeedPenalties[activeUnitControl->unitSlot];
+        int16_t actuator=activeMechState->actuatorCondition[COMBAT_ACTUATOR_LEFT_LEG];
+        if (actuator>(int16_t)activeMechState->actuatorCondition[COMBAT_ACTUATOR_RIGHT_LEG]) actuator=(int16_t)activeMechState->actuatorCondition[COMBAT_ACTUATOR_RIGHT_LEG];
         uint16_t product=(uint16_t)((int32_t)speed*actuator),sign=(int16_t)product<0?UINT16_MAX:0;
-        uint16_t folded=(uint16_t)((product^sign)-sign);
-        uint16_t quarter=(folded>>2)|((folded&0x8000)?0xC000:0);
-        requested=(int16_t)(uint16_t)((quarter^sign)-sign);
+        uint16_t folded=(product^sign)-sign;
+        uint16_t quarter=(folded>>COMBAT_ACTUATOR_SPEED_SHIFT)|((folded&0x8000)?0xC000:0);
+        requested=(quarter^sign)-sign;
         if (direction==MOTION_DIRECTION_REVERSE_HALF)
         {
             uint16_t half=((uint16_t)requested>>1)|(requested<0?0x8000:0);
-            requested=(int16_t)(uint16_t)(0-half);
+            requested=0-half;
         }
     }
-    int16_t acceleration=(int16_t)(uint16_t)(requested-previous);
+    int16_t acceleration=requested-previous;
     if (acceleration>AI_GROUND_ACCELERATION_MAXIMUM) acceleration=AI_GROUND_ACCELERATION_MAXIMUM;
-    activeUnitPositionedObject->forwardStepScale=(int16_t)(uint16_t)(previous+acceleration);
+    activeUnitPositionedObject->forwardStepScale=previous+acceleration;
     int16_t turn=BtechClampSignedDifferenceStep(desiredHeading,activeUnitPositionedObject->object.prefix.orientationC,AI_GROUND_TURN_LIMIT);
     activeUnitPositionedObject->orientationSteps[2]=turn;
 }
@@ -57,16 +57,16 @@ void BtechApplyJumpMotion(uint16_t desiredHeading,uint16_t direction)
     if (!activeMechTemplate || !activeUnitPositionedObject || !activeUnitControl || !activeMechState) abort();
     BtechMechTemplate *chassis=activeMechTemplate;
     BtechPooledWorldObject *motion=activeUnitPositionedObject;
-    int16_t error=(int16_t)(uint16_t)(desiredHeading-motion->object.prefix.orientationC);
+    int16_t error=desiredHeading-motion->object.prefix.orientationC;
     int16_t turn=(uint16_t)error==0x8000?INT16_MAX:error<0?-error:error;
     if (turn>AI_JUMP_TURN_LIMIT) turn=AI_JUMP_TURN_LIMIT;
-    motion->orientationSteps[2]=(int16_t)(uint16_t)(error>0?turn:-turn);
+    motion->orientationSteps[2]=(int16_t)(error>0?turn:-turn);
     uint16_t halfBits=(activeMechTemplate->displayScale>>1)|((activeMechTemplate->displayScale&0x8000)?0x8000:0);
-    uint32_t footHeight=motion->object.prefix.position.positionC-(uint32_t)(int32_t)(int16_t)halfBits;
+    uint32_t footHeight=motion->object.prefix.position.positionC-(uint32_t)(int16_t)halfBits;
     uint32_t shiftedHeight=BtechShiftSignedDwordRight(footHeight,AI_JUMP_CHARGE_HEIGHT_SHIFT);
-    uint32_t quotient=BtechDivideSignedDword(shiftedHeight,(uint32_t)(int32_t)(int16_t)chassis->jumpAcceleration);
-    int16_t requiredCharge=(int16_t)(uint16_t)((uint16_t)quotient+AI_JUMP_CHARGE_RESERVE);
-    uint8_t capabilityLost=activeUnitControl->combatValueOrBoundaryCode==-1
+    uint32_t quotient=BtechDivideSignedDword(shiftedHeight,(int16_t)chassis->jumpAcceleration);
+    int16_t requiredCharge=(uint16_t)quotient+AI_JUMP_CHARGE_RESERVE;
+    uint8_t capabilityLost=activeUnitControl->combatValueOrBoundaryCode==COMBAT_MECH_DISABLED_VALUE
         || !activeMechState->currentInternalStructure[COMBAT_BODY_RIGHT_LEG]
         || !activeMechState->currentInternalStructure[COMBAT_BODY_LEFT_LEG]
         || activeMechTemplate->jumpJetGroupCount==activeMechState->destroyedJumpJetGroups;
@@ -82,17 +82,17 @@ void BtechApplyJumpMotion(uint16_t desiredHeading,uint16_t direction)
         if (surface==SURFACE_BLOCKS_GROUND_MOVEMENT)
         {
             verticalThreshold=0;
-            int16_t forward=(int16_t)(uint16_t)(motion->forwardStepScale+AI_JUMP_FORWARD_STEP);
+            int16_t forward=motion->forwardStepScale+AI_JUMP_FORWARD_STEP;
             if ((int16_t)chassis->jumpSpeedLimit>forward)
             {motion->forwardStepScale=forward;activeMechState->jumpCharge-=AI_JUMP_CHARGE_COST;}
         }
         else
         {
-            verticalThreshold=(int16_t)(uint16_t)(0-(uint16_t)(chassis->jumpSpeedLimit<<4));
+            verticalThreshold=(int16_t)(0-(uint16_t)(chassis->jumpSpeedLimit<<AI_JUMP_DESCENT_SPEED_SHIFT));
             motion->forwardStepScale=0;
         }
         if (motion->positionSteps[2]<verticalThreshold)
-            motion->positionSteps[2]=(int16_t)(uint16_t)(motion->positionSteps[2]+chassis->jumpAcceleration);
+            motion->positionSteps[2]+=chassis->jumpAcceleration;
     }
     else
     {
@@ -100,7 +100,7 @@ void BtechApplyJumpMotion(uint16_t desiredHeading,uint16_t direction)
         motion->orientationSteps[1]=0;motion->orientationSteps[0]=0;
         if ((int32_t)footHeight>0)
         {
-            int16_t forward=(int16_t)(uint16_t)(motion->forwardStepScale+AI_JUMP_FORWARD_STEP);
+            int16_t forward=motion->forwardStepScale+AI_JUMP_FORWARD_STEP;
             if ((int16_t)chassis->jumpSpeedLimit>forward)
             {
                 motion->forwardStepScale=forward;activeMechState->jumpCharge-=AI_JUMP_CHARGE_COST;
@@ -109,7 +109,7 @@ void BtechApplyJumpMotion(uint16_t desiredHeading,uint16_t direction)
         }
         if ((int32_t)footHeight<AI_JUMP_CEILING)
         {
-            int16_t vertical=(int16_t)(uint16_t)(motion->positionSteps[2]+chassis->jumpAcceleration);
+            int16_t vertical=motion->positionSteps[2]+chassis->jumpAcceleration;
             if ((int16_t)chassis->jumpSpeedLimit>vertical)
             {
                 motion->positionSteps[2]=vertical;activeMechState->jumpCharge-=AI_JUMP_CHARGE_COST;
@@ -134,16 +134,16 @@ void BtechAdvanceActiveAiUnitMotion(void)
     {
         uint16_t halfBits=(activeMechTemplate->displayScale>>1)|((activeMechTemplate->displayScale&0x8000)?0x8000:0);
         motion=activeUnitPositionedObject;
-        uint32_t footHeight=motion->object.prefix.position.positionC-(uint32_t)(int32_t)(int16_t)halfBits;
+        uint32_t footHeight=motion->object.prefix.position.positionC-(uint32_t)(int16_t)halfBits;
         uint16_t quarter=((uint16_t)motion->forwardStepScale>>2)|(motion->forwardStepScale<0?0xC000:0);
         motion->object.prefix.orientationA=(uint16_t)(0-(uint16_t)(quarter*AI_JUMP_PITCH_SCALE));
         if ((int32_t)footHeight<AI_JUMP_LANDING_HEIGHT_LIMIT && (int32_t)footHeight<(int32_t)jumpGroundHeight)
         {
             halfBits=(activeMechTemplate->displayScale>>1)|((activeMechTemplate->displayScale&0x8000)?0x8000:0);
             motion=activeUnitPositionedObject;
-            motion->object.prefix.position.positionC=jumpGroundHeight+(uint32_t)(int32_t)(int16_t)halfBits;
+            motion->object.prefix.position.positionC=jumpGroundHeight+(uint32_t)(int16_t)halfBits;
             motion->positionSteps[2]=0;
-            if (activeUnitControl->combatValueOrBoundaryCode!=-1
+            if (activeUnitControl->combatValueOrBoundaryCode!=COMBAT_MECH_DISABLED_VALUE
                 && activeMechState->currentInternalStructure[COMBAT_BODY_LEFT_LEG]
                 && activeMechState->currentInternalStructure[COMBAT_BODY_RIGHT_LEG])
                 activeUnitControl->animationRequestFlags|=ANIMATION_REQUEST_LANDING;
@@ -177,12 +177,12 @@ void BtechAdvanceActiveAiUnitMotion(void)
             return;
         }
         uint16_t halfBits=(activeMechTemplate->displayScale>>1)|((activeMechTemplate->displayScale&0x8000)?0x8000:0);
-        activeUnitPositionedObject->object.prefix.position.positionC+=(uint32_t)(int32_t)(int16_t)halfBits;
+        activeUnitPositionedObject->object.prefix.position.positionC+=(uint32_t)(int16_t)halfBits;
         activeMechState->doubleCoolingFlag=surface==SURFACE_DOUBLE_COOLING;
     }
     else
     {
         uint16_t halfBits=(activeMechTemplate->displayScale>>1)|((activeMechTemplate->displayScale&0x8000)?0x8000:0);
-        motion->object.prefix.position.positionC+=(uint32_t)(int32_t)(int16_t)halfBits;
+        motion->object.prefix.position.positionC+=(uint32_t)(int16_t)halfBits;
     }
 }

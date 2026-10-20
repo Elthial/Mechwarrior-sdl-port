@@ -117,10 +117,10 @@ bool EgaDosCloseFontFile(uint16_t fileHandle) { return mwDosFiles.close(fileHand
 void EgaSelectFont(uint16_t fontIndex)
 {
     selectedFontIndex = fontIndex;
-    uint16_t tableByteOffset = (uint16_t)(fontIndex * EGA_WORD_BYTES);
+    uint16_t tableByteOffset = fontIndex * EGA_WORD_BYTES;
     if (tableByteOffset < sizeof(egaFontHeights))
     {
-        uint16_t fontSlot = (uint16_t)(tableByteOffset / EGA_WORD_BYTES);
+        uint16_t fontSlot = tableByteOffset / EGA_WORD_BYTES;
         selectedFontHeight = egaFontHeights[fontSlot];
         selectedGlyphAdvance = fontAdvances[fontSlot];
         selectedFontBitmapOffset = fontBitmapOffsets[fontSlot];
@@ -149,8 +149,8 @@ void EgaFillRectangleOnPage(uint16_t x, uint16_t y, uint16_t width, uint16_t hei
 {
     rectangleX = x; rectangleY = y;
     rectangleWidth = width; rectangleHeight = height; rectangleColour = colour;
-    uint16_t rowOffset = (uint16_t)((y < EGA_ROWS ? scanlineOffsets[y]
-        : EgaReadOverlayWord((uint16_t)(EGA_SCANLINE_OFFSETS + (uint16_t)(y * 2)))) + (x >> 3));
+    uint16_t rowOffset = (y < EGA_ROWS ? scanlineOffsets[y]
+        : EgaReadOverlayWord((uint16_t)(EGA_SCANLINE_OFFSETS + (uint16_t)(y * 2)))) + (x >> 3);
     firstByteMask = rectangleLeadingMasks[x & 7];
     firstByteWidth = 8 - (x & 7);
     lastByteWidth = (uint16_t)(width - firstByteWidth) & 7;
@@ -188,9 +188,9 @@ void EgaCopyDrawPageToDisplay(uint16_t x, uint16_t y, uint16_t width, uint16_t h
     /* Native stores precede the scanline lookup, which can alias these words. */
     copyRectangleX = x; copyRectangleY = y;
     copyRectangleWidth = width; copyRectangleHeight = height;
-    uint16_t rowOffset = (uint16_t)((y < EGA_ROWS ? scanlineOffsets[y]
-        : EgaReadOverlayWord((uint16_t)(EGA_SCANLINE_OFFSETS + (uint16_t)(y * 2)))) + (x >> 3));
-    uint8_t rowsRemaining = (uint8_t)height;
+    uint16_t rowOffset = (y < EGA_ROWS ? scanlineOffsets[y]
+        : EgaReadOverlayWord((uint16_t)(EGA_SCANLINE_OFFSETS + (uint16_t)(y * 2)))) + (x >> 3);
+    uint8_t rowsRemaining = height;
     uint32_t sourcePage = (uint32_t)(uint16_t)(egaDrawPage - EGA_FIRST_PAGE_SELECTOR) * EGA_SELECTOR_PARAGRAPH_BYTES;
     uint32_t destinationPage = (uint32_t)(uint16_t)(egaDisplayPage - EGA_FIRST_PAGE_SELECTOR) * EGA_SELECTOR_PARAGRAPH_BYTES;
     do
@@ -218,9 +218,9 @@ void EgaCopyDisplayToDrawPage(uint16_t x, uint16_t y, uint16_t width, uint16_t h
     /* Native stores precede the scanline lookup, which can alias these words. */
     copyRectangleX = x; copyRectangleY = y;
     copyRectangleWidth = width; copyRectangleHeight = height;
-    uint16_t rowOffset = (uint16_t)((y < EGA_ROWS ? scanlineOffsets[y]
-        : EgaReadOverlayWord((uint16_t)(EGA_SCANLINE_OFFSETS + (uint16_t)(y * 2)))) + (x >> 3));
-    uint8_t rowsRemaining = (uint8_t)height;
+    uint16_t rowOffset = (y < EGA_ROWS ? scanlineOffsets[y]
+        : EgaReadOverlayWord((uint16_t)(EGA_SCANLINE_OFFSETS + (uint16_t)(y * 2)))) + (x >> 3);
+    uint8_t rowsRemaining = height;
     uint32_t sourcePage = (uint32_t)(uint16_t)(egaDisplayPage - EGA_FIRST_PAGE_SELECTOR) * EGA_SELECTOR_PARAGRAPH_BYTES;
     uint32_t destinationPage = (uint32_t)(uint16_t)(egaDrawPage - EGA_FIRST_PAGE_SELECTOR) * EGA_SELECTOR_PARAGRAPH_BYTES;
     do
@@ -331,8 +331,8 @@ uint16_t EgaDrawCharacter(uint16_t x, uint16_t *y, uint8_t character,
     uint16_t destinationOffset = glyphY < EGA_ROWS ? scanlineOffsets[glyphY]
         : EgaReadOverlayWord((uint16_t)(EGA_SCANLINE_OFFSETS + glyphY * EGA_WORD_BYTES));
     destinationOffset += glyphX >> EGA_PIXEL_BYTE_SHIFT;
-    uint16_t glyphOffset = (uint16_t)((uint8_t)(characterCode - EGA_FIRST_CHARACTER) * (uint8_t)selectedFontHeight + EGA_FONT_HEADER_BYTES
-        + selectedFontBitmapOffset);
+    uint16_t glyphOffset = (uint8_t)(characterCode - EGA_FIRST_CHARACTER) * (uint8_t)selectedFontHeight + EGA_FONT_HEADER_BYTES
+        + selectedFontBitmapOffset;
     uint32_t pageByteOffset = ((uint32_t)egaDisplayPage - EGA_FIRST_PAGE_SELECTOR) * EGA_SELECTOR_PARAGRAPH_BYTES;
     uint16_t rowsRemaining = selectedFontHeight;
     do
@@ -341,7 +341,7 @@ uint16_t EgaDrawCharacter(uint16_t x, uint16_t *y, uint8_t character,
             ? fontBitmapStorage[glyphOffset - EGA_SMALL_FONT_BITMAP] : EgaReadOverlayByte(glyphOffset)) << EGA_BYTE_BITS;
         glyphOffset++;
         shiftedGlyphBits >>= glyphBitOffset;
-        uint16_t glyphCoverageMask = (uint16_t)(EGA_GLYPH_COVERAGE_WORD >> glyphBitOffset);
+        uint16_t glyphCoverageMask = EGA_GLYPH_COVERAGE_WORD >> glyphBitOffset;
         uint16_t pixelMask = (uint16_t)EGA_BYTE_HIGH_BIT << EGA_BYTE_BITS;
         for (uint8_t byteIndex = 0; byteIndex < EGA_WORD_BYTES; ++byteIndex)
         {
@@ -418,8 +418,8 @@ setup:
  * Hardware AND/OR paints only set glyph bits; zero bits leave pixels alone. */
 uint16_t EgaDrawTransparentCharacter(uint8_t character, uint16_t destinationOffset)
 {
-    uint16_t glyphOffset = (uint16_t)((uint8_t)(character - EGA_FIRST_CHARACTER) * (uint8_t)selectedFontHeight + EGA_FONT_HEADER_BYTES
-        + selectedFontBitmapOffset);
+    uint16_t glyphOffset = (uint8_t)(character - EGA_FIRST_CHARACTER) * (uint8_t)selectedFontHeight + EGA_FONT_HEADER_BYTES
+        + selectedFontBitmapOffset;
     uint32_t pageByteOffset = ((uint32_t)egaDisplayPage - EGA_FIRST_PAGE_SELECTOR) * EGA_SELECTOR_PARAGRAPH_BYTES;
     uint16_t rowDestinationOffset = destinationOffset, rowsRemaining = selectedFontHeight;
     do
@@ -443,8 +443,8 @@ uint16_t EgaDrawTransparentCharacter(uint8_t character, uint16_t destinationOffs
         }
         rowDestinationOffset += EGA_ROW_BYTES; rowsRemaining--;
     } while (rowsRemaining != 0);
-    uint8_t nextBitOffset = (uint8_t)(glyphBitOffset
-        + selectedGlyphAdvance);
+    uint8_t nextBitOffset = glyphBitOffset
+        + selectedGlyphAdvance;
     if (nextBitOffset >= EGA_BYTE_BITS) { destinationOffset++; nextBitOffset -= EGA_BYTE_BITS; }
     glyphBitOffset = nextBitOffset;
     egaLogicalFunction = EGA_OR;
@@ -530,12 +530,12 @@ void EgaDrawLine(uint8_t colour, uint16_t startY, uint16_t endX, uint16_t startX
     if (currentY==egaFinalY)
     {EgaDrawHorizontalLine();return;}
     bool descendingY=currentY>egaFinalY;
-    uint16_t horizontalDistance=(uint16_t)(egaFinalX-egaCurrentX);
+    uint16_t horizontalDistance=egaFinalX-egaCurrentX;
     uint16_t verticalDistance=descendingY?(uint16_t)(currentY-egaFinalY):(uint16_t)(egaFinalY-currentY);
     bool yMajor=verticalDistance>horizontalDistance;
     uint16_t majorDistance=yMajor?verticalDistance:horizontalDistance;
     uint16_t minorDistance=yMajor?horizontalDistance:verticalDistance;
-    uint16_t majorPixelCount=(uint16_t)(majorDistance+0x0001);
+    uint16_t majorPixelCount=majorDistance+0x0001;
     uint16_t remainingPixels=majorPixelCount;
     uint16_t halfMajorDistance=majorDistance>>0x0001; // Native BP, logical SHR.
     uint16_t errorAccumulator=0x0000;

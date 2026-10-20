@@ -16,7 +16,7 @@ BtechResourceBank BtechDecodeAndRelocateResourceBank(const char *filename)
     uint16_t count=0;
     for (;;)
     {
-        uint16_t offset=(uint16_t)(count*4);
+        uint16_t offset=count*4;
         if ((uint32_t)offset+4>bank.allocation.byteCount) abort();
         if (!(MwReadNativeWord(bank.allocation.bytes,offset)|MwReadNativeWord(bank.allocation.bytes,offset+2))) break;
         if (++count==0x4000) abort(); /* Missing terminator would wrap the native cursor. */
@@ -79,7 +79,7 @@ BtechResourceBank BtechDecodeAndRelocateResourceBank(const char *filename)
                 variant->primitives=storage+1;
                 for (int32_t primitiveIndex=variant->primitiveCount==0?-1:0;primitiveIndex<primitives;++primitiveIndex)
                 {
-                    uint16_t at=(uint16_t)(primitiveOffset+primitiveIndex*8);
+                    uint16_t at=primitiveOffset+primitiveIndex*8;
                     if (at>0xFFF8 || paragraphBytes+at+8>bank.allocation.byteCount) abort();
                     BtechRenderPrimitive *primitive=&variant->primitives[primitiveIndex];
                     primitive->scaleLimit=resource->paragraphBase[at];
@@ -132,7 +132,7 @@ void BtechLoadCollisionResourceBank(const char *filename)
     uint16_t count=0;
     for (;;)
     {
-        uint16_t cursor=(uint16_t)(count*4);
+        uint16_t cursor=count*4;
         if ((uint32_t)cursor+4>allocation.byteCount) abort();
         if (!(MwReadNativeWord(allocation.bytes,cursor)|MwReadNativeWord(allocation.bytes,cursor+2))) break;
         if (++count==0x4000) abort();
@@ -164,7 +164,7 @@ void BtechLoadCollisionResourceBank(const char *filename)
         }
         for (uint16_t patchIndex=0;patchIndex<surface->patchCount;++patchIndex)
         {
-            uint16_t at=(uint16_t)(table+patchIndex*0x10);
+            uint16_t at=table+patchIndex*0x10;
             if ((uint32_t)at+0x10>0x10000 || paragraphBytes+at+0x10>allocation.byteCount) abort();
             BtechSurfacePatch *patch=&surface->patches[patchIndex];
             for (uint16_t axis=0;axis<3;++axis) patch->orderingPlaneCoefficients[axis]=(int16_t)MwReadNativeWord(base,at+axis*2);
@@ -280,7 +280,7 @@ uint32_t BtechGetResourceScaledValue(uint16_t resourceId)
     uint32_t scale=0;
     if (resource)
     {
-        scale=(uint32_t)(int32_t)resource->baseScale;
+        scale=(uint32_t)resource->baseScale;
         for (uint8_t shifts=resource->scaleShift;shifts;--shifts) scale<<=1;
     }
     return scale;

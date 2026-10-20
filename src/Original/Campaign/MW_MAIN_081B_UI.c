@@ -428,7 +428,7 @@ void MwPresentUiRecord(uint16_t x, uint16_t y, const MwUiRecord *record)
  * aliases are an unconverted boundary, never an out-of-bounds C pointer. */
 MwUiRecord *MwGetSelectedUiRecord(void)
 {
-    uint16_t byteOffset = (uint16_t)(selectedUiRecordIndex * CAMPAIGN_UI_RECORD_BYTES);
+    uint16_t byteOffset = selectedUiRecordIndex * CAMPAIGN_UI_RECORD_BYTES;
     if (!uiMenu || byteOffset % CAMPAIGN_UI_RECORD_BYTES != 0
         || byteOffset / CAMPAIGN_UI_RECORD_BYTES >= uiMenu->recordCount) abort();
     return &uiMenu->records[byteOffset / CAMPAIGN_UI_RECORD_BYTES];
@@ -442,7 +442,7 @@ bool MwIsUiRecordDisabled(uint16_t recordIndex)
         if (!uiMenu->sentinelEnabledWord) abort();
         return (uint8_t)(*uiMenu->sentinelEnabledWord>>uiMenu->sentinelEnabledShift)==0;
     }
-    uint16_t byteOffset=(uint16_t)(recordIndex*CAMPAIGN_UI_RECORD_BYTES);
+    uint16_t byteOffset=recordIndex*CAMPAIGN_UI_RECORD_BYTES;
     if (byteOffset%CAMPAIGN_UI_RECORD_BYTES!=0 || byteOffset/CAMPAIGN_UI_RECORD_BYTES>=uiMenu->recordCount) abort();
     return uiMenu->records[byteOffset/CAMPAIGN_UI_RECORD_BYTES].enabled==0;
 }

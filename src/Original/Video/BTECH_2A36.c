@@ -50,8 +50,8 @@ void BtechEgaDrawGlyph(uint16_t character,uint16_t x,uint16_t y,uint16_t page)
     // No clipping here; the shared text caller owns clipping decisions.
     uint8_t width=fontAdvanceWidths[0x0000];
     uint8_t byteAligned=(x&0x0007)==0x0000&&(width&0x07)==0x00;
-    uint8_t bytesPerRow=(uint8_t)((width>>0x03)+(!byteAligned&&(width&0x07)!=0x00));
-    uint8_t shift=(uint8_t)(x&0x0007);
+    uint8_t bytesPerRow=(width>>0x03)+(!byteAligned&&(width&0x07)!=0x00);
+    uint8_t shift=x&0x0007;
     uint16_t cursor=0x0000;
     if (!byteAligned)
     {
@@ -59,13 +59,13 @@ void BtechEgaDrawGlyph(uint16_t character,uint16_t x,uint16_t y,uint16_t page)
         glyphTailMask=glyphTailMasks[width&0x07];
     } // Native scratch write precedes character rejection on general path.
     uint8_t rowsRemaining=combatFontHeights[0x0000];
-    uint8_t glyphStride=(uint8_t)(rowsRemaining*bytesPerRow); // MUL BYTE then MUL BL: high product BYTE discarded.
+    uint8_t glyphStride=rowsRemaining*bytesPerRow; // MUL BYTE then MUL BL: high product BYTE discarded.
     uint8_t characterByte=(uint8_t)character,firstCharacter=fontFirstCharacters[0x0000];
-    uint8_t relativeCharacter=(uint8_t)(characterByte-firstCharacter);
+    uint8_t relativeCharacter=characterByte-firstCharacter;
     if ((int8_t)characterByte<(int8_t)firstCharacter)return; // SUB/JL includes overflow, not just relative sign.
     uint8_t characterCount=fontCharacterCounts[0x0000];
     if (byteAligned?relativeCharacter>=characterCount:(int8_t)relativeCharacter>=(int8_t)characterCount)return;
-    uint16_t glyphCursor=(uint16_t)(relativeCharacter*glyphStride);
+    uint16_t glyphCursor=relativeCharacter*glyphStride;
     if (byteAligned)
         cursor=(uint16_t)(graphicsRowOffsets[y]+(x>>0x0003));
     uint8_t foreground=textForegroundPattern,background=textBackgroundPattern;
@@ -146,7 +146,7 @@ void BtechEgaDrawGlyph(uint16_t character,uint16_t x,uint16_t y,uint16_t page)
         else if (transparent)
         {
             uint8_t previousBits=0x00;
-            uint8_t bytesRemaining=(uint8_t)(bytesPerRow+0x01);
+            uint8_t bytesRemaining=bytesPerRow+0x01;
             while (--bytesRemaining!=0x00)
             {
                 if (!font->bytes || glyphCursor>=font->byteCount) abort();
@@ -154,14 +154,14 @@ void BtechEgaDrawGlyph(uint16_t character,uint16_t x,uint16_t y,uint16_t page)
                 glyphCursor++;
                 uint16_t joinedBits=(uint16_t)((uint16_t)previousBits<<0x0008)|glyphBits;
                 previousBits=glyphBits;
-                uint8_t shiftedBits=(uint8_t)(joinedBits>>shift);
+                uint8_t shiftedBits=joinedBits>>shift;
                 btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,(uint16_t)((uint16_t)shiftedBits<<0x0008)|COMBAT_EGA_BIT_MASK_REGISTER);
                 btechHostReadVideoByte(page,cursor);
                 btechHostWriteVideoByte(page,cursor,textForegroundPattern);
                 cursor++;
             }
             uint16_t joinedBits=(uint16_t)previousBits<<0x0008;
-            uint8_t shiftedBits=(uint8_t)(joinedBits>>shift);
+            uint8_t shiftedBits=joinedBits>>shift;
             btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,(uint16_t)((uint16_t)shiftedBits<<0x0008)|COMBAT_EGA_BIT_MASK_REGISTER);
             btechHostReadVideoByte(page,cursor);
             btechHostWriteVideoByte(page,cursor,textForegroundPattern);
@@ -176,13 +176,13 @@ void BtechEgaDrawGlyph(uint16_t character,uint16_t x,uint16_t y,uint16_t page)
                 if (!font->bytes || glyphCursor>=font->byteCount) abort();
                 uint8_t glyphBits=font->bytes[glyphCursor];
                 glyphCursor++;
-                uint8_t foregroundMask=(uint8_t)(((uint16_t)((uint16_t)previousBits<<0x0008)|glyphBits)>>shift);
+                uint8_t foregroundMask=((uint16_t)((uint16_t)previousBits<<0x0008)|glyphBits)>>shift;
                 previousBits=glyphBits;
                 btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,(uint16_t)((uint16_t)foregroundMask<<0x0008)|COMBAT_EGA_BIT_MASK_REGISTER);
                 btechHostReadVideoByte(page,cursor);
                 btechHostWriteVideoByte(page,cursor,textForegroundPattern);
                 uint8_t invertedBits=(uint8_t)~previousBits;
-                uint8_t backgroundMask=(uint8_t)(((uint16_t)((uint16_t)previousBackground<<0x0008)|invertedBits)>>shift);
+                uint8_t backgroundMask=((uint16_t)((uint16_t)previousBackground<<0x0008)|invertedBits)>>shift;
                 previousBackground=invertedBits;
                 btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,(uint16_t)((uint16_t)backgroundMask<<0x0008)|COMBAT_EGA_BIT_MASK_REGISTER);
                 btechHostReadVideoByte(page,cursor);
@@ -192,13 +192,13 @@ void BtechEgaDrawGlyph(uint16_t character,uint16_t x,uint16_t y,uint16_t page)
             if (!font->bytes || glyphCursor>=font->byteCount) abort();
             uint8_t glyphBits=font->bytes[glyphCursor];
             glyphCursor++;
-            uint8_t foregroundMask=(uint8_t)(((uint16_t)((uint16_t)previousBits<<0x0008)|glyphBits)>>shift);
+            uint8_t foregroundMask=((uint16_t)((uint16_t)previousBits<<0x0008)|glyphBits)>>shift;
             previousBits=glyphBits;
             btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,(uint16_t)((uint16_t)foregroundMask<<0x0008)|COMBAT_EGA_BIT_MASK_REGISTER);
             btechHostReadVideoByte(page,cursor);
             btechHostWriteVideoByte(page,cursor,textForegroundPattern);
             uint8_t invertedBits=(uint8_t)~previousBits&glyphTailMask;
-            uint8_t backgroundMask=(uint8_t)(((uint16_t)((uint16_t)previousBackground<<0x0008)|invertedBits)>>shift);
+            uint8_t backgroundMask=((uint16_t)((uint16_t)previousBackground<<0x0008)|invertedBits)>>shift;
             previousBackground=invertedBits;
             btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,(uint16_t)((uint16_t)backgroundMask<<0x0008)|COMBAT_EGA_BIT_MASK_REGISTER);
             btechHostReadVideoByte(page,cursor);
@@ -228,8 +228,8 @@ void BtechEgaDrawGlyph(uint16_t character,uint16_t x,uint16_t y,uint16_t page)
 uint16_t BtechEgaLoadFont(BtechRuntimeStream *stream,uint16_t slot,uint8_t *scratch)
 {
     if (slot>=COMBAT_FONT_SLOTS || !stream || !btechHostAllocateParagraphs) abort();
-    uint8_t bytesPerRow=(uint8_t)((fontAdvanceWidths[slot]+7)/8);
-    uint16_t bytes=(uint16_t)((uint8_t)(combatFontHeights[slot]*bytesPerRow)*fontCharacterCounts[slot]);
+    uint8_t bytesPerRow=(fontAdvanceWidths[slot]+7)/8;
+    uint16_t bytes=(uint8_t)(combatFontHeights[slot]*bytesPerRow)*fontCharacterCounts[slot];
     egaFontChunkCounter=bytes;
     uint16_t paragraphs=(uint16_t)((bytes>>4)+((bytes&0x0F)!=0)),largestFreeParagraphs;
     uint8_t *allocation=btechHostAllocateParagraphs(paragraphs,&largestFreeParagraphs);
@@ -286,7 +286,7 @@ void BtechEgaSelectPalette(uint16_t slot)
         graphicsColourPatterns[colour]=colour;
         palettePrimarySlots[0][colour+COMBAT_EGA_COLOURS]=palettePrimarySlots[slot][colour+COMBAT_EGA_COLOURS];
         paletteSecondarySlots[0][colour+COMBAT_EGA_COLOURS]=paletteSecondarySlots[slot][colour+COMBAT_EGA_COLOURS];
-        uint8_t hardwareColour=(uint8_t)(palettePrimarySlots[slot][colour]&0x0F);
+        uint8_t hardwareColour=palettePrimarySlots[slot][colour]&0x0F;
         if (hardwareColour>=8) hardwareColour+=8;
         btechHostSetPaletteRegister((uint8_t)colour,hardwareColour);
     }

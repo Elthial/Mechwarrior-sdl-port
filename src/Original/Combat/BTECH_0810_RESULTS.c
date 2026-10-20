@@ -80,8 +80,8 @@ void BtechExportCombatResultsAndTransition(uint16_t resultCode)
         {
             uint16_t body=armorToBodyLocations[armor],tier=campaignBodyTierByArmorLocation[armor];
             if (body>=COMBAT_BODY_LOCATIONS || tier>=CAMPAIGN_BODY_LOCATION_COUNT) abort();
-            int16_t maximum=(int16_t)(uint16_t)(chassis->maximumInternalStructure[body]+chassis->maximumArmor[armor]);
-            int16_t scaledRemaining=(int16_t)(uint16_t)((mech->currentInternalStructure[body]+mech->currentArmor[armor])*CAMPAIGN_FULL_BODY_INTEGRITY+CAMPAIGN_FULL_BODY_INTEGRITY);
+            int16_t maximum=chassis->maximumInternalStructure[body]+chassis->maximumArmor[armor];
+            int16_t scaledRemaining=(mech->currentInternalStructure[body]+mech->currentArmor[armor])*CAMPAIGN_FULL_BODY_INTEGRITY+CAMPAIGN_FULL_BODY_INTEGRITY;
             if (!maximum) abort();
             int32_t remainingTier=(int32_t)scaledRemaining/maximum;
             if (remainingTier<INT16_MIN || remainingTier>INT16_MAX) abort();

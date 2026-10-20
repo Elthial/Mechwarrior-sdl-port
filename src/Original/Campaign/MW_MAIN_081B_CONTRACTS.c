@@ -34,7 +34,7 @@ uint16_t MwEnterContractOfficeContinuation(uint16_t entryOffset)
     if (currentPlanetHouseIndex>=CAMPAIGN_HOUSE_COUNT) abort(); /* Unrepresented authored list. */
     const uint8_t *planetGroup=contractOfficePlanetGroups[currentPlanetHouseIndex];
     uint16_t groupIndex=0;
-    uint8_t planetSelector=(uint8_t)(currentPlanetIndex+1);
+    uint8_t planetSelector=currentPlanetIndex+1;
     for (;;)
     {
         if (*planetGroup==CONTRACT_REGION_SEPARATOR) ++groupIndex;

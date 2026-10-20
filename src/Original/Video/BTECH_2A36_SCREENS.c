@@ -10,11 +10,11 @@ void BtechEgaCopyScreenRectangle(uint16_t x,uint16_t y,uint16_t width,uint16_t h
     uint16_t end=(uint16_t)(x+width+7)&0xFFF8,first=x&0xFFF8;
     uint16_t bytes=(uint16_t)(end-first)>>3,row=(uint16_t)(y*2)>>1;
     if (row>=COMBAT_SCREEN_HEIGHT) abort();
-    uint16_t cursor=(uint16_t)(graphicsRowOffsets[row]+(first>>3));
+    uint16_t cursor=graphicsRowOffsets[row]+(first>>3);
     uint16_t destinationPage=drawPageSelector,sourcePage=copySourcePageSelector;
     do
     {
-        uint16_t nextRow=(uint16_t)(cursor+COMBAT_SCREEN_ROW_BYTES);
+        uint16_t nextRow=cursor+COMBAT_SCREEN_ROW_BYTES;
         for (uint16_t remaining=bytes;remaining;--remaining)
         {
             uint8_t value=btechHostReadVideoByte(sourcePage,cursor);
@@ -42,7 +42,7 @@ void BtechEgaUploadPackedScreenRegion(BtechResourceAllocation source,uint16_t le
     btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,COMBAT_EGA_ALL_PIXEL_BITS);
     btechHostWritePort(COMBAT_EGA_SEQUENCER_PORT,COMBAT_EGA_SEQUENCER_MAP_MASK);
     if (top>=COMBAT_SCREEN_HEIGHT) abort(); /* Native row-table adjacent-owner alias not represented. */
-    uint16_t destination=(uint16_t)(graphicsRowOffsets[top]+(left>>3));
+    uint16_t destination=graphicsRowOffsets[top]+(left>>3);
     uint16_t page=drawPageSelector;
     egaScreenUploadRowsRemaining=height;
     egaScreenUploadColumns=width>>3;
@@ -59,7 +59,7 @@ void BtechEgaUploadPackedScreenRegion(BtechResourceAllocation source,uint16_t le
             sourceCursor+=2;
             for (uint16_t sourceByte=0;sourceByte<2;++sourceByte)
             {
-                uint8_t packedPair=(uint8_t)(packedPixels>>(sourceByte*8));
+                uint8_t packedPair=packedPixels>>(sourceByte*8);
                 for (uint16_t nibble=0;nibble<2;++nibble)
                 {
                     uint8_t colour=nibble?packedPair&0x0F:packedPair>>4;

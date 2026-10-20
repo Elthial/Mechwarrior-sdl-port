@@ -216,7 +216,7 @@ void MwDrawCommanderProfile(void)
         (uint16_t)(commanderProfilePanel.x+COMPANY_WEALTH_X),1,0,PILOT_CARD_TEXT_COLOUR,PILOT_CARD_BACKGROUND,COMPANY_WEALTH_Y);
     for (uint16_t house=0;house<CAMPAIGN_HOUSE_COUNT;++house)
     {
-        int16_t standing=(int16_t)houseNetStandings[house];
+        int16_t standing=houseNetStandings[house];
         if (standing<-COMPANY_HOUSE_STANDING_LIMIT) standing=-COMPANY_HOUSE_STANDING_LIMIT;
         else if (standing>COMPANY_HOUSE_STANDING_LIMIT) standing=COMPANY_HOUSE_STANDING_LIMIT;
         uint16_t attitude=(uint16_t)(((uint16_t)standing&0xFFFE)+COMPANY_HOUSE_STANDING_LIMIT)>>1;
@@ -370,7 +370,7 @@ uint16_t MwPollPilotMechAssignmentContinuation(void)
             if (mwCampaignInput.readKeyboardShiftFlags()&BIOS_SHIFT_CONTROL) return CAMPAIGN_CONTINUE_CLEANUP;
             continue; /* Plain Escape is NOT a cancel action here. */
         }
-        uint16_t ownedByteOffset=(uint16_t)(assignmentCandidateOwnedSlot<<1);
+        uint16_t ownedByteOffset=assignmentCandidateOwnedSlot<<1;
         if (key==CAMPAIGN_KEY_UP)
         {
             for (;;)
@@ -440,7 +440,7 @@ void MwFindAssignmentConflict(void)
 void MwDrawPilotAssignmentCandidate(uint16_t pilotRosterSlot,uint16_t ownedUnitSlot,uint8_t foreground)
 {
     uint16_t x=pilotCardColumnOrigins[(uint16_t)(pilotRosterSlot<<1)/sizeof(uint16_t)]+PILOT_CARD_TEXT_INSET;
-    uint16_t ownedByteOffset=(uint16_t)(ownedUnitSlot<<1);
+    uint16_t ownedByteOffset=ownedUnitSlot<<1;
     uint16_t kind=ownedByteOffset==0xFFFE?PILOT_ASSIGNMENT_NONE:ownedByteOffset==0xFFFC?PILOT_ASSIGNMENT_DISMISS:ownedUnitKinds[ownedByteOffset/sizeof(uint16_t)];
     uint16_t caption=(uint16_t)((uint16_t)(kind<<1)+4)/sizeof(uint16_t);
     if (caption>=12) abort();
@@ -497,11 +497,11 @@ uint16_t MwConfirmPilotMechAssignmentContinuation(void)
 {
     MwDrawSelectedPilotAssignment(ASSIGNMENT_CONFIRMED_COLOUR);
     MwTransferPreviousMechToConflictingPilot();
-    uint16_t selectedPilotByteOffset=(uint16_t)(assignmentSelectedPilotSlot<<1);
+    uint16_t selectedPilotByteOffset=assignmentSelectedPilotSlot<<1;
     uint16_t candidate=assignmentCandidateOwnedSlot;
     if (candidate==PILOT_ASSIGNMENT_DISMISS) return MwDismissSelectedPilotContinuation(selectedPilotByteOffset);
     rosterMechAssignments[selectedPilotByteOffset/sizeof(uint16_t)]=candidate;
-    uint16_t ownedByteOffset=(uint16_t)(candidate<<1);
+    uint16_t ownedByteOffset=candidate<<1;
     pilotCardRosterSlot=assignmentSelectedPilotSlot;
     uint16_t kind=ownedByteOffset==0xFFFE?PILOT_ASSIGNMENT_NONE:ownedUnitKinds[ownedByteOffset/sizeof(uint16_t)];
     MwSetPilotAssignmentCaption(kind);
@@ -519,7 +519,7 @@ void MwTransferPreviousMechToConflictingPilot(void)
     EgaFillDisplayPageRectangle((uint16_t)(pilotCardColumnOrigins[assignmentConflictingPilotSlot]+PILOT_CARD_TEXT_INSET),
         PILOT_CARD_ASSIGNMENT_Y,ASSIGNMENT_TEXT_WIDTH,ASSIGNMENT_TEXT_HEIGHT,PILOT_CARD_BACKGROUND);
     MwDrawPilotAssignmentCandidate(conflictingPilotSlot,previousOwnedSlot,PILOT_CARD_TEXT_COLOUR);
-    uint16_t ownedByteOffset=(uint16_t)(previousOwnedSlot<<1);
+    uint16_t ownedByteOffset=previousOwnedSlot<<1;
     pilotCardRosterSlot=assignmentConflictingPilotSlot;
     uint16_t kind=ownedByteOffset==0xFFFE?PILOT_ASSIGNMENT_NONE:ownedUnitKinds[ownedByteOffset/sizeof(uint16_t)];
     MwSetPilotAssignmentCaption(kind);
@@ -572,7 +572,7 @@ void MwInitializePilotRatingsFromDefinitions(void)
  * Gunnery promotion also sets Piloting, but does not update the wage tier. */
 void MwAdvancePilotSkillFromExperience(uint16_t pilotRosterSlot)
 {
-    uint16_t rosterByteOffset = (uint16_t)(pilotRosterSlot * sizeof(uint16_t));
+    uint16_t rosterByteOffset = pilotRosterSlot * sizeof(uint16_t);
     if (rosterByteOffset >= sizeof(rosterMechAssignments)) abort();
     pilotRosterSlot = rosterByteOffset / sizeof(uint16_t);
     if (rosterMechAssignments[pilotRosterSlot] == CAMPAIGN_NO_MECH_ASSIGNMENT) return;
