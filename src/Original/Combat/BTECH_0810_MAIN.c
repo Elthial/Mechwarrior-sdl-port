@@ -63,19 +63,16 @@ void BtechProgramMain(uint16_t argumentCount,const char *const *arguments)
             uint16_t result=UINT16_MAX;
             if (playerValue<-1)
             {
-                uint8_t boundaryIndex=(uint8_t)(2-(uint8_t)playerValue);
+                uint16_t boundaryIndex=(uint16_t)(-((int32_t)playerValue+2));
+                result=COMBAT_RESULT_RETREAT;
                 if (sideObjectiveRules[0]==OBJECTIVE_WITHDRAW)
                 {
-                    uint8_t mask;
-                    if (boundaryIndex<TACTICAL_BOUNDARY_CODES) mask=boundaryMaskByCode[boundaryIndex];
-                    else if (boundaryIndex==4) mask=aiUpdatesSuppressed;
-                    else if (boundaryIndex==5) mask=unidentifiedField22;
-                    else if (boundaryIndex==6) mask=(uint8_t)bodyLocationReferenceIndices[0];
-                    else if (boundaryIndex==7) mask=(uint8_t)(bodyLocationReferenceIndices[0]>>8);
-                    else abort(); /* Other native adjacent-owner boundary aliases. */
-                    result=(scenarioSelectors.sideBoundaryMasks[0]&mask)?0:2;
+                    /* Use the same four-edge decoding as the withdrawal
+                     * objective check. Other game state is not an exit mask. */
+                    if (boundaryIndex<TACTICAL_BOUNDARY_CODES
+                        && (scenarioSelectors.sideBoundaryMasks[0]&boundaryMaskByCode[boundaryIndex]))
+                        result=COMBAT_RESULT_SUCCESS;
                 }
-                else result=2;
             }
             else
             {

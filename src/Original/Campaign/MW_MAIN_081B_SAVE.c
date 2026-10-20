@@ -121,10 +121,8 @@ bool MwEnumerateCampaignSaves(void)
     return false; /* Native swallows every FindNext end/error. */
 }
 
-/* MW_MAIN081B:6F4C..6FB8. Empty row RETs; other entries discard the UI IP.
- * Binary staging is confined to this DOS read, not retained campaign state.
- * Encode the old state first: a short read leaves the old tail, including a
- * high BYTE when a WORD read is partial. Apply partial work even on CF error. */
+/* Restore a complete GAM record without replacing the company on failed IO.
+ * The extra read byte detects oversized files; it is not campaign data. */
 uint16_t MwLoadSelectedCampaignCallback(void)
 {
     uint16_t row=(uint8_t)selectedUiRecordIndex; /* Native MUL BL uses AL only. */
@@ -140,17 +138,12 @@ uint16_t MwLoadSelectedCampaignCallback(void)
     uint16_t handleOrError;
     if (MwDosOpenResourceReadWrite(selectedSaveFilename,&handleOrError)) goto diskError;
     saveFileHandle=handleOrError;
-    uint8_t bytes[CAMPAIGN_LOAD_REQUEST_BYTES];
-    MwEncodeCampaignExchange(bytes);
-    uint16_t bytesReadOrError;
-    bool readError=MwDosReadFile(bytes,CAMPAIGN_LOAD_REQUEST_BYTES,handleOrError,&bytesReadOrError);
+    uint8_t bytes[CAMPAIGN_SAVE_BYTES+1];
+    uint16_t bytesReadOrError=0;
+    bool readError=MwDosReadFile(bytes,sizeof(bytes),handleOrError,&bytesReadOrError);
+    bool closeError=MwDosCloseFile(saveFileHandle);
+    if (readError || closeError || bytesReadOrError!=CAMPAIGN_SAVE_BYTES) goto diskError;
     MwDecodeCampaignExchange(bytes);
-    if (readError) goto diskError; /* Native leaks the open handle; no rollback. */
-    if (bytesReadOrError>CAMPAIGN_SAVE_BYTES) abort();
-    /* Explicit unsupported original overwrite of0B60..2B57, not a new invalid-
-     * save dialog, ignored tail, or a smaller native CX request. The known
-     * prefix above has already changed. Do not continue with fabricated owners. */
-    (void)MwDosCloseFile(saveFileHandle);
     hubSelectedRecordIndex=0;
     MwIndexedPictureCloseHook(); /* RET-only: retain actual directory/cache state. */
     return CAMPAIGN_CONTINUE_PLANET_HUB;

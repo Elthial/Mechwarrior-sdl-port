@@ -53,15 +53,9 @@ void BtechProcessPlayerControls(void)
         break;
     case COMBAT_KEY_W:
         mountGroupMode^=1;
-        for (int16_t mount=0;mount<(int16_t)playerMechTemplate->weaponMountCount;++mount)
+        for (uint16_t mount=0;mount<playerMechTemplate->weaponMountCount && mount<COMBAT_WEAPON_MOUNTS;++mount)
         {
-            if ((uint16_t)mount>COMBAT_WEAPON_MOUNTS) abort();
-            /* Native CBW, not Boolean normalization. Mount10 crosses into ammo
-             * and the first reference-vector WORD; no eleventh weapon owner. */
-            uint8_t operational=(uint16_t)mount==COMBAT_WEAPON_MOUNTS?(uint8_t)playerMechState->ammoSalvosRemaining[0]
-                :playerMechState->weapons[mount].operational;
-            if ((uint16_t)mount==COMBAT_WEAPON_MOUNTS) resourceReferenceVector[0]=(uint16_t)(int16_t)(int8_t)operational;
-            else playerMountFireFlags[mount]=(uint16_t)(int16_t)(int8_t)operational;
+            playerMountFireFlags[mount]=(uint16_t)(int16_t)(int8_t)playerMechState->weapons[mount].operational;
         }
         break;
     case COMBAT_KEY_E:
@@ -85,9 +79,8 @@ void BtechProcessPlayerControls(void)
                 ?ANIMATION_REQUEST_RECOVER:ANIMATION_REQUEST_FAILED_RECOVERY;
         break;
     case COMBAT_KEY_O:
-        if (selectedWeaponMount>COMBAT_WEAPON_MOUNTS) abort();
-        if (selectedWeaponMount==COMBAT_WEAPON_MOUNTS) resourceReferenceVector[0]^=1;
-        else playerMountFireFlags[selectedWeaponMount]^=1;
+        if (selectedWeaponMount<COMBAT_WEAPON_MOUNTS && selectedWeaponMount<playerMechTemplate->weaponMountCount)
+            playerMountFireFlags[selectedWeaponMount]^=1;
         break;
     case COMBAT_KEY_H:
     {
