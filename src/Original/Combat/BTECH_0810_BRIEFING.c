@@ -20,7 +20,7 @@ void BtechShowCombatStageBriefing(void)
     BtechLoadScreenImage("status.scr",NULL);
     textTransparentBackground=1;
     screenPolygonNeedsClip=0;
-    textForegroundColour=hudColourSchemeIndex?0:COMBAT_BRIEFING_TEXT_COLOUR;
+    textForegroundColour=hudColourSchemeIndex?Combat_Pal_EGA_Black:COMBAT_BRIEFING_TEXT_COLOUR;
     BtechDrawNearText("YOUR NEXT MISSION:",BRIEFING_MISSION_LABEL_X,BRIEFING_MISSION_LABEL_Y);
     if (combatMissionDefinitionIndex>=COMBAT_BRIEFING_MISSIONS) abort(); /* Adjacent directory alias not mapped. */
     BtechDrawNearText(combatMissionTitles[combatMissionDefinitionIndex],BRIEFING_MISSION_TITLE_X,BRIEFING_MISSION_TITLE_Y);
@@ -58,7 +58,7 @@ void BtechShowCombatStageBriefing(void)
     orderMapCameraContext->clipMinimumA=0x3E;
     orderMapCameraContext->clipMaximumA=0x102;
     screenPolygonNeedsClip=0;
-    BtechSetOverscanColour(7);
+    BtechSetOverscanColour(Combat_Pal_EGA_LightGrey);
     BtechCopyHudRectangleIfReady(0,0,COMBAT_SCREEN_WIDTH,COMBAT_SCREEN_HEIGHT);
     BtechWaitForCombatInputReleaseThenPress();
     for (uint16_t slot=0;slot<COMBAT_LANCE_SLOTS;++slot)

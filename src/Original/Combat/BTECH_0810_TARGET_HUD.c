@@ -22,7 +22,7 @@ void BtechUpdateTargetPanelAndReticle(uint16_t targetUnitSlot)
     {
         if (cachedTargetPanelSlot)
         {
-            cachedTargetPanelSlot=0;drawPolygonFilled=1;drawFillColour=0x0A;drawLineColour=0x0A;
+            cachedTargetPanelSlot=0;drawPolygonFilled=1;drawFillColour=Combat_Pal_EGA_LightGreen;drawLineColour=Combat_Pal_EGA_LightGreen;
             BtechDrawStyledRectangle((uint16_t)(panel->x+1),(uint16_t)(panel->y+1),panel->width,panel->height);
             BtechCopyHudRectangleIfReady((uint16_t)(panel->x+1),(uint16_t)(panel->y+1),panel->width,panel->height);
         }
@@ -91,7 +91,7 @@ void BtechDrawTargetDamagePanel(uint16_t targetUnitSlot,const BtechScreenRectang
         BtechMechState *mech=unitBindings[targetUnitSlot].mech;
         if (!mech || mech->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
         const BtechMechTemplate *chassis=&mechTemplates[mech->templateIndex];
-        drawLineColour=7;drawFillColour=7;
+        drawLineColour=Combat_Pal_EGA_LightGrey;drawFillColour=Combat_Pal_EGA_LightGrey;
         BtechDrawStyledRectangle((uint16_t)(panel->x+5),(uint16_t)(panel->y+1),(uint16_t)(panel->width-10),(uint16_t)(panel->height-2));
         for (uint16_t armor=0;armor<COMBAT_ARMOR_LOCATIONS;++armor)
         {

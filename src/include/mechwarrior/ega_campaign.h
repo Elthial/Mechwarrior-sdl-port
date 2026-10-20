@@ -48,17 +48,20 @@ enum
     EGA_COPY = 0, EGA_AND = 1, EGA_OR = 2, EGA_XOR = 3
 };
 enum { EGA_BIOS_MODE_320X200=0x0D, EGA_PALETTE_ENTRIES=0x11 };
+/* BIOS palette-register values, not campaign pixel indices. */
+enum { EGA_PALETTE_BLACK=0x00, EGA_PALETTE_LIGHT_GREY=0x07,
+    EGA_PALETTE_DARK_GREY=0x10, EGA_PALETTE_WHITE=0x17 };
 /* Pixel indices in MechWarrior's default campaign palette (MW_EGA:13AC),
  * NOT BIOS colour codes or the standard EGA index order. Palette effects and
  * the alternate palette can temporarily change their displayed colours. */
 enum
 {
-    CAMPAIGN_MAGENTA=0x00, CAMPAIGN_BLACK=0x01, CAMPAIGN_WHITE=0x02,
-    CAMPAIGN_LIGHT_GREY=0x03, CAMPAIGN_DARK_GREY=0x04, CAMPAIGN_LIGHT_CYAN=0x05,
-    CAMPAIGN_LIGHT_BLUE=0x06, CAMPAIGN_BLUE=0x07, CAMPAIGN_LIGHT_RED=0x08,
-    CAMPAIGN_RED=0x09, CAMPAIGN_LIGHT_GREEN=0x0A, CAMPAIGN_CYAN=0x0B,
-    CAMPAIGN_GREEN=0x0C, CAMPAIGN_YELLOW=0x0D, CAMPAIGN_BROWN=0x0E,
-    CAMPAIGN_LIGHT_MAGENTA=0x0F
+    Campaign_Pal_EGA_Magenta=0x00, Campaign_Pal_EGA_Black=0x01, Campaign_Pal_EGA_White=0x02,
+    Campaign_Pal_EGA_LightGrey=0x03, Campaign_Pal_EGA_DarkGrey=0x04, Campaign_Pal_EGA_LightCyan=0x05,
+    Campaign_Pal_EGA_LightBlue=0x06, Campaign_Pal_EGA_Blue=0x07, Campaign_Pal_EGA_LightRed=0x08,
+    Campaign_Pal_EGA_Red=0x09, Campaign_Pal_EGA_LightGreen=0x0A, Campaign_Pal_EGA_Cyan=0x0B,
+    Campaign_Pal_EGA_Green=0x0C, Campaign_Pal_EGA_Yellow=0x0D, Campaign_Pal_EGA_Brown=0x0E,
+    Campaign_Pal_EGA_LightMagenta=0x0F
 };
 extern uint8_t defaultPaletteCodes[EGA_PALETTE_ENTRIES];
 extern uint8_t alternatePaletteCodes[EGA_PALETTE_ENTRIES];

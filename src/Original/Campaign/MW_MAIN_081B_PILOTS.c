@@ -221,7 +221,7 @@ void MwDrawCommanderProfile(void)
         else if (standing>COMPANY_HOUSE_STANDING_LIMIT) standing=COMPANY_HOUSE_STANDING_LIMIT;
         uint16_t attitude=(uint16_t)(((uint16_t)standing&0xFFFE)+COMPANY_HOUSE_STANDING_LIMIT)>>1;
         MwNativeByteView text={(const uint8_t *)houseAttitudeText[attitude],0,(uint32_t)strlen(houseAttitudeText[attitude])+1};
-        EgaDrawTransparentText((uint16_t)(commanderProfilePanel.x+COMPANY_HOUSE_ATTITUDE_X),(uint16_t)(COMPANY_HOUSE_FIRST_Y+house*COMPANY_HOUSE_ROW_HEIGHT),CAMPAIGN_LIGHT_GREY,&text,0);
+        EgaDrawTransparentText((uint16_t)(commanderProfilePanel.x+COMPANY_HOUSE_ATTITUDE_X),(uint16_t)(COMPANY_HOUSE_FIRST_Y+house*COMPANY_HOUSE_ROW_HEIGHT),Campaign_Pal_EGA_LightGrey,&text,0);
     }
     EgaSelectFont(COMPANY_MENU_FONT);
 }
@@ -259,7 +259,7 @@ uint16_t MwEnterCrewMenuContinuation(void)
     } /* Tier3 does NOT restore a previously changed23C1 byte. */
     EgaDrawLine(PILOT_CARD_TEXT_COLOUR,PILOT_CARD_NAME_Y-3,crewScreenRightEdge,0,PILOT_CARD_NAME_Y-3);
     EgaDrawLine(PILOT_CARD_TEXT_COLOUR,PILOT_CARD_MECH_Y-1,crewScreenRightEdge,0,PILOT_CARD_MECH_Y-1);
-    EgaDrawLine(3,0,crewScreenRightEdge,0,0);
+    EgaDrawLine(Campaign_Pal_EGA_LightGrey,0,crewScreenRightEdge,0,0);
     EgaDrawLine(PILOT_CARD_TEXT_COLOUR,CREW_LAST_Y,crewScreenRightEdge,0,CREW_LAST_Y);
     for (uint16_t rosterSlot=0;rosterSlot<PILOT_CARD_COUNT;++rosterSlot) MwDrawPilotRosterCard(rosterSlot);
     MwSelectUiRecordTable(0,&crewMenu);
@@ -296,7 +296,7 @@ void MwDrawPilotRosterCard(uint16_t pilotRosterSlot)
     {
         uint16_t wage=pilotWageAmounts[pilotCardWageTier];
         ++numericGroupingEnabled;
-        MwDrawSignedDecimalField(wage,pilotCardTextX,1,0,3,4,PILOT_CARD_WAGE_Y);
+        MwDrawSignedDecimalField(wage,pilotCardTextX,1,0,Campaign_Pal_EGA_LightGrey,Campaign_Pal_EGA_DarkGrey,PILOT_CARD_WAGE_Y);
     }
     uint16_t assignedSlot=pilotCardOwnedUnitSlot;
     uint16_t kind=assignedSlot==PILOT_ASSIGNMENT_NONE?PILOT_ASSIGNMENT_NONE:ownedUnitKinds[assignedSlot];
@@ -313,9 +313,9 @@ void MwDrawPilotRosterCard(uint16_t pilotRosterSlot)
 void MwDrawPilotCardSeparators(void)
 {
     uint16_t x=pilotCardTextX-PILOT_CARD_TEXT_INSET;
-    EgaDrawLine(3,0,x,x,EGA_ROWS);
+    EgaDrawLine(Campaign_Pal_EGA_LightGrey,0,x,x,EGA_ROWS);
     x=pilotCardTextX-PILOT_CARD_TEXT_INSET+PILOT_CARD_COLUMN_WIDTH-1;
-    EgaDrawLine(3,0,x,x,EGA_ROWS);
+    EgaDrawLine(Campaign_Pal_EGA_LightGrey,0,x,x,EGA_ROWS);
 }
 
 /* MW_MAIN081B:28A3..28B1, genuine DI text/BX Y callee. */

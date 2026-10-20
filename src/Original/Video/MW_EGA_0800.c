@@ -18,7 +18,7 @@ void EgaInitializeGraphics(void)
     if (!egaSetVideoMode || !egaSetPaletteRegister) abort();
     egaSetVideoMode(EGA_BIOS_MODE_320X200);
     EgaClearDrawPage(1);
-    egaSetPaletteRegister(1,0);
+    egaSetPaletteRegister(Campaign_Pal_EGA_Black,EGA_PALETTE_BLACK);
     EgaFlipPages();
     EgaLoadDefaultPalette();
 }

@@ -2,6 +2,19 @@
 #define MECHWARRIOR_COMBAT_VIDEO_H
 #include "mechwarrior/combat_sound.h"
 
+/* Pixel indices after the shipped combat EGA palettes are selected. Verified
+ * against desert/arctic/tropic/dmgpal; independent of the campaign palette.
+ * Slots3/5 are remapped by those files, so do not assume standard EGA order.
+ * Resource-authored colours and subsequent palette changes remain data-driven. */
+enum
+{
+    Combat_Pal_EGA_Black=0x00, Combat_Pal_EGA_Blue=0x01, Combat_Pal_EGA_Green=0x02,
+    Combat_Pal_EGA_Red=0x04, Combat_Pal_EGA_Cyan=0x05, Combat_Pal_EGA_Brown=0x06,
+    Combat_Pal_EGA_LightGrey=0x07, Combat_Pal_EGA_DarkGrey=0x08, Combat_Pal_EGA_LightBlue=0x09,
+    Combat_Pal_EGA_LightGreen=0x0A, Combat_Pal_EGA_LightCyan=0x0B, Combat_Pal_EGA_LightRed=0x0C,
+    Combat_Pal_EGA_LightMagenta=0x0D, Combat_Pal_EGA_Yellow=0x0E, Combat_Pal_EGA_White=0x0F
+};
+
 enum { COMBAT_VIDEO_EGA=2,COMBAT_VIDEO_AUTO=0,COMBAT_VIDEO_ALLOWED=7,
     COMBAT_SCREEN_WIDTH=320,COMBAT_SCREEN_HEIGHT=200,COMBAT_SCREEN_ROW_BYTES=40,
     COMBAT_EGA_COLOURS=16,COMBAT_PALETTE_SLOTS=10,COMBAT_PALETTE_WORDS=32,

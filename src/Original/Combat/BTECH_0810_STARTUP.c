@@ -95,7 +95,7 @@ void BtechInitializeVideoAndInput(void)
  *02C2 draws to the existing draw page; no invented flip/present is inserted. */
 void BtechShowFatalErrorAndExit(const char *errorText)
 {
-    textForegroundColour=0x0F;textBackgroundColour=0;screenPolygonNeedsClip=0;
+    textForegroundColour=Combat_Pal_EGA_White;textBackgroundColour=Combat_Pal_EGA_Black;screenPolygonNeedsClip=0;
     BtechDrawNearText(errorText,COMBAT_FATAL_TEXT_X,COMBAT_FATAL_TEXT_Y);
     BtechRestoreTextVideoMode();
     BtechShutdownPlatformHandlers();

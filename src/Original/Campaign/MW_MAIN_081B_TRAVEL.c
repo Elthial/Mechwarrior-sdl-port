@@ -166,10 +166,10 @@ restoreCurrentPlanet:
  * and every later draw in the same order as the executable. */
 void MwDrawTravelDestinationDetails(void)
 {
-    EgaFillDisplayPageRectangle(0x0008,0x0006,0x0074,0x0008,1);
-    EgaFillDisplayPageRectangle(0x0087,0x0006,0x0035,0x0008,3);
-    EgaFillDisplayPageRectangle(0x00E5,0x0006,0x0052,0x0008,3);
-    EgaFillDisplayPageRectangle(0x0008,0x0015,0x0130,0x0008,3);
+    EgaFillDisplayPageRectangle(0x0008,0x0006,0x0074,0x0008,Campaign_Pal_EGA_Black);
+    EgaFillDisplayPageRectangle(0x0087,0x0006,0x0035,0x0008,Campaign_Pal_EGA_LightGrey);
+    EgaFillDisplayPageRectangle(0x00E5,0x0006,0x0052,0x0008,Campaign_Pal_EGA_LightGrey);
+    EgaFillDisplayPageRectangle(0x0008,0x0015,0x0130,0x0008,Campaign_Pal_EGA_LightGrey);
     uint16_t directoryByteOffset=(uint16_t)(travelDestinationPlanetIndex*sizeof(uint16_t));
     if (directoryByteOffset>=sizeof(planetRecordOffsets)) abort();
     uint16_t planetOffset=planetRecordOffsets[directoryByteOffset/sizeof(uint16_t)];
@@ -182,24 +182,24 @@ void MwDrawTravelDestinationDetails(void)
     const uint8_t *nameEnd=memchr(name,0,bytesRemaining);
     if (!nameEnd) abort();
     MwNativeByteView nameView={name,0,(uint32_t)(nameEnd-name+1)};
-    EgaDrawTransparentText(0x000A,0x0008,CAMPAIGN_WHITE,&nameView,0);
+    EgaDrawTransparentText(0x000A,0x0008,Campaign_Pal_EGA_White,&nameView,0);
     uint16_t pictureSelector=MwLoadIndexedPicture((uint16_t)(TRAVEL_HOUSE_PICTURE_BASE+planet->houseIndex));
     EgaDrawPackedSprite(0x00EF,0x0021,EGA_DISPLAY_PAGE,0,pictureSelector);
     uint8_t classification=(uint8_t)(planet->landscapeAndMarketCode-1);
     const char *landscape=travelLandscapeLabels[classification%TRAVEL_LANDSCAPE_LABEL_COUNT];
     MwNativeByteView landscapeView={(const uint8_t *)landscape,0,(uint32_t)strlen(landscape)+1};
-    EgaDrawTransparentText(0x008D,0x0008,CAMPAIGN_WHITE,&landscapeView,0);
+    EgaDrawTransparentText(0x008D,0x0008,Campaign_Pal_EGA_White,&landscapeView,0);
     uint16_t population=MwReadNativeWord(planet->populationMillions,0);
     numericGroupingEnabled++;
-    MwDrawSignedDecimalField(population,0x00E6,0,4,2,3,0x0008);
+    MwDrawSignedDecimalField(population,0x00E6,0,4,Campaign_Pal_EGA_White,Campaign_Pal_EGA_LightGrey,0x0008);
     MwNativeByteView suffix={(const uint8_t *)travelPopulationSuffix,0,sizeof(travelPopulationSuffix)};
-    EgaDrawTransparentText(0x0104,0x0008,CAMPAIGN_WHITE,&suffix,0);
+    EgaDrawTransparentText(0x0104,0x0008,Campaign_Pal_EGA_White,&suffix,0);
     const uint8_t *description=nameEnd+1;
     size_t descriptionCapacity=bytesRemaining-(size_t)(description-name);
     const uint8_t *descriptionEnd=memchr(description,0,descriptionCapacity);
     if (!descriptionEnd) abort();
     MwNativeByteView descriptionView={description,0,(uint32_t)(descriptionEnd-description+1)};
-    EgaDrawTransparentText(0x000A,0x0017,CAMPAIGN_WHITE,&descriptionView,0);
+    EgaDrawTransparentText(0x000A,0x0017,Campaign_Pal_EGA_White,&descriptionView,0);
 }
 
 /* MW_MAIN 081B:569F..56C2, then the fallthrough56C3..56E6. The genuine5816
@@ -238,7 +238,7 @@ uint16_t MwEnterTravelMapMenuContinuation(void)
  * selection byte untouched. */
 void MwDrawPlanetTravelQuote(void)
 {
-    EgaFillDisplayPageRectangle(0x00ED,0x0067,0x0049,0x0007,3);
+    EgaFillDisplayPageRectangle(0x00ED,0x0067,0x0049,0x0007,Campaign_Pal_EGA_LightGrey);
     travelQuoteCbillsLow=0;
     travelQuoteCbillsHigh=0;
     if (travelDestinationPlanetIndex!=currentPlanetIndex)

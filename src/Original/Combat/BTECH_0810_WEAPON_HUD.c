@@ -12,7 +12,7 @@ void BtechDrawWeaponStatusList(uint16_t selectedMountIndex,uint16_t targetUnitSl
     uint16_t layout=mechCockpitLayoutIndices[playerMechState->templateIndex];
     if (layout>=COMBAT_COCKPIT_LAYOUTS) abort();
     const BtechCockpitLayout *cockpit=&cockpitLayouts[layout];
-    textTransparentBackground=0;textBackgroundColour=8;
+    textTransparentBackground=0;textBackgroundColour=Combat_Pal_EGA_DarkGrey;
     uint16_t rowY=(uint16_t)cockpit->weaponListY;
     uint16_t mount;
     for (mount=0;mount<COMBAT_WEAPON_MOUNTS;++mount,rowY+=8)
@@ -46,7 +46,7 @@ void BtechDrawWeaponStatusList(uint16_t selectedMountIndex,uint16_t targetUnitSl
         drawLineColour=drawFillColour;drawPolygonFilled=1;
         BtechDrawStyledRectangle(markerX,rowY,6,5);
         drawPolygonFilled=0;
-        drawFillColour=playerMountFireFlags[mount] && mountGroupMode?0x0C:8;
+        drawFillColour=playerMountFireFlags[mount] && mountGroupMode?Combat_Pal_EGA_LightRed:Combat_Pal_EGA_DarkGrey;
         BtechDrawStyledRectangle((uint16_t)(markerX-1),(uint16_t)(rowY-1),8,7);
     }
     BtechPresentHudRectangleIfReady((uint16_t)(cockpit->weaponListX-0x0A),(uint16_t)(cockpit->weaponListY-1),0x4A,(uint16_t)(mount*8+3));

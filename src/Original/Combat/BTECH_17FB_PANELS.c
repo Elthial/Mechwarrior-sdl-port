@@ -12,7 +12,7 @@ enum { ORDER_WEAPON_TOTAL_X=0x42,ORDER_WEAPON_OPERATIONAL_X=0x24,
  * full marker colour WORDs and the native condition-colour write order. */
 void BtechDrawUnitOrderPanels(void)
 {
-    textBackgroundColour=0;
+    textBackgroundColour=Combat_Pal_EGA_Black;
     drawFillColour=ORDER_PANEL_TEXT_COLOUR;
     uint16_t panel=0,friendlyMarker=0;
     for (int16_t unitSlot=1;unitSlot<COMBAT_MECH_SLOTS;++unitSlot)

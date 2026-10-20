@@ -620,8 +620,8 @@ void MwRefreshReserveAmmunitionSelection(void)
         const char *label=selling?reserveAmmoSellLabel:reserveAmmoBuyLabel;
         MwNativeByteView text={(const uint8_t *)label,0,(uint32_t)strlen(label)+1};
         uint16_t y=0x6A,offset=0;
-        EgaDrawString(0x89,&y,(CAMPAIGN_DARK_GREY<<EGA_BYTE_BITS)
-            |CAMPAIGN_LIGHT_RED,&text,&offset);
+        EgaDrawString(0x89,&y,(Campaign_Pal_EGA_DarkGrey<<EGA_BYTE_BITS)
+            |Campaign_Pal_EGA_LightRed,&text,&offset);
         reserveAmmoSelling=selling;MwDrawReserveAmmunitionPrices(selling);
     }
     if (row==RESERVE_AMMO_DONE_ROW)

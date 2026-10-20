@@ -9,7 +9,7 @@ enum { ORDER_REDUCED_PANEL_X=0x6D,ORDER_REDUCED_PANEL_Y=0x7A,
     ORDER_REDUCED_PANEL_WIDTH=0x67,ORDER_REDUCED_PANEL_HEIGHT=0x4A,
     ORDER_REDUCED_BORDER_LEFT=0x70,ORDER_REDUCED_BORDER_RIGHT=0xD2,
     ORDER_REDUCED_BORDER_TOP=0x78,ORDER_REDUCED_BORDER_BOTTOM=0xC4,
-    ORDER_PANEL_BACKGROUND=7,ORDER_PANEL_SHADOW=8,ORDER_PANEL_HIGHLIGHT=15,
+    ORDER_PANEL_BACKGROUND=Combat_Pal_EGA_LightGrey,ORDER_PANEL_SHADOW=Combat_Pal_EGA_DarkGrey,ORDER_PANEL_HIGHLIGHT=Combat_Pal_EGA_White,
     ORDER_DESTINATION_BLINK_MASK=2,ORDER_DESTINATION_MARKER_INSET=2,ORDER_DESTINATION_MARKER_SIZE=5 };
 
 /*17FB:00DF. Actual FAR command-screen refresh. The full-map capture excludes
@@ -103,7 +103,7 @@ void BtechRefreshLanceOrderScreen(void)
                 BtechDrawClippedLine(unitOrderMapScreenX[unitSlot],unitOrderMapScreenY[unitSlot],trackedX,trackedY);
                 if ((orderPanelMode==ORDER_PANEL_DESTINATION || orderPanelMode==ORDER_PANEL_TARGET) && (combatTickCounter&ORDER_DESTINATION_BLINK_MASK))
                 {
-                    drawFillColour=0;drawPolygonFilled=0;
+                    drawFillColour=Combat_Pal_EGA_Black;drawPolygonFilled=0;
                     BtechDrawStyledRectangle((uint16_t)(trackedX-ORDER_DESTINATION_MARKER_INSET),(uint16_t)(trackedY-ORDER_DESTINATION_MARKER_INSET),ORDER_DESTINATION_MARKER_SIZE,ORDER_DESTINATION_MARKER_SIZE);
                 }
             }

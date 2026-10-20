@@ -1,5 +1,6 @@
 #ifndef MECHWARRIOR_COMBAT_STARTUP_H
 #define MECHWARRIOR_COMBAT_STARTUP_H
+#include "mechwarrior/combat_video.h"
 #include "mechwarrior/combat_world.h"
 #include <stdbool.h>
 #include "mechwarrior/hardware_ports.h"
@@ -16,7 +17,7 @@ enum { COMBAT_SCHEDULER_INVALID_SLOT_BITS=0xF0,COMBAT_SCHEDULER_MAX_POSITIVE_PER
 enum { PLAYER_SCREEN_INSPECTION=1,PLAYER_SCREEN_ORDERS=2,PLAYER_SCREEN_TARGET_INSPECTION=3 };
 enum { COMBAT_FRAME_DELAY_TICKS=18,COMBAT_OUTCOME_DELAY_TICKS=20,
     COMBAT_LOSS_FLASHES=20,COMBAT_LOSS_FLASH_DELAY=6,COMBAT_LOSS_SOUND=5,COMBAT_LOSS_SOUND_PRIORITY=100,
-    COMBAT_LOSS_COLOUR_A=0x0C,COMBAT_LOSS_COLOUR_B=0x0E };
+    COMBAT_LOSS_COLOUR_A=Combat_Pal_EGA_LightRed,COMBAT_LOSS_COLOUR_B=Combat_Pal_EGA_Yellow };
 extern uint8_t aiUpdatesSuppressed,unidentifiedField22;
 void BtechProgramMain(uint16_t argumentCount,const char *const *arguments);
 void BtechFlashPlayerMechLoss(void);

@@ -1,5 +1,6 @@
 #ifndef MECHWARRIOR_CAMPAIGN_OPTIONS_H
 #define MECHWARRIOR_CAMPAIGN_OPTIONS_H
+#include "mechwarrior/ega_campaign.h"
 #include "mechwarrior/campaign_service.h"
 #include "mechwarrior/campaign_events.h"
 #include "mechwarrior/campaign_exchange.h"
@@ -11,7 +12,7 @@ enum { CAMPAIGN_OPTIONS_ROWS=7, CAMPAIGN_SAVE_ROWS=12, CAMPAIGN_SAVE_STEM_BYTES=
     OPTION_QUIT, OPTION_CONTINUE };
 enum { OPTIONS_HUB_ROW=5,OPTIONS_LANDSCAPE_PICTURE_BASE=3,
     OPTIONS_SOUND_LABEL_COLUMN=11,OPTIONS_DETAIL_LABEL_COLUMN=8,
-    OPTIONS_VALUE_FOREGROUND=13,OPTIONS_VALUE_BACKGROUND=4 };
+    OPTIONS_VALUE_FOREGROUND=Campaign_Pal_EGA_Yellow,OPTIONS_VALUE_BACKGROUND=Campaign_Pal_EGA_DarkGrey };
 typedef struct MwSaveListRow
 {
     MwPanelText display;

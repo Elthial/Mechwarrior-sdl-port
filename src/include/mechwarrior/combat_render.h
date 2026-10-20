@@ -1,5 +1,6 @@
 #ifndef MECHWARRIOR_COMBAT_RENDER_H
 #define MECHWARRIOR_COMBAT_RENDER_H
+#include "mechwarrior/combat_video.h"
 #include "mechwarrior/combat_cockpit.h"
 #include "mechwarrior/combat_resources.h"
 #include "mechwarrior/combat_polygons.h"
@@ -98,7 +99,7 @@ extern BtechOrientationBasis *activeRenderBasis;
 extern uint16_t dotProductScratchHigh,dotProductScratchMiddle,dotProductScratchLow;
 extern BtechDwordDivisionResult signedDivisionResult;
 extern uint16_t selectionCount;
-enum { SELECTION_LIST_PREFIX=9,SELECTION_MARKER_COLOUR=0x0D };
+enum { SELECTION_LIST_PREFIX=9,SELECTION_MARKER_COLOUR=Combat_Pal_EGA_LightMagenta };
 extern uint16_t selectionPointScreenX,selectionPointScreenY;
 extern uint16_t selectionObjectListIndices[SELECTION_LIST_PREFIX];
 extern uint32_t selectionMarkerPixels,selectionCapturedPixels,selectionPointBackground;

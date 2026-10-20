@@ -9,6 +9,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* The unconverted Tandy branch uses its16-colour register codes. */
+enum { TANDY_PALETTE_DARK_GREY=0x08, TANDY_PALETTE_WHITE=0x0F };
+
 MwCampaignPlatformCalls mwCampaignPlatform;
 void (*campaignStopMusic)(void);
 void (*campaignStartMusic)(uint16_t selector,uint16_t offset);
@@ -85,7 +88,7 @@ uint8_t MwRunCampaign(const MwCampaignLaunch *launch)
     EgaInitializeGraphics();
     (void)MwLoadMechMusic();
     (void)MwLoadAlternatePictureBank();
-    EgaClearDrawPage(1);
+    EgaClearDrawPage(Campaign_Pal_EGA_Black);
     MwDrawActivePicture(0x000C,0x002D,EGA_DRAW_PAGE,1);
     EgaFlipPages();
     if (MwWaitTicksOrInputInterruption(0x0048))
@@ -93,17 +96,17 @@ uint8_t MwRunCampaign(const MwCampaignLaunch *launch)
         (void)MwLoadTPictureBank();
         goto initializeCampaign;
     }
-    EgaClearDrawPage(1);
+    EgaClearDrawPage(Campaign_Pal_EGA_Black);
     EgaFlipPages();
     (void)MwLoadTPictureBank();
     EgaSelectFont(0);
-    MwSetIntroTextPaletteColour(0);
+    MwSetIntroTextPaletteColour(EGA_PALETTE_BLACK);
     MwDrawIntroNarrationLines(2);
-    MwSetIntroTextPaletteColour(tandyGraphicsSelected?0x08:0x10);
+    MwSetIntroTextPaletteColour(tandyGraphicsSelected?TANDY_PALETTE_DARK_GREY:EGA_PALETTE_DARK_GREY);
     (void)MwWaitTicksOrInputInterruption(2);
-    MwSetIntroTextPaletteColour(7);
+    MwSetIntroTextPaletteColour(EGA_PALETTE_LIGHT_GREY);
     (void)MwWaitTicksOrInputInterruption(2);
-    MwSetIntroTextPaletteColour(tandyGraphicsSelected?0x0F:0x17);
+    MwSetIntroTextPaletteColour(tandyGraphicsSelected?TANDY_PALETTE_WHITE:EGA_PALETTE_WHITE);
     if (MwWaitTicksOrInputInterruption(0x0024)) goto initializeCampaign;
     if (!campaignStartMusic) abort();
     campaignStartMusic(campaignMusicBufferSelector,0);
@@ -144,7 +147,7 @@ beginDebrief:
         (void)EgaDrawPackedSprite(0x0100,0x008E,EGA_DISPLAY_PAGE,0,picture);
     }
     MwDrawAlternatePicturePanelBorder(2,2,0x013B,0x0088);
-    EgaDrawLine(2,7,0x0136,0x009C,7); /* BX/CX=(009C,0007), DX/SI=(0136,0007). */
+    EgaDrawLine(Campaign_Pal_EGA_White,7,0x0136,0x009C,7); /* BX/CX=(009C,0007), DX/SI=(0136,0007). */
     {
         uint16_t picture=AFTER_ACTION_SUCCESS_PICTURE;
         if (combatTransitionResult!=0)
@@ -623,13 +626,13 @@ bool MwWaitTicksOrInputInterruption(uint16_t delayTicks)
 void MwSetIntroTextPaletteColour(uint8_t paletteCode)
 {
     if (!egaSetPaletteRegister) abort();
-    egaSetPaletteRegister(CAMPAIGN_WHITE,paletteCode);
+    egaSetPaletteRegister(Campaign_Pal_EGA_White,paletteCode);
 }
 /* MW_MAIN081B:162E..1643. Original record has X/Y then NUL text, no colour. */
 void MwDrawPositionedIntroText(const MwIntroPositionedText *text)
 {
     MwNativeByteView view={(const uint8_t *)text->text,0,sizeof(text->text)};
-    (void)EgaDrawTransparentText(text->x,text->y,CAMPAIGN_WHITE,&view,0);
+    (void)EgaDrawTransparentText(text->x,text->y,Campaign_Pal_EGA_White,&view,0);
 }
 /* MW_MAIN081B:1644..166C.166D result below transports the POP-IP/JMP path;
  * successful native return has no AX result contract. Do not seed this host
@@ -681,18 +684,18 @@ uint16_t MwRunCopyProtectionAndInitializeCampaign(uint16_t entryOffset)
     (void)MwLoadBarDeathAndLaunchMusic();
     copyProtectionSelection=MwRandomUpTo(COPY_PROTECTION_MECH_COUNT-1);
     uint16_t pictureSelector=MwLoadIndexedPicture(copyProtectionPictureIndices[copyProtectionSelection]);
-    EgaFillDisplayPageRectangle(0,0x0074,EGA_COLUMNS,0x0054,4);
+    EgaFillDisplayPageRectangle(0,0x0074,EGA_COLUMNS,0x0054,Campaign_Pal_EGA_DarkGrey);
     MwDrawPicturePanelBorder(0,0x0074,EGA_COLUMNS,0x0054);
     EgaSelectFont(0);
     MwNativeByteView prompt={(const uint8_t *)copyProtectionPrompt,0,sizeof(copyProtectionPrompt)};
-    (void)EgaDrawTransparentText(0x000C,0x0080,CAMPAIGN_LIGHT_RED,&prompt,0);
+    (void)EgaDrawTransparentText(0x000C,0x0080,Campaign_Pal_EGA_LightRed,&prompt,0);
     (void)EgaDrawPackedSprite(0x00F0,0x007C,EGA_DISPLAY_PAGE,0,pictureSelector);
     /* Native stores BYTE displacement into two parallel WORD directories. */
     uint16_t callsignRowByteOffset=copyProtectionSelection*COPY_PROTECTION_CALLSIGNS_PER_MECH*sizeof(uint16_t);
     copyProtectionSelection=callsignRowByteOffset+MwRandomUpTo(COPY_PROTECTION_CALLSIGNS_PER_MECH-1)*sizeof(uint16_t);
     uint16_t question=copyProtectionSelection/sizeof(uint16_t);
     MwNativeByteView callsign={(const uint8_t *)copyProtectionCallsigns[question],0,COPY_PROTECTION_TEXT_CAPACITY};
-    (void)EgaDrawTransparentText(0x0054,0x00AA,CAMPAIGN_LIGHT_GREY,&callsign,0);
+    (void)EgaDrawTransparentText(0x0054,0x00AA,Campaign_Pal_EGA_LightGrey,&callsign,0);
     /*174A..174C NOP: there is intentionally no keyboard answer-entry call. */
     EgaCopyDrawPageToDisplay(0,0,EGA_COLUMNS,EGA_ROWS);
     uint16_t answerIndex=0;

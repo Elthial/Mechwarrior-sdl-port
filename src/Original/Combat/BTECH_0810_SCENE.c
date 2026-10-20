@@ -70,7 +70,7 @@ void BtechRenderCockpitSceneAndHud(void)
     BtechSwapScreenPages(0);
     if (cockpitFullRedrawPending)
     {
-        BtechSetOverscanColour(0);
+        BtechSetOverscanColour(Combat_Pal_EGA_Black);
         BtechPresentScreenRectangle(0,0,COMBAT_SCREEN_WIDTH,COMBAT_SCREEN_HEIGHT);
         cockpitFullRedrawPending=0;
         drawPageSelector=backPageSelector;copySourcePageSelector=frontPageSelector;

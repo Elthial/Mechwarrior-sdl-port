@@ -26,7 +26,7 @@ uint32_t BtechBuildOrderMapPositionMask(void)
 void BtechSetConditionTextColours(uint16_t conditionColour)
 {
     textForegroundColour=(uint8_t)conditionColour;
-    textBackgroundColour=conditionColour?0:ORDER_CONDITION_FAILED_BACKGROUND;
+    textBackgroundColour=conditionColour?Combat_Pal_EGA_Black:ORDER_CONDITION_FAILED_BACKGROUND;
 }
 
 /*17FB:1472. Combined armour/internal condition band, with exact system-hit
@@ -62,7 +62,7 @@ void BtechUpdateLanceOrderHighlight(void)
     drawPolygonFilled=0;drawPageSelector=backPageSelector;
     if ((int16_t)previousOrderHighlightRow>=0)
     {
-        drawFillColour=0;
+        drawFillColour=Combat_Pal_EGA_Black;
         uint16_t previousY=previousOrderHighlightRow? (uint16_t)(ORDER_HIGHLIGHT_ROW_BASE_Y+(uint16_t)(previousOrderHighlightRow*ORDER_PANEL_ROW_STEP)):ORDER_HIGHLIGHT_FIRST_ROW_Y;
         if (previousOrderHighlightPanel>=ORDER_WINGMATE_PANELS) abort();
         uint16_t previousX=lanceOrderPanelTextX[previousOrderHighlightPanel]-ORDER_PANEL_INSET;
@@ -88,7 +88,7 @@ void BtechUpdateLanceOrderHighlight(void)
 void BtechClearLanceOrderPanel(uint16_t panelIndex)
 {
     drawPageSelector=backPageSelector;drawPolygonFilled=1;
-    drawFillColour=0;drawLineColour=0;
+    drawFillColour=Combat_Pal_EGA_Black;drawLineColour=Combat_Pal_EGA_Black;
     if (panelIndex>=ORDER_WINGMATE_PANELS) abort();
     BtechDrawStyledRectangle((uint16_t)(lanceOrderPanelTextX[panelIndex]-ORDER_PANEL_INSET),ORDER_PANEL_TOP,ORDER_PANEL_WIDTH,ORDER_PANEL_HEIGHT);
     drawPolygonFilled=0;

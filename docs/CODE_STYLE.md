@@ -22,6 +22,9 @@ and gameplay decisions rather than replacing them with a new engine.
   bytes, unrelated variables or uninitialized native registers/stack contents.
 - Name meaningful constants, flags and continuation destinations. Avoid magic
   numbers, redundant temporaries and invented pass-through Support helpers.
+- Name palette colours as `Campaign_Pal_EGA_Green` or `Combat_Pal_EGA_Green`:
+  identify the palette and the confirmed EGA colour. These are drawing indices,
+  not interchangeable BIOS palette-register codes.
 - Use readable loops, ++, -- and compound assignments when native-width behaviour
   is retained. Do not flatten genuine snapshots or alias-sensitive operations.
 - Keep gameplay and original drawing/decoding/audio logic in `src/Original`.

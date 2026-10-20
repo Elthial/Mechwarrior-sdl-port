@@ -44,7 +44,7 @@ void BtechDrawHeadingRadar(void)
     drawLineColour=hudColourSchemeIndex?RADAR_ALTERNATE_HEADING_BACKGROUND:RADAR_HEADING_BACKGROUND;
     drawFillColour=drawLineColour;
     BtechDrawStyledRectangle(panel->x,panel->y,panel->width,panel->height);
-    drawFillColour=hudColourSchemeIndex?15:2;
+    drawFillColour=hudColourSchemeIndex?Combat_Pal_EGA_White:Combat_Pal_EGA_Green;
     BtechDrawClippedLine(panel->x,panel->y,(int16_t)centreX,(int16_t)centreY);
     BtechDrawClippedLine((int16_t)(uint16_t)(panel->x+panel->width-1),panel->y,(int16_t)centreX,(int16_t)centreY);
     if (!playerUnitBinding || !playerUnitBinding->torso || !playerUnitBinding->positionedLeftLeg) abort();
@@ -54,11 +54,11 @@ void BtechDrawHeadingRadar(void)
     {
         if (unitControls[slot].combatValueOrBoundaryCode<=-2) continue;
         uint16_t paletteIndex;
-        if (!unitControls[slot].sideIndex) paletteIndex=hudColourSchemeIndex?0:9;
+        if (!unitControls[slot].sideIndex) paletteIndex=hudColourSchemeIndex?Combat_Pal_EGA_Black:Combat_Pal_EGA_LightBlue;
         else
         {
             if (!unitVisibility[0][slot]) continue;
-            paletteIndex=hudColourSchemeIndex?2:0x0C;
+            paletteIndex=hudColourSchemeIndex?Combat_Pal_EGA_Green:Combat_Pal_EGA_LightRed;
         }
         /* Do not repair671B by silently skipping absent eligible contacts. */
         if (!unitBindings[slot].torso) abort();
@@ -71,7 +71,7 @@ void BtechDrawHeadingRadar(void)
         if (absoluteX<halfWidth && absoluteY<halfHeight)
             BtechWriteClippedPixel((int16_t)(uint16_t)(centreX+relativeX),(int16_t)(uint16_t)(centreY-relativeY-1),paletteIndex);
     }
-    textForegroundColour=hudColourSchemeIndex?15:2;textTransparentBackground=1;
+    textForegroundColour=hudColourSchemeIndex?Combat_Pal_EGA_White:Combat_Pal_EGA_Green;textTransparentBackground=1;
     if (radarRangeShift<RADAR_MINIMUM_RANGE_SHIFT || radarRangeShift>RADAR_MAXIMUM_RANGE_SHIFT) abort(); /* ASCII aliases below2406. */
     BtechDrawNearText(radarRangeLabels[radarRangeShift-RADAR_MINIMUM_RANGE_SHIFT],
         (int16_t)(uint16_t)(panel->x+panel->width/2-0x12),(int16_t)(uint16_t)(panel->y+panel->height-8));

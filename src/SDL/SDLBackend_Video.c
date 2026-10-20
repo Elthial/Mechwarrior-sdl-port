@@ -32,7 +32,7 @@ void MwSdlSetVideoMode(uint8_t mode)
         memset(egaVideoPixels,0,sizeof(egaVideoPixels));egaLogicalFunction=EGA_COPY;
         MwSdlResetCombatVideoHardware();
         for (uint8_t i=0;i<16;++i) paletteCodes[i]=(i&7)|((i&8)?0x10:0);
-        paletteCodes[16]=0;haveFrame=false;
+        paletteCodes[16]=EGA_PALETTE_BLACK;haveFrame=false;
         MwSdlResetCombatCpu();
     }
 }

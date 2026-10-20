@@ -13,7 +13,7 @@ enum { INSPECTION_DIVIDER_X=0x9D,INSPECTION_NAME_X=0x2E,INSPECTION_NAME_Y=4,
     INSPECTION_LEGEND_FIRST_Y=0xAE,INSPECTION_LEGEND_SECOND_Y=0xB4,
     INSPECTION_DIAGRAM_X=0xA2,INSPECTION_DIAGRAM_Y=3,INSPECTION_DIAGRAM_WIDTH=0x94,INSPECTION_DIAGRAM_HEIGHT=0xBF,
     INSPECTION_FUNCTIONAL_LABEL=0,INSPECTION_DESTROYED_LABEL=5,
-    INSPECTION_UNDAMAGED_COLOUR=7,INSPECTION_ABOVE_HALF_COLOUR=14,INSPECTION_DAMAGED_COLOUR=4,INSPECTION_DESTROYED_COLOUR=0 };
+    INSPECTION_UNDAMAGED_COLOUR=Combat_Pal_EGA_LightGrey,INSPECTION_ABOVE_HALF_COLOUR=Combat_Pal_EGA_Yellow,INSPECTION_DAMAGED_COLOUR=Combat_Pal_EGA_Red,INSPECTION_DESTROYED_COLOUR=Combat_Pal_EGA_Black };
 
 /*0810:13A8. One slot input. Setup latches, shared inspection pointers and
  * loaded bitmap ownership remain separate. Even an exit key draws one final
@@ -67,7 +67,7 @@ void BtechClearInspectionBackground(void)
     if (hudColourSchemeIndex)
     {
         drawPageSelector=backPageSelector;
-        drawPolygonFilled=1;screenPolygonNeedsClip=0;drawLineColour=0;drawFillColour=0;
+        drawPolygonFilled=1;screenPolygonNeedsClip=0;drawLineColour=Combat_Pal_EGA_Black;drawFillColour=Combat_Pal_EGA_Black;
         BtechDrawStyledRectangle(0,0,COMBAT_SCREEN_WIDTH,COMBAT_SCREEN_HEIGHT);
         BtechCopyHudRectangleIfReady(0,0,COMBAT_SCREEN_WIDTH,COMBAT_SCREEN_HEIGHT);
     }
@@ -81,10 +81,10 @@ void BtechDrawMechInspectionStatus(void)
     if (!mech || mech->templateIndex>=COMBAT_MECH_TEMPLATES || hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES) abort();
     const BtechMechTemplate *chassis=&mechTemplates[mech->templateIndex];
     const BtechHudColourScheme *colours=&hudColourSchemes[hudColourSchemeIndex];
-    screenPolygonNeedsClip=0;drawFillColour=(uint8_t)colours->inspectionBackground;drawLineColour=0;
+    screenPolygonNeedsClip=0;drawFillColour=(uint8_t)colours->inspectionBackground;drawLineColour=Combat_Pal_EGA_Black;
     BtechDrawStyledRectangle(0,0,COMBAT_SCREEN_WIDTH,COMBAT_SCREEN_HEIGHT);
     BtechDrawClippedLine(INSPECTION_DIVIDER_X,0,INSPECTION_DIVIDER_X,COMBAT_SCREEN_HEIGHT);
-    textForegroundColour=(uint8_t)colours->inspectionMechName;textBackgroundColour=0;
+    textForegroundColour=(uint8_t)colours->inspectionMechName;textBackgroundColour=Combat_Pal_EGA_Black;
     BtechDrawNearText(mechTemplateNames[mech->templateIndex],INSPECTION_NAME_X,INSPECTION_NAME_Y);
     textForegroundColour=(uint8_t)colours->inspectionSubsystemText;
     for (uint16_t system=0;system<5;++system)

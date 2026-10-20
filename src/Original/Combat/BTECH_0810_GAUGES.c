@@ -17,7 +17,7 @@ void BtechUpdateHeatGauge(int16_t heatLevel)
     if (hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES) abort();
     drawFillColour=(uint8_t)(heatLevel<(int16_t)cachedHeatGaugeLevel?
         hudColourSchemes[hudColourSchemeIndex].heatFalling:hudColourSchemes[hudColourSchemeIndex].heatRising);
-    uint16_t pixelColour=heatLevel<(int16_t)cachedHeatGaugeLevel?0x0F:0x0C;
+    uint16_t pixelColour=heatLevel<(int16_t)cachedHeatGaugeLevel?Combat_Pal_EGA_White:Combat_Pal_EGA_LightRed;
     screenPolygonNeedsClip=0;drawPageSelector=backPageSelector;
     if (!unitBindings[0].mech || unitBindings[0].mech->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
     uint16_t layoutIndex=mechCockpitLayoutIndices[unitBindings[0].mech->templateIndex];
@@ -51,13 +51,13 @@ void BtechDrawForwardMovementGauge(int16_t forwardScale)
     int16_t forward=forwardScale<0?0:forwardScale;
     uint16_t reverse=forward?0:(uint16_t)(0-(uint16_t)forwardScale);
     drawFillColour=(uint8_t)hudColourSchemes[hudColourSchemeIndex].forwardTicks;
-    uint16_t pixelColour=0x0A;
+    uint16_t pixelColour=Combat_Pal_EGA_LightGreen;
     int16_t marker=forward>>2;
     uint16_t tickX=(uint16_t)(gauge->x+12);
     for (int16_t tick=0;tick<19;++tick)
     {
         if (tick==marker)
-        {pixelColour=7;drawFillColour=(uint8_t)hudColourSchemes[hudColourSchemeIndex].selectedMovementTick;}
+        {pixelColour=Combat_Pal_EGA_LightGrey;drawFillColour=(uint8_t)hudColourSchemes[hudColourSchemeIndex].selectedMovementTick;}
         BtechDrawClippedLine((int16_t)tickX,gauge->y,(int16_t)tickX,(int16_t)(uint16_t)(gauge->y+6));
         if (!hudColourSchemeIndex) BtechWriteClippedPixel((int16_t)tickX,gauge->y,pixelColour);
         tickX+=2;
@@ -65,14 +65,14 @@ void BtechDrawForwardMovementGauge(int16_t forwardScale)
     drawFillColour=(uint8_t)hudColourSchemes[hudColourSchemeIndex].movementZeroReference;
     uint16_t zeroX=(uint16_t)(gauge->x+10);
     BtechDrawClippedLine((int16_t)zeroX,gauge->y,(int16_t)zeroX,(int16_t)(uint16_t)(gauge->y+6));
-    if (!hudColourSchemeIndex) BtechWriteClippedPixel((int16_t)(uint16_t)(gauge->x+10),gauge->y,0x0F);
+    if (!hudColourSchemeIndex) BtechWriteClippedPixel((int16_t)(uint16_t)(gauge->x+10),gauge->y,Combat_Pal_EGA_White);
     drawFillColour=(uint8_t)hudColourSchemes[hudColourSchemeIndex].reverseTicks;
-    pixelColour=0x0C;marker=(int16_t)((reverse>>2)|((reverse&0x8000)?0xC000:0));
+    pixelColour=Combat_Pal_EGA_LightRed;marker=(int16_t)((reverse>>2)|((reverse&0x8000)?0xC000:0));
     tickX=(uint16_t)(gauge->x+8);
     for (int16_t tick=0;tick<9;++tick)
     {
         if (tick==marker)
-        {drawFillColour=(uint8_t)hudColourSchemes[hudColourSchemeIndex].selectedMovementTick;pixelColour=7;}
+        {drawFillColour=(uint8_t)hudColourSchemes[hudColourSchemeIndex].selectedMovementTick;pixelColour=Combat_Pal_EGA_LightGrey;}
         BtechDrawClippedLine((int16_t)tickX,gauge->y,(int16_t)tickX,(int16_t)(uint16_t)(gauge->y+6));
         if (!hudColourSchemeIndex) BtechWriteClippedPixel((int16_t)tickX,gauge->y,pixelColour);
         tickX-=2;
@@ -97,7 +97,7 @@ void BtechUpdateJumpChargeGauge(int16_t jumpCharge)
     BtechDrawStyledRectangle((uint16_t)(gauge->x+2),0x7C,3,3);
     if (!hudColourSchemeIndex)
     {
-        uint16_t colour=belowThreshold?0x0C:0x0A;
+        uint16_t colour=belowThreshold?Combat_Pal_EGA_LightRed:Combat_Pal_EGA_LightGreen;
         BtechWriteClippedPixel((int16_t)(uint16_t)(gauge->x+3),0x7C,colour);
         BtechWriteClippedPixel((int16_t)(uint16_t)(gauge->x+4),0x7C,colour);
         BtechWriteClippedPixel((int16_t)(uint16_t)(gauge->x+4),0x7D,colour);
@@ -116,14 +116,14 @@ void BtechUpdateJumpChargeGauge(int16_t jumpCharge)
     BtechDrawStyledRectangle((uint16_t)gauge->x,(uint16_t)(rowY-difference+1),7,difference);
     if (!hudColourSchemeIndex)
     {
-        drawFillColour=level<(int16_t)cachedJumpChargeGaugeLevel?0x0F:0x0B;
+        drawFillColour=level<(int16_t)cachedJumpChargeGaugeLevel?Combat_Pal_EGA_White:Combat_Pal_EGA_LightCyan;
         uint16_t edgeX=(uint16_t)(gauge->x+6);
         BtechDrawClippedLine((int16_t)edgeX,(int16_t)rowY,(int16_t)edgeX,(int16_t)(uint16_t)(rowY-difference+1));
     }
     drawFillColour=(uint8_t)hudColourSchemes[hudColourSchemeIndex].jumpReference;
     uint16_t referenceX=(uint16_t)gauge->x;
     BtechDrawClippedLine((int16_t)referenceX,0x92,(int16_t)(uint16_t)(referenceX+6),0x92);
-    if (!hudColourSchemeIndex) BtechWriteClippedPixel((int16_t)(uint16_t)(gauge->x+6),0x92,0x0C);
+    if (!hudColourSchemeIndex) BtechWriteClippedPixel((int16_t)(uint16_t)(gauge->x+6),0x92,Combat_Pal_EGA_LightRed);
     BtechCopyHudRectangleIfReady((uint16_t)gauge->x,(uint16_t)(rowY-difference+1),8,(uint16_t)(difference+1));
     cachedJumpChargeGaugeLevel=(uint16_t)level;
 }
