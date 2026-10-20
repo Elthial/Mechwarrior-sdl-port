@@ -3,38 +3,44 @@
 #include "mechwarrior/combat_polygons.h"
 #include <stdlib.h>
 
+enum { SUBSYSTEM_LAMP_Y=0x6B, SUBSYSTEM_LAMP_SIZE=7, SUBSYSTEM_LAMP_TEXT_Y=0x6C,
+    SENSOR_LAMP_X=0x89, SENSOR_LAMP_TEXT_X=0x8A, GYRO_LAMP_X=0x93, GYRO_LAMP_TEXT_X=0x94,
+    ENGINE_LAMP_X=0x9D, ENGINE_LAMP_TEXT_X=0x9E,
+    LIFE_SUPPORT_LAMP_X=0xA7, LIFE_SUPPORT_LAMP_TEXT_X=0xA8,
+    SUBSYSTEM_LAMPS_COPY_WIDTH=0x28, SUBSYSTEM_LAMPS_COPY_HEIGHT=0x0B };
+
 /*17FB:1AD6. Four authored unrolled lamps; hit fields reload after each draw.
  * Colour-table over-indexing within the adjacent combined owner is retained. */
 void BtechDrawMechSubsystemLamps(BtechMechState *mech)
 {
     if (!mech) abort();
-    textTransparentBackground=1;drawPolygonFilled=1;screenPolygonNeedsClip=0;
+    textTransparentBackground=true;drawPolygonFilled=true;screenPolygonNeedsClip=false;
     uint16_t colourWord=(uint16_t)(hudColourSchemeIndex*6+mech->sensorHits*2)>>1;
     if (colourWord>=14) abort();
     drawLineColour=drawFillColour=(uint8_t)subsystemLampColourTables.words[colourWord];
-    BtechDrawStyledRectangle(0x89,0x6B,7,7);
+    BtechDrawStyledRectangle(SENSOR_LAMP_X,SUBSYSTEM_LAMP_Y,SUBSYSTEM_LAMP_SIZE,SUBSYSTEM_LAMP_SIZE);
     textForegroundColour=drawFillColour?Combat_Pal_EGA_Black:(hudColourSchemeIndex?Combat_Pal_EGA_Red:Combat_Pal_EGA_DarkGrey);
-    BtechDrawNearText(subsystemLampLabels[0],0x8A,0x6C);
+    BtechDrawNearText(subsystemLampLabels[0],SENSOR_LAMP_TEXT_X,SUBSYSTEM_LAMP_TEXT_Y);
     colourWord=(uint16_t)(hudColourSchemeIndex*6+mech->gyroHits*2)>>1;
     if (colourWord>=14) abort();
     drawLineColour=drawFillColour=(uint8_t)subsystemLampColourTables.words[colourWord];
-    BtechDrawStyledRectangle(0x93,0x6B,7,7);
+    BtechDrawStyledRectangle(GYRO_LAMP_X,SUBSYSTEM_LAMP_Y,SUBSYSTEM_LAMP_SIZE,SUBSYSTEM_LAMP_SIZE);
     textForegroundColour=drawFillColour?Combat_Pal_EGA_Black:(hudColourSchemeIndex?Combat_Pal_EGA_Red:Combat_Pal_EGA_DarkGrey);
-    BtechDrawNearText(subsystemLampLabels[1],0x94,0x6C);
+    BtechDrawNearText(subsystemLampLabels[1],GYRO_LAMP_TEXT_X,SUBSYSTEM_LAMP_TEXT_Y);
     colourWord=(uint16_t)(12+hudColourSchemeIndex*8+mech->engineHits*2)>>1;
     if (colourWord>=14) abort();
     drawLineColour=drawFillColour=(uint8_t)subsystemLampColourTables.words[colourWord];
-    BtechDrawStyledRectangle(0x9D,0x6B,7,7);
+    BtechDrawStyledRectangle(ENGINE_LAMP_X,SUBSYSTEM_LAMP_Y,SUBSYSTEM_LAMP_SIZE,SUBSYSTEM_LAMP_SIZE);
     textForegroundColour=drawFillColour?Combat_Pal_EGA_Black:(hudColourSchemeIndex?Combat_Pal_EGA_Red:Combat_Pal_EGA_DarkGrey);
-    BtechDrawNearText(subsystemLampLabels[2],0x9E,0x6C);
+    BtechDrawNearText(subsystemLampLabels[2],ENGINE_LAMP_TEXT_X,SUBSYSTEM_LAMP_TEXT_Y);
     colourWord=(uint16_t)(hudColourSchemeIndex*6+mech->lifeSupportHits*2)>>1;
     if (colourWord>=14) abort();
     drawLineColour=drawFillColour=(uint8_t)subsystemLampColourTables.words[colourWord];
-    BtechDrawStyledRectangle(0xA7,0x6B,7,7);
+    BtechDrawStyledRectangle(LIFE_SUPPORT_LAMP_X,SUBSYSTEM_LAMP_Y,SUBSYSTEM_LAMP_SIZE,SUBSYSTEM_LAMP_SIZE);
     textForegroundColour=drawFillColour?Combat_Pal_EGA_Black:(hudColourSchemeIndex?Combat_Pal_EGA_Red:Combat_Pal_EGA_DarkGrey);
-    BtechDrawNearText(subsystemLampLabels[3],0xA8,0x6C);
-    textTransparentBackground=0;
-    BtechPresentHudRectangleIfReady(0x89,0x6B,0x28,0x0B);
+    BtechDrawNearText(subsystemLampLabels[3],LIFE_SUPPORT_LAMP_TEXT_X,SUBSYSTEM_LAMP_TEXT_Y);
+    textTransparentBackground=false;
+    BtechPresentHudRectangleIfReady(SENSOR_LAMP_X,SUBSYSTEM_LAMP_Y,SUBSYSTEM_LAMPS_COPY_WIDTH,SUBSYSTEM_LAMPS_COPY_HEIGHT);
 }
 
 /*17FB:2176. Native compass labels/ticks and signed torso-relative marker.
@@ -47,7 +53,7 @@ void BtechDrawCockpitHeadingStrip(uint16_t bodyHeading,int16_t torsoTwist)
     if (combatLandscapeIndex>=COMBAT_LANDSCAPES || hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES) abort();
     uint8_t colour=landscapeCameraColourRows[hudColourSchemeIndex][combatLandscapeIndex].hudReticleColour;
     egaBitmapEnabledPlanes=colour;drawFillColour=colour;
-    clipMinimumX=HEADING_STRIP_LEFT;clipMaximumX=HEADING_STRIP_RIGHT;screenPolygonNeedsClip=1;
+    clipMinimumX=HEADING_STRIP_LEFT;clipMaximumX=HEADING_STRIP_RIGHT;screenPolygonNeedsClip=true;
     if (!unitBindings[0].mech || unitBindings[0].mech->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
     uint16_t layoutIndex=mechCockpitLayoutIndices[unitBindings[0].mech->templateIndex];
     if (layoutIndex>=COMBAT_COCKPIT_LAYOUTS) abort();
@@ -79,5 +85,5 @@ void BtechDrawCockpitHeadingStrip(uint16_t bodyHeading,int16_t torsoTwist)
     BtechDrawClippedLine((int16_t)(uint16_t)(0x9E-torsoMarkerOffset),(int16_t)(uint16_t)(y+1),(int16_t)(uint16_t)(0xA0-torsoMarkerOffset),(int16_t)(uint16_t)(y+1));
     BtechDrawClippedLine((int16_t)(uint16_t)(0x9D-torsoMarkerOffset),y,(int16_t)(uint16_t)(0xA1-torsoMarkerOffset),y);
     clipMinimumX=savedMinimumX;clipMaximumX=savedMaximumX;
-    screenPolygonNeedsClip=0;egaBitmapEnabledPlanes=COMBAT_EGA_PLANE_MASK_ALL;
+    screenPolygonNeedsClip=false;egaBitmapEnabledPlanes=COMBAT_EGA_PLANE_MASK_ALL;
 }

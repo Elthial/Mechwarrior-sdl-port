@@ -6,6 +6,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+enum { RESERVE_AMMO_TRADE_LABEL_X=0x89, RESERVE_AMMO_TRADE_LABEL_Y=0x6A,
+    RESERVE_AMMO_COMPATIBILITY_X=6, RESERVE_AMMO_COMPATIBILITY_Y=6,
+    RESERVE_AMMO_COMPATIBILITY_WIDTH=0x58, RESERVE_AMMO_COMPATIBILITY_HEIGHT=0x32,
+    RESERVE_AMMO_COMPATIBILITY_TEXT_X=0x0E, RESERVE_AMMO_COMPATIBILITY_HEADING_Y=0x0C,
+    RESERVE_AMMO_COMPATIBILITY_FIRST_ROW_Y=0x13, RESERVE_AMMO_COMPATIBILITY_ROW_HEIGHT=7,
+    RESERVE_AMMO_COMPATIBILITY_ROWS=6 };
+
 /* MW_MAIN081B:2DA6..2DF3. POP inherited dispatch IP, reset remembered rows.
  *2DE2 is the folded post-event entry, not a second game procedure. */
 uint16_t MwEnterMechServiceMenuContinuation(uint16_t entryOffset)
@@ -619,8 +626,8 @@ void MwRefreshReserveAmmunitionSelection(void)
     {
         const char *label=selling?reserveAmmoSellLabel:reserveAmmoBuyLabel;
         MwNativeByteView text={(const uint8_t *)label,0,(uint32_t)strlen(label)+1};
-        uint16_t y=0x6A,offset=0;
-        EgaDrawString(0x89,&y,(Campaign_Pal_EGA_DarkGrey<<EGA_BYTE_BITS)
+        uint16_t y=RESERVE_AMMO_TRADE_LABEL_Y,offset=0;
+        EgaDrawString(RESERVE_AMMO_TRADE_LABEL_X,&y,(Campaign_Pal_EGA_DarkGrey<<EGA_BYTE_BITS)
             |Campaign_Pal_EGA_LightRed,&text,&offset);
         reserveAmmoSelling=selling;MwDrawReserveAmmunitionPrices(selling);
     }
@@ -635,7 +642,7 @@ void MwRefreshReserveAmmunitionSelection(void)
     else
     {
         reserveAmmoPreviewSelection=row;
-        EgaFillDisplayPageRectangle(6,6,0x58,0x32,TEXT_PANEL_BACKGROUND);
+        EgaFillDisplayPageRectangle(RESERVE_AMMO_COMPATIBILITY_X,RESERVE_AMMO_COMPATIBILITY_Y,RESERVE_AMMO_COMPATIBILITY_WIDTH,RESERVE_AMMO_COMPATIBILITY_HEIGHT,TEXT_PANEL_BACKGROUND);
         MwDrawReserveAmmunitionCompatibleMechs(family);
     }
 }
@@ -645,15 +652,15 @@ void MwDrawReserveAmmunitionCompatibleMechs(uint16_t family)
     if (family>=CAMPAIGN_AMMO_FAMILY_COUNT) abort();
     const char *heading=reserveAmmoCompatibilityHeadings[family].text;
     MwNativeByteView text={(const uint8_t *)heading,0,(uint32_t)strlen(heading)+1};
-    EgaDrawTransparentText(0x0E,0x0C,TEXT_PANEL_FOREGROUND,&text,0);
-    uint16_t y=0x13;
-    for (uint16_t index=0;index<6;++index)
+    EgaDrawTransparentText(RESERVE_AMMO_COMPATIBILITY_TEXT_X,RESERVE_AMMO_COMPATIBILITY_HEADING_Y,TEXT_PANEL_FOREGROUND,&text,0);
+    uint16_t y=RESERVE_AMMO_COMPATIBILITY_FIRST_ROW_Y;
+    for (uint16_t index=0;index<RESERVE_AMMO_COMPATIBILITY_ROWS;++index)
     {
         uint16_t kind=reserveAmmoCompatibleMechs[family][index];
         if (kind==UINT16_MAX) return;
         const char *name=unitDisplayNames[kind];
         text=(MwNativeByteView){(const uint8_t *)name,0,(uint32_t)strlen(name)+1};
-        EgaDrawTransparentText(0x0E,y,reserveAmmoMechColours[kind],&text,0);y+=7;
+        EgaDrawTransparentText(RESERVE_AMMO_COMPATIBILITY_TEXT_X,y,reserveAmmoMechColours[kind],&text,0);y+=RESERVE_AMMO_COMPATIBILITY_ROW_HEIGHT;
     }
     abort();
 }

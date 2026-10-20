@@ -27,7 +27,7 @@ void BtechDrawTerrainRadar(void)
     uint16_t mapY=(uint16_t)(TERRAIN_TILE_COLUMNS-halfHeight-BtechShiftSignedDwordRightLow(player->positionB,TERRAIN_WORLD_CELL_SHIFT));
     if (mapX!=radarMapOriginX || mapY!=radarMapOriginY || cockpitFullRedrawPending || tickDiscontinuity)
     {
-        radarMapOriginX=mapX;radarMapOriginY=mapY;drawPolygonFilled=1;
+        radarMapOriginX=mapX;radarMapOriginY=mapY;drawPolygonFilled=true;
         if (hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES) abort();
         drawLineColour=(uint8_t)hudColourSchemes[hudColourSchemeIndex].radarBackground;
         drawFillColour=drawLineColour;

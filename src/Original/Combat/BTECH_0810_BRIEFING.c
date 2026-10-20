@@ -5,6 +5,9 @@
 #include "mechwarrior/combat_input.h"
 #include <stdlib.h>
 
+enum { BRIEFING_RESTORED_MAP_TOP=7, BRIEFING_RESTORED_MAP_BOTTOM=0x71,
+    BRIEFING_RESTORED_MAP_LEFT=0x3E, BRIEFING_RESTORED_MAP_RIGHT=0x102 };
+
 enum { BRIEFING_MISSION_LABEL_X=0x14,BRIEFING_MISSION_LABEL_Y=0x96,
     BRIEFING_MISSION_TITLE_X=0x19,BRIEFING_MISSION_TITLE_Y=0xA5,
     BRIEFING_ROSTER_LABEL_X=0xCF,BRIEFING_CREW_LABEL_Y=0x16,BRIEFING_MECH_LABEL_Y=0x46,
@@ -18,8 +21,8 @@ void BtechShowCombatStageBriefing(void)
 {
     drawPageSelector=backPageSelector;
     BtechLoadScreenImage("status.scr",NULL);
-    textTransparentBackground=1;
-    screenPolygonNeedsClip=0;
+    textTransparentBackground=true;
+    screenPolygonNeedsClip=false;
     textForegroundColour=hudColourSchemeIndex?Combat_Pal_EGA_Black:COMBAT_BRIEFING_TEXT_COLOUR;
     BtechDrawNearText("YOUR NEXT MISSION:",BRIEFING_MISSION_LABEL_X,BRIEFING_MISSION_LABEL_Y);
     if (combatMissionDefinitionIndex>=COMBAT_BRIEFING_MISSIONS) abort(); /* Adjacent directory alias not mapped. */
@@ -42,7 +45,7 @@ void BtechShowCombatStageBriefing(void)
             BtechDrawNearText(condition,BRIEFING_MECH_STATUS_X,rowY+BRIEFING_MECH_LABEL_Y);
         }
     }
-    textTransparentBackground=0;
+    textTransparentBackground=false;
     if (!orderMapCameraObject) abort();
     orderMapCameraObject->object.prefix.position.positionC=COMBAT_BRIEFING_MAP_ALTITUDE;
     if (!orderMapCameraContext) abort();
@@ -53,11 +56,11 @@ void BtechShowCombatStageBriefing(void)
     BtechRenderObjectListVeneer(orderMapCameraContext,selectedWorldObjects,(int16_t)selectedObjectCount);
     BtechDrawLanceMapUnitMarkers();
     BtechDrawLanceMapRetreatBoundaries();
-    orderMapCameraContext->clipMinimumB=7;
-    orderMapCameraContext->clipMaximumB=0x71;
-    orderMapCameraContext->clipMinimumA=0x3E;
-    orderMapCameraContext->clipMaximumA=0x102;
-    screenPolygonNeedsClip=0;
+    orderMapCameraContext->clipMinimumB=BRIEFING_RESTORED_MAP_TOP;
+    orderMapCameraContext->clipMaximumB=BRIEFING_RESTORED_MAP_BOTTOM;
+    orderMapCameraContext->clipMinimumA=BRIEFING_RESTORED_MAP_LEFT;
+    orderMapCameraContext->clipMaximumA=BRIEFING_RESTORED_MAP_RIGHT;
+    screenPolygonNeedsClip=false;
     BtechSetOverscanColour(Combat_Pal_EGA_LightGrey);
     BtechCopyHudRectangleIfReady(0,0,COMBAT_SCREEN_WIDTH,COMBAT_SCREEN_HEIGHT);
     BtechWaitForCombatInputReleaseThenPress();

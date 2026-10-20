@@ -30,7 +30,7 @@ void BtechRefreshCockpitViewportAndGauges(void)
     uint8_t savedClipping=screenPolygonNeedsClip;
     if (!playerMechState || playerMechState->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
     activeCockpitLayoutIndex=mechCockpitLayoutIndices[playerMechState->templateIndex];
-    screenPolygonNeedsClip=0;
+    screenPolygonNeedsClip=false;
     drawPageSelector=backPageSelector;
     if (activeCockpitLayoutIndex>=COMBAT_COCKPIT_LAYOUTS) abort();
     BtechLoadScreenImage(cockpitScreenFilenames[activeCockpitLayoutIndex],NULL);

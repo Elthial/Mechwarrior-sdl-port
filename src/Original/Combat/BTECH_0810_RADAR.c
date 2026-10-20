@@ -17,7 +17,7 @@ void BtechUpdateRadarPanel(void)
     }
     if (activeCockpitLayoutIndex>=COMBAT_COCKPIT_LAYOUTS) abort();
     const BtechScreenRectangle *panel=&cockpitLayouts[activeCockpitLayoutIndex].radarPanel;
-    drawPolygonFilled=1;
+    drawPolygonFilled=true;
     if (headingRadarSelected)
         drawLineColour=hudColourSchemeIndex?RADAR_ALTERNATE_HEADING_BACKGROUND:RADAR_HEADING_BACKGROUND;
     else
@@ -40,7 +40,7 @@ void BtechDrawHeadingRadar(void)
     int16_t halfHeight=(int16_t)((panel->height-(panel->height<0))/2);
     uint16_t centreX=(uint16_t)(panel->x+halfWidth-1);
     uint16_t centreY=(uint16_t)(panel->y+halfWidth-1); /*6680 uses WIDTH. */
-    drawPolygonFilled=1;
+    drawPolygonFilled=true;
     drawLineColour=hudColourSchemeIndex?RADAR_ALTERNATE_HEADING_BACKGROUND:RADAR_HEADING_BACKGROUND;
     drawFillColour=drawLineColour;
     BtechDrawStyledRectangle(panel->x,panel->y,panel->width,panel->height);
@@ -71,10 +71,10 @@ void BtechDrawHeadingRadar(void)
         if (absoluteX<halfWidth && absoluteY<halfHeight)
             BtechWriteClippedPixel((int16_t)(uint16_t)(centreX+relativeX),(int16_t)(uint16_t)(centreY-relativeY-1),paletteIndex);
     }
-    textForegroundColour=hudColourSchemeIndex?Combat_Pal_EGA_White:Combat_Pal_EGA_Green;textTransparentBackground=1;
+    textForegroundColour=hudColourSchemeIndex?Combat_Pal_EGA_White:Combat_Pal_EGA_Green;textTransparentBackground=true;
     if (radarRangeShift<RADAR_MINIMUM_RANGE_SHIFT || radarRangeShift>RADAR_MAXIMUM_RANGE_SHIFT) abort(); /* ASCII aliases below2406. */
     BtechDrawNearText(radarRangeLabels[radarRangeShift-RADAR_MINIMUM_RANGE_SHIFT],
         (int16_t)(uint16_t)(panel->x+panel->width/2-0x12),(int16_t)(uint16_t)(panel->y+panel->height-8));
-    textTransparentBackground=0;
+    textTransparentBackground=false;
     BtechPresentScreenRectangle(panel->x,panel->y,panel->width,panel->height);
 }

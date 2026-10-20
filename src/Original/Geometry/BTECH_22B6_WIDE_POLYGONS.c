@@ -112,7 +112,7 @@ divideCoordinate:
             screenPolygonX[vertex]=(int16_t)wideScreenX[vertex];
             screenPolygonY[vertex]=(int16_t)wideScreenY[vertex];
         }
-        screenPolygonNeedsClip=0;
+        screenPolygonNeedsClip=false;
         BtechDrawScreenPolygon((int16_t)polygonVertexCount,screenPolygonX,screenPolygonY);
     }
 }

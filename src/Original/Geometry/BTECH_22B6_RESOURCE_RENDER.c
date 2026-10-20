@@ -132,7 +132,7 @@ void BtechDrawReferencePointEllipse(const BtechRenderEllipse *ellipse)
         || (int32_t)(int16_t)(uint16_t)(clipMaximumX+0x0100)<(int32_t)projectionVectorScratch.positionA
         || (int32_t)(int16_t)(uint16_t)(clipMinimumY-0x0100)>(int32_t)projectionVectorScratch.positionB
         || (int32_t)(int16_t)(uint16_t)(clipMaximumY+0x0100)<(int32_t)projectionVectorScratch.positionB) return;
-    screenPolygonNeedsClip=1;drawPolygonFilled=1;
+    screenPolygonNeedsClip=true;drawPolygonFilled=true;
     uint8_t colour=graphicsColourMode?ellipse->colour:ellipse->alternateColour;
     drawLineColour=activePaletteRemap?activePaletteRemap[colour]:colour;
     if (!graphicsColourMode) drawLineColour&=0x1F;

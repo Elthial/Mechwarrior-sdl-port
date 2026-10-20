@@ -106,7 +106,7 @@ void BtechDrawLanceMapRetreatBoundaries(void)
     uint8_t secondVisible=BtechProjectPositionToOrderMap(&combatWorldBoundaryCorners[1],&right,&bottom);
     if (!firstVisible || !secondVisible) return;
     clipMinimumY=top;clipMaximumY=bottom;clipMinimumX=left;clipMaximumX=right;
-    screenPolygonNeedsClip=1;
+    screenPolygonNeedsClip=true;
     int16_t phase=(int16_t)((combatTickCounter&7)-4);
     if (combatLandscapeIndex>=COMBAT_LANDSCAPES || hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES) abort();
     const BtechLandscapeCameraColourRow *colours=&landscapeCameraColourRows[hudColourSchemeIndex][combatLandscapeIndex];

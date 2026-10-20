@@ -5,7 +5,7 @@
  * decisions. Non-horizontal split polygons still need0475; no flat substitute. */
 void BtechFillTiltedCameraHorizonRegions(uint16_t fillA,uint16_t fillB,uint16_t pitch,uint16_t roll)
 {
-    drawPolygonFilled=1;
+    drawPolygonFilled=true;
     if (pitch>0x4000 && pitch<=0xC000)
     {
         uint16_t saved=fillA;fillA=fillB;fillB=saved;
@@ -147,13 +147,13 @@ fillRegions: ;
     int16_t top=leftY<rightY?leftY:rightY,bottom=leftY>rightY?leftY:rightY;
     if (top!=clipMinimumY)
     {
-        drawLineColour=(uint8_t)fillA;drawFillColour=(uint8_t)fillA;screenPolygonNeedsClip=0;
+        drawLineColour=(uint8_t)fillA;drawFillColour=(uint8_t)fillA;screenPolygonNeedsClip=false;
         BtechDrawStyledRectangle((uint16_t)clipMinimumX,(uint16_t)clipMinimumY,
             (uint16_t)(clipMaximumX-clipMinimumX+1),(uint16_t)(top-clipMinimumY+1));
     }
     if (bottom<clipMaximumY)
     {
-        drawLineColour=(uint8_t)fillB;drawFillColour=(uint8_t)fillB;screenPolygonNeedsClip=0;
+        drawLineColour=(uint8_t)fillB;drawFillColour=(uint8_t)fillB;screenPolygonNeedsClip=false;
         BtechDrawStyledRectangle((uint16_t)clipMinimumX,(uint16_t)bottom,
             (uint16_t)(clipMaximumX-clipMinimumX+1),(uint16_t)(clipMaximumY-bottom+1));
     }
@@ -182,11 +182,11 @@ fillRegions: ;
             BtechDrawScreenPolygon(4,horizonPolygonX,horizonPolygonY);
         }
     }
-    screenPolygonNeedsClip=1;
+    screenPolygonNeedsClip=true;
     return;
 fillWhole:
-    drawLineColour=(uint8_t)wholeColour;drawFillColour=(uint8_t)wholeColour;screenPolygonNeedsClip=0;
+    drawLineColour=(uint8_t)wholeColour;drawFillColour=(uint8_t)wholeColour;screenPolygonNeedsClip=false;
     BtechDrawStyledRectangle((uint16_t)clipMinimumX,(uint16_t)clipMinimumY,
         (uint16_t)(clipMaximumX-clipMinimumX+1),(uint16_t)(clipMaximumY-clipMinimumY+1));
-    screenPolygonNeedsClip=1;
+    screenPolygonNeedsClip=true;
 }

@@ -6,6 +6,10 @@
 #include "mechwarrior/ega_campaign.h"
 #include <stdlib.h>
 
+enum { EVENT_PAGE_PANEL_X=0x001D, EVENT_PAGE_PANEL_Y=0x0017,
+    EVENT_PAGE_PANEL_WIDTH=0x0106, EVENT_PAGE_PANEL_HEIGHT=0x009A,
+    EVENT_PAGE_TEXT_X=0x001F, EVENT_PAGE_TEXT_Y=0x0019 };
+
 /* MW_MAIN081B:61CC..621E. FF asks0EF1 to skip THIS caller's return word:
  * the page remains visible and the actual text origin reaches the choice code.
  * Without FF,6210 overwrites AX with1AA5 before the next-page test. */
@@ -169,14 +173,14 @@ uint16_t MwRestartCampaignContinuation(void)
 MwTextPanelReturn MwShowClassThreeEventPages(uint16_t textId)
 {
     EgaSelectFont(0);
-    EgaFillDisplayPageRectangle(0x001D,0x0017,0x0106,0x009A,Campaign_Pal_EGA_Black);
+    EgaFillDisplayPageRectangle(EVENT_PAGE_PANEL_X,EVENT_PAGE_PANEL_Y,EVENT_PAGE_PANEL_WIDTH,EVENT_PAGE_PANEL_HEIGHT,Campaign_Pal_EGA_Black);
     if (textId>=EVENT_TEXT_DIRECTORY_COUNT || !eventTextRecords[textId]) abort();
     const uint8_t *page=eventTextRecords[textId];
     MwNativeByteView text={eventTextStorage,EVENT_TEXT_STORAGE_START,sizeof(eventTextStorage)};
     for (;;)
     {
         page+=sizeof(MwEventTextPageHeader);
-        uint16_t cursor=EgaDrawTextWithLineSpacing(0x001F,0x0019,Campaign_Pal_EGA_Green,&text,(uint16_t)(page-eventTextStorage+EVENT_TEXT_STORAGE_START));
+        uint16_t cursor=EgaDrawTextWithLineSpacing(EVENT_PAGE_TEXT_X,EVENT_PAGE_TEXT_Y,Campaign_Pal_EGA_Green,&text,(uint16_t)(page-eventTextStorage+EVENT_TEXT_STORAGE_START));
         page=&eventTextStorage[cursor-EVENT_TEXT_STORAGE_START+1];
         if (page>=eventTextStorage+sizeof(eventTextStorage)) abort();
         if (!*page)
@@ -185,7 +189,7 @@ MwTextPanelReturn MwShowClassThreeEventPages(uint16_t textId)
             return result; /* Register projection; no class03 choice consumes BX. */
         }
         MwWaitForInputAcknowledgment();
-        EgaFillDisplayPageRectangle(0x001D,0x0017,0x0106,0x009A,Campaign_Pal_EGA_Black);
+        EgaFillDisplayPageRectangle(EVENT_PAGE_PANEL_X,EVENT_PAGE_PANEL_Y,EVENT_PAGE_PANEL_WIDTH,EVENT_PAGE_PANEL_HEIGHT,Campaign_Pal_EGA_Black);
     }
 }
 

@@ -29,7 +29,7 @@ void BtechRenderCockpitSceneAndHud(void)
     BtechApplyBodyHeadingToMechParts();
     if (!torso) abort();
     BtechUpdatePlayerMechPose(&torso->object.prefix);
-    drawPolygonFilled=1;
+    drawPolygonFilled=true;
     cockpitWorldObjectCount=(uint16_t)BtechFilterNearbyWorldObjects(playerPoseCameraContext,worldObjects,
         (int16_t)worldObjectCount,cockpitWorldObjects,(int16_t)cockpitWorldObjectCount);
     BtechSortFarWorldObjectsForView(playerPoseCameraContext,cockpitWorldObjects,
@@ -52,7 +52,7 @@ void BtechRenderCockpitSceneAndHud(void)
     BtechRefreshCockpitAndSensorTarget();
     BtechDrawPendingFiringIndicator();
     BtechDrawCockpitBitmapPlacements();
-    textTransparentBackground=1;
+    textTransparentBackground=true;
     textForegroundColour=landscapeCameraColourRows[hudColourSchemeIndex][combatLandscapeIndex].hudReticleColour;
     uint16_t zoomX=COCKPIT_RIGHT_LABEL_X,automaticWeaponsX=COCKPIT_LEFT_LABEL_X;
     if (playerMechState->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
@@ -66,8 +66,8 @@ void BtechRenderCockpitSceneAndHud(void)
         textForegroundColour=COCKPIT_REACTOR_WARNING_COLOUR;
         BtechDrawNearText(reactorShutdownText,COCKPIT_REACTOR_WARNING_X,COCKPIT_REACTOR_WARNING_Y);
     }
-    textTransparentBackground=0;
-    BtechSwapScreenPages(0);
+    textTransparentBackground=false;
+    BtechSwapScreenPages(false);
     if (cockpitFullRedrawPending)
     {
         BtechSetOverscanColour(Combat_Pal_EGA_Black);
@@ -79,5 +79,5 @@ void BtechRenderCockpitSceneAndHud(void)
     else BtechPresentScreenRectangle(playerPoseCameraContext->clipMinimumA,playerPoseCameraContext->clipMinimumB,
         (uint16_t)(playerPoseCameraContext->clipMaximumA-playerPoseCameraContext->clipMinimumA),
         (uint16_t)(playerPoseCameraContext->clipMaximumB-playerPoseCameraContext->clipMinimumB+1));
-    drawPolygonFilled=1;screenPolygonNeedsClip=1;
+    drawPolygonFilled=true;screenPolygonNeedsClip=true;
 }

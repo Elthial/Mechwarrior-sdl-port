@@ -49,7 +49,7 @@ void BtechUpdateMechInspectionScreen(uint16_t unitSlot)
     drawPageSelector=backPageSelector;
     BtechDrawMechInspectionStatus();
     BtechDrawMechInspectionDiagramAndLegend();
-    BtechSwapScreenPages(0);
+    BtechSwapScreenPages(false);
     BtechPresentScreenRectangle(0,0,COMBAT_SCREEN_WIDTH,COMBAT_SCREEN_HEIGHT);
     if (combatDispatchState!=PLAYER_SCREEN_TARGET_INSPECTION && combatDispatchState!=PLAYER_SCREEN_INSPECTION)
     {
@@ -67,7 +67,7 @@ void BtechClearInspectionBackground(void)
     if (hudColourSchemeIndex)
     {
         drawPageSelector=backPageSelector;
-        drawPolygonFilled=1;screenPolygonNeedsClip=0;drawLineColour=Combat_Pal_EGA_Black;drawFillColour=Combat_Pal_EGA_Black;
+        drawPolygonFilled=true;screenPolygonNeedsClip=false;drawLineColour=Combat_Pal_EGA_Black;drawFillColour=Combat_Pal_EGA_Black;
         BtechDrawStyledRectangle(0,0,COMBAT_SCREEN_WIDTH,COMBAT_SCREEN_HEIGHT);
         BtechCopyHudRectangleIfReady(0,0,COMBAT_SCREEN_WIDTH,COMBAT_SCREEN_HEIGHT);
     }
@@ -81,7 +81,7 @@ void BtechDrawMechInspectionStatus(void)
     if (!mech || mech->templateIndex>=COMBAT_MECH_TEMPLATES || hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES) abort();
     const BtechMechTemplate *chassis=&mechTemplates[mech->templateIndex];
     const BtechHudColourScheme *colours=&hudColourSchemes[hudColourSchemeIndex];
-    screenPolygonNeedsClip=0;drawFillColour=(uint8_t)colours->inspectionBackground;drawLineColour=Combat_Pal_EGA_Black;
+    screenPolygonNeedsClip=false;drawFillColour=(uint8_t)colours->inspectionBackground;drawLineColour=Combat_Pal_EGA_Black;
     BtechDrawStyledRectangle(0,0,COMBAT_SCREEN_WIDTH,COMBAT_SCREEN_HEIGHT);
     BtechDrawClippedLine(INSPECTION_DIVIDER_X,0,INSPECTION_DIVIDER_X,COMBAT_SCREEN_HEIGHT);
     textForegroundColour=(uint8_t)colours->inspectionMechName;textBackgroundColour=Combat_Pal_EGA_Black;

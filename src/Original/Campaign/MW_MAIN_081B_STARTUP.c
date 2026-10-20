@@ -9,6 +9,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+enum { PROTECTION_PANEL_Y=0x0074, PROTECTION_PANEL_HEIGHT=0x0054,
+    PROTECTION_PROMPT_X=0x000C, PROTECTION_PROMPT_Y=0x0080,
+    PROTECTION_MECH_PICTURE_X=0x00F0, PROTECTION_MECH_PICTURE_Y=0x007C,
+    PROTECTION_CALLSIGN_X=0x0054, PROTECTION_CALLSIGN_Y=0x00AA };
+
 /* The unconverted Tandy branch uses its16-colour register codes. */
 enum { TANDY_PALETTE_DARK_GREY=0x08, TANDY_PALETTE_WHITE=0x0F };
 
@@ -684,18 +689,18 @@ uint16_t MwRunCopyProtectionAndInitializeCampaign(uint16_t entryOffset)
     (void)MwLoadBarDeathAndLaunchMusic();
     copyProtectionSelection=MwRandomUpTo(COPY_PROTECTION_MECH_COUNT-1);
     uint16_t pictureSelector=MwLoadIndexedPicture(copyProtectionPictureIndices[copyProtectionSelection]);
-    EgaFillDisplayPageRectangle(0,0x0074,EGA_COLUMNS,0x0054,Campaign_Pal_EGA_DarkGrey);
-    MwDrawPicturePanelBorder(0,0x0074,EGA_COLUMNS,0x0054);
+    EgaFillDisplayPageRectangle(0,PROTECTION_PANEL_Y,EGA_COLUMNS,PROTECTION_PANEL_HEIGHT,Campaign_Pal_EGA_DarkGrey);
+    MwDrawPicturePanelBorder(0,PROTECTION_PANEL_Y,EGA_COLUMNS,PROTECTION_PANEL_HEIGHT);
     EgaSelectFont(0);
     MwNativeByteView prompt={(const uint8_t *)copyProtectionPrompt,0,sizeof(copyProtectionPrompt)};
-    (void)EgaDrawTransparentText(0x000C,0x0080,Campaign_Pal_EGA_LightRed,&prompt,0);
-    (void)EgaDrawPackedSprite(0x00F0,0x007C,EGA_DISPLAY_PAGE,0,pictureSelector);
+    (void)EgaDrawTransparentText(PROTECTION_PROMPT_X,PROTECTION_PROMPT_Y,Campaign_Pal_EGA_LightRed,&prompt,0);
+    (void)EgaDrawPackedSprite(PROTECTION_MECH_PICTURE_X,PROTECTION_MECH_PICTURE_Y,EGA_DISPLAY_PAGE,0,pictureSelector);
     /* Native stores BYTE displacement into two parallel WORD directories. */
     uint16_t callsignRowByteOffset=copyProtectionSelection*COPY_PROTECTION_CALLSIGNS_PER_MECH*sizeof(uint16_t);
     copyProtectionSelection=callsignRowByteOffset+MwRandomUpTo(COPY_PROTECTION_CALLSIGNS_PER_MECH-1)*sizeof(uint16_t);
     uint16_t question=copyProtectionSelection/sizeof(uint16_t);
     MwNativeByteView callsign={(const uint8_t *)copyProtectionCallsigns[question],0,COPY_PROTECTION_TEXT_CAPACITY};
-    (void)EgaDrawTransparentText(0x0054,0x00AA,Campaign_Pal_EGA_LightGrey,&callsign,0);
+    (void)EgaDrawTransparentText(PROTECTION_CALLSIGN_X,PROTECTION_CALLSIGN_Y,Campaign_Pal_EGA_LightGrey,&callsign,0);
     /*174A..174C NOP: there is intentionally no keyboard answer-entry call. */
     EgaCopyDrawPageToDisplay(0,0,EGA_COLUMNS,EGA_ROWS);
     uint16_t answerIndex=0;

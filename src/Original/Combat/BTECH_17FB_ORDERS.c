@@ -59,7 +59,7 @@ uint16_t BtechGetMechConditionColour(int16_t unitSlot)
 void BtechUpdateLanceOrderHighlight(void)
 {
     if (!unitBindings[1].mech) return;
-    drawPolygonFilled=0;drawPageSelector=backPageSelector;
+    drawPolygonFilled=false;drawPageSelector=backPageSelector;
     if ((int16_t)previousOrderHighlightRow>=0)
     {
         drawFillColour=Combat_Pal_EGA_Black;
@@ -87,11 +87,11 @@ void BtechUpdateLanceOrderHighlight(void)
 /*17FB:16A7. Clear panel body but not its heading; leave outline mode set. */
 void BtechClearLanceOrderPanel(uint16_t panelIndex)
 {
-    drawPageSelector=backPageSelector;drawPolygonFilled=1;
+    drawPageSelector=backPageSelector;drawPolygonFilled=true;
     drawFillColour=Combat_Pal_EGA_Black;drawLineColour=Combat_Pal_EGA_Black;
     if (panelIndex>=ORDER_WINGMATE_PANELS) abort();
     BtechDrawStyledRectangle((uint16_t)(lanceOrderPanelTextX[panelIndex]-ORDER_PANEL_INSET),ORDER_PANEL_TOP,ORDER_PANEL_WIDTH,ORDER_PANEL_HEIGHT);
-    drawPolygonFilled=0;
+    drawPolygonFilled=false;
 }
 
 /*17FB:0CFE. Command codes and editor panel modes are different domains.

@@ -40,7 +40,7 @@ uint16_t BtechShowCapturedTwoLineDialog(const BtechDialogMessagePair *message)
     {
         drawPageSelector=frontPageSelector;copySourcePageSelector=frontPageSelector;
         BtechCaptureScreenRectangle(capture,DIALOG_LEFT,DIALOG_TOP,DIALOG_WIDTH,DIALOG_HEIGHT);
-        screenPolygonNeedsClip=0;drawPolygonFilled=1;textTransparentBackground=1;
+        screenPolygonNeedsClip=false;drawPolygonFilled=true;textTransparentBackground=true;
         textForegroundColour=hudColourSchemeIndex?DIALOG_MONOCHROME_TEXT_COLOUR:DIALOG_TEXT_COLOUR;
         if (!promptBitmaps || !promptBitmaps->images || !promptBitmaps->imageCount) abort();
         BtechDrawBitmap(&promptBitmaps->images[0],DIALOG_LEFT,DIALOG_TOP);
@@ -48,7 +48,7 @@ uint16_t BtechShowCapturedTwoLineDialog(const BtechDialogMessagePair *message)
         BtechDrawNearText(message->firstText,(int16_t)(uint16_t)(DIALOG_CENTRE_X-textHalfWidth),DIALOG_FIRST_TEXT_Y);
         textHalfWidth=(uint16_t)(strlen(message->secondText)*DIALOG_HALF_CHARACTER_WIDTH);
         BtechDrawNearText(message->secondText,(int16_t)(uint16_t)(DIALOG_CENTRE_X-textHalfWidth),DIALOG_SECOND_TEXT_Y);
-        textTransparentBackground=0;
+        textTransparentBackground=false;
     }
     BtechWaitForCombatInputReleaseThenPress();
     uint16_t scanCode=combatInputScanCode;

@@ -22,12 +22,12 @@ void BtechRefreshLanceOrderScreen(void)
     if (orderScreenFullRedrawPending)
     {
         cockpitFullRedrawPending=0;
-        screenPolygonNeedsClip=0;
+        screenPolygonNeedsClip=false;
         BtechLoadScreenImage("map.scr",NULL);
         if (reducedMemoryMode)
         {
             drawLineColour=ORDER_PANEL_BACKGROUND;drawFillColour=ORDER_PANEL_BACKGROUND;
-            drawPolygonFilled=1;
+            drawPolygonFilled=true;
             BtechDrawStyledRectangle(ORDER_REDUCED_PANEL_X,ORDER_REDUCED_PANEL_Y,ORDER_REDUCED_PANEL_WIDTH,ORDER_REDUCED_PANEL_HEIGHT);
             drawFillColour=ORDER_PANEL_SHADOW;
             BtechDrawClippedLine(ORDER_REDUCED_BORDER_LEFT,ORDER_REDUCED_BORDER_TOP,ORDER_REDUCED_BORDER_RIGHT,ORDER_REDUCED_BORDER_TOP);
@@ -63,7 +63,7 @@ void BtechRefreshLanceOrderScreen(void)
     }
     orderMapCameraObject->object.prefix.position.positionC=
         BtechShiftDwordLeftPair(1,orderMapScaleShifts[orderMapScaleIndex]);
-    drawPolygonFilled=1;drawPageSelector=backPageSelector;
+    drawPolygonFilled=true;drawPageSelector=backPageSelector;
     if (redrawRequired)
     {
         BtechRenderObjectListVeneer(orderMapCameraContext,selectedWorldObjects,(int16_t)selectedObjectCount);
@@ -83,7 +83,7 @@ void BtechRefreshLanceOrderScreen(void)
     }
     for (uint16_t panel=0;panel<ORDER_WINGMATE_PANELS;++panel)
         lanceOrderControls[panel]=unitBindings[panel+1].mech?&unitControls[panel+1]:NULL;
-    screenPolygonNeedsClip=0;
+    screenPolygonNeedsClip=false;
     BtechDrawLanceMapUnitMarkers();
     if (lanceOrderControls[0])
     {
@@ -103,22 +103,22 @@ void BtechRefreshLanceOrderScreen(void)
                 BtechDrawClippedLine(unitOrderMapScreenX[unitSlot],unitOrderMapScreenY[unitSlot],trackedX,trackedY);
                 if ((orderPanelMode==ORDER_PANEL_DESTINATION || orderPanelMode==ORDER_PANEL_TARGET) && (combatTickCounter&ORDER_DESTINATION_BLINK_MASK))
                 {
-                    drawFillColour=Combat_Pal_EGA_Black;drawPolygonFilled=0;
+                    drawFillColour=Combat_Pal_EGA_Black;drawPolygonFilled=false;
                     BtechDrawStyledRectangle((uint16_t)(trackedX-ORDER_DESTINATION_MARKER_INSET),(uint16_t)(trackedY-ORDER_DESTINATION_MARKER_INSET),ORDER_DESTINATION_MARKER_SIZE,ORDER_DESTINATION_MARKER_SIZE);
                 }
             }
         }
     }
     if (orderMapScaleIndex==ORDER_MAP_FULL_SCALE) BtechDrawLanceMapRetreatBoundaries();
-    screenPolygonNeedsClip=0;drawPolygonFilled=0;
+    screenPolygonNeedsClip=false;drawPolygonFilled=false;
     previousOrderMapScaleIndex=orderMapScaleIndex;
     BtechEditSelectedUnitOrders();
     if (combatDispatchState!=PLAYER_SCREEN_ORDERS)
-    {screenPolygonNeedsClip=1;drawPolygonFilled=1;return;}
+    {screenPolygonNeedsClip=true;drawPolygonFilled=true;return;}
     BtechDrawUnitOrderPanels();
     while (BtechGetActiveRuntimeDelayFar())
     {if (!btechHostPollInterrupts) abort();btechHostPollInterrupts();}
-    BtechSwapScreenPages(0);
+    BtechSwapScreenPages(false);
     if (orderScreenFullRedrawPending)
     {
         BtechPresentScreenRectangle(0,0,COMBAT_SCREEN_WIDTH,COMBAT_SCREEN_HEIGHT);

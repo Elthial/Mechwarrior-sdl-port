@@ -57,7 +57,7 @@ uint16_t BtechDrawStyledRectangle(uint16_t left,uint16_t top,uint16_t width,uint
     }
     if (!drawPolygonFilled || drawFillColour!=drawLineColour)
     {
-        uint8_t savedClip=screenPolygonNeedsClip;screenPolygonNeedsClip=0;
+        uint8_t savedClip=screenPolygonNeedsClip;screenPolygonNeedsClip=false;
         if (!(clippedSides&1))
         {
             BtechDrawClippedLine((int16_t)left,(int16_t)top,(int16_t)left,(int16_t)(uint16_t)(top+height-1));
