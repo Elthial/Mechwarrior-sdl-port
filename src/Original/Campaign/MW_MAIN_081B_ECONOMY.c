@@ -49,8 +49,8 @@ void MwGenerateUnitStock(uint16_t stockKindRangeIndex, uint16_t tierThreeRolls,
     do
     {
         uint16_t bodyLocation = MwRandomUpTo(CAMPAIGN_BODY_LOCATION_COUNT - 1);
-        uint8_t damageTier = (MwRandomUpTo(STOCK_BODY_TIER_MAXIMUM) | 1) & STOCK_BODY_TIER_MAXIMUM;
-        generatedMechDamage.bodyDamageTiers[bodyLocation] = damageTier;
+        generatedMechDamage.bodyDamageTiers[bodyLocation] =
+            (MwRandomUpTo(STOCK_BODY_TIER_MAXIMUM) | 1) & STOCK_BODY_TIER_MAXIMUM;
     } while (--bodyRollsRemaining != 0);
     if (generateStartingJenner == STOCK_FORCE_STARTER_MECH)
     {

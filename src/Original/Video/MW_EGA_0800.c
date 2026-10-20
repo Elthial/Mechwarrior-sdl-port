@@ -543,15 +543,15 @@ void EgaDrawLine(uint8_t colour, uint16_t startY, uint16_t endX, uint16_t startX
     do
     {
         EgaDrawSavedLinePixel();
-        if (yMajor)currentY=(uint16_t)(currentY+yStep);
+        if (yMajor)currentY += yStep;
         else ++egaCurrentX;
-        errorAccumulator=(uint16_t)(errorAccumulator+minorDistance);
+        errorAccumulator += minorDistance;
         // Native CMP DX,BP / JLE: signed comparison AFTER16-bit ADD wrapping.
         if ((int16_t)errorAccumulator>(int16_t)halfMajorDistance)
         {
-            errorAccumulator=(uint16_t)(errorAccumulator-majorPixelCount);
+            errorAccumulator -= majorPixelCount;
             if (yMajor)++egaCurrentX;
-            else currentY=(uint16_t)(currentY+yStep);
+            else currentY += yStep;
         }
         --remainingPixels;
     }while (remainingPixels!=0x0000);

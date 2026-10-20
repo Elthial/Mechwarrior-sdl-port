@@ -18,9 +18,9 @@ void BtechAccumulateVerticalPolygonEdge(int16_t firstY,int16_t fixedX,int16_t se
         if (row>=COMBAT_SCREEN_HEIGHT || (polygonSpanBoundaryByteOffset!=0 && polygonSpanBoundaryByteOffset!=2)) abort();
         if (polygonSpanBoundaryByteOffset) polygonScanlineSpans[row].endpoints.right=currentX;
         else polygonScanlineSpans[row].endpoints.left=currentX;
-        row=(uint16_t)(row+rowStep);
+        row += rowStep;
         uint32_t sum=(uint32_t)fraction+fractionStep;
-        fraction=(uint16_t)sum;currentX=(uint16_t)(currentX+integerStep+(sum>>16));
+        fraction=(uint16_t)sum;currentX += integerStep+(sum>>16);
     }
 }
 
@@ -49,9 +49,9 @@ void BtechAccumulateYMajorPolygonEdge(int16_t firstY,int16_t firstX,int16_t seco
         if (row>=COMBAT_SCREEN_HEIGHT || (polygonSpanBoundaryByteOffset!=0 && polygonSpanBoundaryByteOffset!=2)) abort();
         if (polygonSpanBoundaryByteOffset) polygonScanlineSpans[row].endpoints.right=currentX;
         else polygonScanlineSpans[row].endpoints.left=currentX;
-        row=(uint16_t)(row+rowStep);
+        row += rowStep;
         uint32_t sum=(uint32_t)fraction+fractionStep;
-        fraction=(uint16_t)sum;currentX=(uint16_t)(currentX+integerStep+(sum>>16));
+        fraction=(uint16_t)sum;currentX += integerStep+(sum>>16);
     }
 }
 
@@ -73,9 +73,9 @@ void BtechAccumulateDiagonalPolygonEdge(int16_t firstY,int16_t firstX,int16_t se
         if (row>=COMBAT_SCREEN_HEIGHT || (polygonSpanBoundaryByteOffset!=0 && polygonSpanBoundaryByteOffset!=2)) abort();
         if (polygonSpanBoundaryByteOffset) polygonScanlineSpans[row].endpoints.right=currentX;
         else polygonScanlineSpans[row].endpoints.left=currentX;
-        row=(uint16_t)(row+rowStep);
+        row += rowStep;
         uint32_t sum=(uint32_t)fraction+fractionStep;
-        fraction=(uint16_t)sum;currentX=(uint16_t)(currentX+integerStep+(sum>>16));
+        fraction=(uint16_t)sum;currentX += integerStep+(sum>>16);
     }
 }
 
@@ -106,9 +106,9 @@ void BtechAccumulateDescendingXMajorPolygonEdge(int16_t firstY,int16_t firstX,in
         if (row>=COMBAT_SCREEN_HEIGHT || (polygonSpanBoundaryByteOffset!=0 && polygonSpanBoundaryByteOffset!=2)) abort();
         if (polygonSpanBoundaryByteOffset) polygonScanlineSpans[row].endpoints.right=currentX;
         else polygonScanlineSpans[row].endpoints.left=currentX;
-        row=(uint16_t)(row+rowStep);
+        row += rowStep;
         uint32_t sum=(uint32_t)fraction+fractionStep;
-        fraction=(uint16_t)sum;currentX=(uint16_t)(currentX+integerStep+(sum>>16));
+        fraction=(uint16_t)sum;currentX += integerStep+(sum>>16);
     }
 }
 
@@ -137,8 +137,8 @@ void BtechAccumulateAscendingXMajorPolygonEdge(int16_t firstY,int16_t firstX,int
         if (row>=COMBAT_SCREEN_HEIGHT || (polygonSpanBoundaryByteOffset!=0 && polygonSpanBoundaryByteOffset!=2)) abort();
         if (polygonSpanBoundaryByteOffset) polygonScanlineSpans[row].endpoints.right=currentX;
         else polygonScanlineSpans[row].endpoints.left=currentX;
-        row=(uint16_t)(row+rowStep);
+        row += rowStep;
         uint32_t sum=(uint32_t)fraction+fractionStep;
-        fraction=(uint16_t)sum;currentX=(uint16_t)(currentX+integerStep+(sum>>16));
+        fraction=(uint16_t)sum;currentX += integerStep+(sum>>16);
     }
 }

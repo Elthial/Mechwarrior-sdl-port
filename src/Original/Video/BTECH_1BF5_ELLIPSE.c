@@ -89,9 +89,9 @@ void BtechDrawStyledEllipse(int16_t radius, uint16_t centerX, uint16_t centerY)
         {
             uint16_t skippedRows=clipMinimumY-firstRow;
             int32_t difference=(int16_t)rows-(int16_t)skippedRows;
-            rows=(uint16_t)(rows-skippedRows);
+            rows -= skippedRows;
             if (difference<=0x0000)goto lowerHalf;
-            tableRow=(uint16_t)(tableRow+skippedRows);firstRow=clipMinimumY;
+            tableRow += skippedRows;firstRow=clipMinimumY;
         }
         if ((uint16_t)(rows+firstRow)>(uint16_t)clipMaximumY)
         {
@@ -116,19 +116,19 @@ void BtechDrawStyledEllipse(int16_t radius, uint16_t centerX, uint16_t centerY)
             if ((int8_t)edge>(int8_t)clipRight)goto upperRowDone;
             if ((int8_t)edge<(int8_t)clipLeft)
             {
-                edge=(uint8_t)(edge-clipLeft);
+                edge -= clipLeft;
                 int16_t signedSum=(int8_t)width+(int8_t)edge;
-                width=(uint8_t)(width+edge);
+                width += edge;
                 if (signedSum<=0x0000)
                 {edge=(uint8_t)(width+clipLeft);goto upperInterior;}
                 edge=clipLeft;
             }
-            width=(uint8_t)(width+edge);
+            width += edge;
             if (width>clipRight)width=clipRight;
-            width=(uint8_t)(width-edge);
+            width -= edge;
             {
                 uint16_t startX=leftX+(uint16_t)edge;
-                edge=(uint8_t)(edge+width); // Saved AX contains next edge, not pattern.
+                edge += width; // Saved AX contains next edge, not pattern.
                 if (!graphicsFillSolidSpan) abort();
                 graphicsFillSolidSpan(drawColourPattern,startX,(int16_t)width,scanlineOffset,page);
             }
@@ -136,23 +136,23 @@ upperInterior:
             width=ellipseInteriorWidths[tableRow];
             if (width==0x00)goto upperRowDone;
             if (drawPolygonFilled==0x00)
-            {edge=(uint8_t)(edge+width);goto upperRightBorder;}
+            {edge += width;goto upperRightBorder;}
             if ((int8_t)edge>(int8_t)clipRight)goto upperRowDone;
             if ((int8_t)edge<(int8_t)clipLeft)
             {
-                edge=(uint8_t)(edge-clipLeft);
+                edge -= clipLeft;
                 int16_t signedSum=(int8_t)width+(int8_t)edge;
-                width=(uint8_t)(width+edge);
+                width += edge;
                 if (signedSum<=0x0000)
                 {edge=(uint8_t)(width+clipLeft);goto upperRightBorder;}
                 edge=clipLeft;
             }
-            width=(uint8_t)(width+edge);
+            width += edge;
             if (width>clipRight)width=clipRight;
-            width=(uint8_t)(width-edge);
+            width -= edge;
             {
                 uint16_t startX=leftX+(uint16_t)edge;
-                edge=(uint8_t)(edge+width);
+                edge += width;
                 // DX receives PRIMARY, AX SECONDARY; do not swap these patterns.
                 if (shapeSpanCallback.alternating)
                     shapeSpanCallback.alternating(spanSecondaryPattern,startX,(int16_t)width,spanPrimaryPattern,scanlineOffset,page);
@@ -167,15 +167,15 @@ upperRightBorder:
             if ((int8_t)edge>(int8_t)clipRight)goto upperRowDone;
             if ((int8_t)edge<(int8_t)clipLeft)
             {
-                edge=(uint8_t)(edge-clipLeft);
+                edge -= clipLeft;
                 int16_t signedSum=(int8_t)width+(int8_t)edge;
-                width=(uint8_t)(width+edge);
+                width += edge;
                 if (signedSum<=0x0000)goto upperRowDone;
                 edge=clipLeft;
             }
-            width=(uint8_t)(width+edge);
+            width += edge;
             if (width>clipRight)width=clipRight;
-            width=(uint8_t)(width-edge);
+            width -= edge;
             if (!graphicsFillSolidSpan) abort();
             graphicsFillSolidSpan(drawColourPattern,(uint16_t)(leftX+(uint16_t)edge),(int16_t)width,scanlineOffset,page);
 upperRowDone:
@@ -197,9 +197,9 @@ lowerHalf:
         if ((int16_t)clipMinimumY>(int16_t)firstRow)
         {
             uint16_t skippedRows=clipMinimumY-firstRow;
-            rows=(uint16_t)(rows-skippedRows);
+            rows -= skippedRows;
             int32_t difference=(int16_t)tableRow-(int16_t)skippedRows;
-            tableRow=(uint16_t)(tableRow-skippedRows);
+            tableRow -= skippedRows;
             if (difference<=0x0000)return; // Native tests SI, not remaining CX.
             firstRow=clipMinimumY;
         }
@@ -227,19 +227,19 @@ lowerHalf:
             if ((int8_t)edge>(int8_t)clipRight)goto lowerRowDone;
             if ((int8_t)edge<(int8_t)clipLeft)
             {
-                edge=(uint8_t)(edge-clipLeft);
+                edge -= clipLeft;
                 int16_t signedSum=(int8_t)width+(int8_t)edge;
-                width=(uint8_t)(width+edge);
+                width += edge;
                 if (signedSum<=0x0000)
                 {edge=(uint8_t)(width+clipLeft);goto lowerInterior;}
                 edge=clipLeft;
             }
-            width=(uint8_t)(width+edge);
+            width += edge;
             if (width>clipRight)width=clipRight;
-            width=(uint8_t)(width-edge);
+            width -= edge;
             {
                 uint16_t startX=leftX+(uint16_t)edge;
-                edge=(uint8_t)(edge+width); // Saved AX contains next edge, not pattern.
+                edge += width; // Saved AX contains next edge, not pattern.
                 if (!graphicsFillSolidSpan) abort();
                 graphicsFillSolidSpan(drawColourPattern,startX,(int16_t)width,scanlineOffset,page);
             }
@@ -247,23 +247,23 @@ lowerInterior:
             width=ellipseInteriorWidths[tableRow];
             if (width==0x00)goto lowerRowDone;
             if (drawPolygonFilled==0x00)
-            {edge=(uint8_t)(edge+width);goto lowerRightBorder;}
+            {edge += width;goto lowerRightBorder;}
             if ((int8_t)edge>(int8_t)clipRight)goto lowerRowDone;
             if ((int8_t)edge<(int8_t)clipLeft)
             {
-                edge=(uint8_t)(edge-clipLeft);
+                edge -= clipLeft;
                 int16_t signedSum=(int8_t)width+(int8_t)edge;
-                width=(uint8_t)(width+edge);
+                width += edge;
                 if (signedSum<=0x0000)
                 {edge=(uint8_t)(width+clipLeft);goto lowerRightBorder;}
                 edge=clipLeft;
             }
-            width=(uint8_t)(width+edge);
+            width += edge;
             if (width>clipRight)width=clipRight;
-            width=(uint8_t)(width-edge);
+            width -= edge;
             {
                 uint16_t startX=leftX+(uint16_t)edge;
-                edge=(uint8_t)(edge+width);
+                edge += width;
                 // DX receives PRIMARY, AX SECONDARY; do not swap these patterns.
                 if (shapeSpanCallback.alternating)
                     shapeSpanCallback.alternating(spanSecondaryPattern,startX,(int16_t)width,spanPrimaryPattern,scanlineOffset,page);
@@ -278,15 +278,15 @@ lowerRightBorder:
             if ((int8_t)edge>(int8_t)clipRight)goto lowerRowDone;
             if ((int8_t)edge<(int8_t)clipLeft)
             {
-                edge=(uint8_t)(edge-clipLeft);
+                edge -= clipLeft;
                 int16_t signedSum=(int8_t)width+(int8_t)edge;
-                width=(uint8_t)(width+edge);
+                width += edge;
                 if (signedSum<=0x0000)goto lowerRowDone;
                 edge=clipLeft;
             }
-            width=(uint8_t)(width+edge);
+            width += edge;
             if (width>clipRight)width=clipRight;
-            width=(uint8_t)(width-edge);
+            width -= edge;
             if (!graphicsFillSolidSpan) abort();
             graphicsFillSolidSpan(drawColourPattern,(uint16_t)(leftX+(uint16_t)edge),(int16_t)width,scanlineOffset,page);
 lowerRowDone:

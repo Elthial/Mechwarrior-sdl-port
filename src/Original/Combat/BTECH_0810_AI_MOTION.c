@@ -45,8 +45,8 @@ void BtechSetActiveUnitGroundOrJumpMotion(uint16_t desiredHeading,uint16_t direc
     int16_t acceleration=requested-previous;
     if (acceleration>AI_GROUND_ACCELERATION_MAXIMUM) acceleration=AI_GROUND_ACCELERATION_MAXIMUM;
     activeUnitPositionedObject->forwardStepScale=previous+acceleration;
-    int16_t turn=BtechClampSignedDifferenceStep(desiredHeading,activeUnitPositionedObject->object.prefix.orientationC,AI_GROUND_TURN_LIMIT);
-    activeUnitPositionedObject->orientationSteps[2]=turn;
+    activeUnitPositionedObject->orientationSteps[2]=BtechClampSignedDifferenceStep(
+        desiredHeading,activeUnitPositionedObject->object.prefix.orientationC,AI_GROUND_TURN_LIMIT);
 }
 
 /*0810:85BA. Jump controls use a saved chassis reference and shared5416 height.

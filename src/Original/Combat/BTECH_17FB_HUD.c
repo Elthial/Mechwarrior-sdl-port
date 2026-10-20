@@ -51,8 +51,8 @@ void BtechDrawCockpitHeadingStrip(uint16_t bodyHeading,int16_t torsoTwist)
         HEADING_STRIP_LEFT=0x78,HEADING_STRIP_RIGHT=0xC7,HEADING_LABELS_DRAWN=4 };
     int16_t savedMinimumX=clipMinimumX,savedMaximumX=clipMaximumX;
     if (combatLandscapeIndex>=COMBAT_LANDSCAPES || hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES) abort();
-    uint8_t colour=landscapeCameraColourRows[hudColourSchemeIndex][combatLandscapeIndex].hudReticleColour;
-    egaBitmapEnabledPlanes=colour;drawFillColour=colour;
+    drawFillColour=egaBitmapEnabledPlanes=
+        landscapeCameraColourRows[hudColourSchemeIndex][combatLandscapeIndex].hudReticleColour;
     clipMinimumX=HEADING_STRIP_LEFT;clipMaximumX=HEADING_STRIP_RIGHT;screenPolygonNeedsClip=true;
     if (!unitBindings[0].mech || unitBindings[0].mech->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
     uint16_t layoutIndex=mechCockpitLayoutIndices[unitBindings[0].mech->templateIndex];

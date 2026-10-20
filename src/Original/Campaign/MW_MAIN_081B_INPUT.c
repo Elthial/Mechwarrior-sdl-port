@@ -181,7 +181,7 @@ uint16_t MwReadCampaignTextInput(uint16_t x,uint16_t y,uint16_t capacity,
         {
             if (textInputLength==0) continue;
             campaignTextInputBuffer[--textInputLength]=0;MwEraseTextInputCursor();
-            textInputCursorX=(uint16_t)(textInputCursorX-selectedGlyphAdvance);continue;
+            textInputCursorX -= selectedGlyphAdvance;continue;
         }
         if (key==CAMPAIGN_KEY_ESCAPE)
         {
@@ -191,9 +191,9 @@ uint16_t MwReadCampaignTextInput(uint16_t x,uint16_t y,uint16_t capacity,
         }
         uint8_t character=key;
         if (character<' ' || character>'z') continue;
-        if (character>='a') character=(uint8_t)(character-ASCII_CASE_DISTANCE);
+        if (character>='a') character -= ASCII_CASE_DISTANCE;
         if (textInputLength==textInputMaximumIndex) continue;
-        if (character>='a') character=(uint8_t)(character-CAMPAIGN_TEXT_SECOND_CASE_ADJUSTMENT);
+        if (character>='a') character -= CAMPAIGN_TEXT_SECOND_CASE_ADJUSTMENT;
         campaignTextInputBuffer[textInputLength++]=character;
         MwEraseTextInputCursor();
         textInputCursorX=EgaDrawCharacter(textInputCursorX,&textInputCursorY,

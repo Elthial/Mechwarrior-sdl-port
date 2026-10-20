@@ -92,8 +92,8 @@ void BtechEgaDrawGlyph(uint16_t character,uint16_t x,uint16_t y,uint16_t page)
                 }
                 cursor++;
             } while (--bytesRemaining!=0x00); // BYTE0 means256 copies.
-            cursor=(uint16_t)(cursor-bytesPerRow);
-            cursor=(uint16_t)(cursor+COMBAT_SCREEN_ROW_BYTES);
+            cursor -= bytesPerRow;
+            cursor += COMBAT_SCREEN_ROW_BYTES;
         } while (--rowsRemaining!=0x00); // Height0 means256 rows.
         return;
     }
@@ -216,8 +216,8 @@ void BtechEgaDrawGlyph(uint16_t character,uint16_t x,uint16_t y,uint16_t page)
         }
         uint16_t rowBytes=bytesPerRow;
         if (shift!=0x00&&transparent)++rowBytes;
-        cursor=(uint16_t)(cursor-rowBytes);
-        cursor=(uint16_t)(cursor+COMBAT_SCREEN_ROW_BYTES);
+        cursor -= rowBytes;
+        cursor += COMBAT_SCREEN_ROW_BYTES;
     } while (--rowsRemaining!=0x00);
     // EGA leaves the final bitmask in place; it does not restore FF or change write mode.
 }

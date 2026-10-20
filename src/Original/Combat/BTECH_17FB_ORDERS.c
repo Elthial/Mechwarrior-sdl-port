@@ -46,8 +46,8 @@ uint16_t BtechGetMechConditionColour(int16_t unitSlot)
     int32_t quotient=(int16_t)(current*ORDER_CONDITION_SCALE)/(int16_t)maximum;
     if (quotient<INT16_MIN || quotient>INT16_MAX) abort();
     int16_t band=quotient;
-    if (mech->sensorHits==COMBAT_SENSORS_DESTROYED_HITS) band=(int16_t)(band-1);
-    if (mech->lifeSupportHits==1) band=(int16_t)(band-1);
+    if (mech->sensorHits==COMBAT_SENSORS_DESTROYED_HITS) --band;
+    if (mech->lifeSupportHits==1) --band;
     if (mech->engineHits==COMBAT_ENGINE_HIT_LIMIT || mech->gyroHits==COMBAT_GYRO_DESTROYED_HITS || mech->cockpitDisabled==1) band=0;
     if (band<0 || (uint16_t)unitControls[unitSlot].combatValueOrBoundaryCode==COMBAT_DISABLED_UNIT_VALUE) band=0;
     if (hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES || band>=ORDER_CONDITION_BANDS) abort(); /* Unsupported upper-band adjacent palette alias. */

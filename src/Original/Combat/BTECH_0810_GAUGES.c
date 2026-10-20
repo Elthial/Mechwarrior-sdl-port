@@ -103,8 +103,9 @@ void BtechUpdateJumpChargeGauge(int16_t jumpCharge)
     if (layoutIndex>=COMBAT_COCKPIT_LAYOUTS || hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES) abort();
     const BtechHudGaugeAnchor *gauge=&cockpitLayouts[layoutIndex].jumpChargeGauge;
     uint16_t belowThreshold=jumpCharge<JUMP_GAUGE_READY_CHARGE;
-    uint8_t thresholdColour=belowThreshold?hudColourSchemes[hudColourSchemeIndex].jumpBelowThreshold:hudColourSchemes[hudColourSchemeIndex].jumpCharged;
-    drawLineColour=thresholdColour;drawFillColour=thresholdColour;
+    drawFillColour=drawLineColour=belowThreshold?
+        hudColourSchemes[hudColourSchemeIndex].jumpBelowThreshold:
+        hudColourSchemes[hudColourSchemeIndex].jumpCharged;
     BtechDrawStyledRectangle((uint16_t)(gauge->x+JUMP_LAMP_X_INSET),JUMP_LAMP_Y,JUMP_LAMP_SIZE,JUMP_LAMP_SIZE);
     if (!hudColourSchemeIndex)
     {

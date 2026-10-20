@@ -61,9 +61,8 @@ void BtechApplyLandscapeCameraColours(void)
         || !playerPoseCameraContext || !orderMapCameraContext) abort(); /* Unrecovered unrelated-owner aliases. */
     playerPoseCameraContext->fillPaletteA=playerCameraFillASuppressed?0:
         landscapeCameraColourRows[hudColourSchemeIndex][combatLandscapeIndex].playerFillPaletteA;
-    uint8_t sharedPalette=landscapeCameraColourRows[hudColourSchemeIndex][combatLandscapeIndex].sharedFillPaletteB;
-    orderMapCameraContext->fillPaletteB=sharedPalette;
-    playerPoseCameraContext->fillPaletteB=sharedPalette;
+    playerPoseCameraContext->fillPaletteB=orderMapCameraContext->fillPaletteB=
+        landscapeCameraColourRows[hudColourSchemeIndex][combatLandscapeIndex].sharedFillPaletteB;
     BtechSelectPaletteSlot(landscapePaletteSlots[combatLandscapeIndex]);
 }
 

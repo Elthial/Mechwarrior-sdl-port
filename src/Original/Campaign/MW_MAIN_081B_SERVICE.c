@@ -476,22 +476,21 @@ uint16_t MwOpenOwnedMechList(void)
 /* MW_MAIN081B:3021..3062. POP callback IP, map visible row, JMP3063. */
 uint16_t MwSelectOwnedUnitListRowCallback(void)
 {
-    uint16_t selectedRow=selectedUiRecordIndex;
-    ownedUnitListSelectedRow=selectedRow;
-    uint16_t ownedByteOffset=0,visibleRow=0;
+    ownedUnitListSelectedRow=selectedUiRecordIndex;
+    uint16_t ownedUnitSlot=0,visibleRow=0;
     for (;;)
     {
-        if (ownedByteOffset>=sizeof(ownedUnitKinds)) abort(); /* Unsupported adjacent read; native has no count guard. */
-        if (ownedUnitKinds[ownedByteOffset/2]!=CAMPAIGN_VACANT_UNIT_KIND)
+        if (ownedUnitSlot>=CAMPAIGN_OWNED_UNIT_SLOTS) abort();
+        if (ownedUnitKinds[ownedUnitSlot]!=CAMPAIGN_VACANT_UNIT_KIND)
         {
-            if (visibleRow==selectedRow) break;
+            if (visibleRow==ownedUnitListSelectedRow) break;
             ++visibleRow;
         }
-        ownedByteOffset+=2;
+        ++ownedUnitSlot;
     }
-    selectedOwnedUnitByteOffset=ownedByteOffset;
-    selectedOwnedUnitSlot=ownedByteOffset>>1;
-    selectedOwnedUnitKind=ownedUnitKinds[selectedOwnedUnitByteOffset/2];
+    selectedOwnedUnitByteOffset=ownedUnitSlot*sizeof(uint16_t);
+    selectedOwnedUnitSlot=ownedUnitSlot;
+    selectedOwnedUnitKind=ownedUnitKinds[ownedUnitSlot];
     return CAMPAIGN_CONTINUE_OPEN_OWNED_MECH;
 }
 

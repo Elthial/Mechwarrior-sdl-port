@@ -569,7 +569,7 @@ void MwPlayHiredTransportAnimation(void)
         if (pictureIndex==TRAVEL_ANIMATION_TERMINATOR) break;
         MwDrawFourthBankPicture(HIRED_TRANSPORT_X,HIRED_TRANSPORT_Y,EGA_DRAW_PAGE,pictureIndex);
         EgaFlipPages();
-        frameIndex=(uint16_t)(frameIndex+travelAnimationFrameStep);
+        frameIndex += travelAnimationFrameStep;
     }
     uint16_t finalTick=campaignTimerTicks+TRAVEL_ANIMATION_FINAL_TICKS;
     while (finalTick>campaignTimerTicks)

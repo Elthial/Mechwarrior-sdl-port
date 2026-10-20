@@ -351,22 +351,21 @@ uint16_t MwOpenMarketMechList(void)
 /* MW_MAIN081B:4317..4351. POP dispatch IP; shared4352 POP is bypassed. */
 uint16_t MwSelectMarketUnitListRowCallback(void)
 {
-    uint16_t selectedRow=selectedUiRecordIndex;
-    marketUnitListSelectedRow=selectedRow;
+    marketUnitListSelectedRow=selectedUiRecordIndex;
     uint16_t marketUnitSlot=0,visibleRow=0;
     for (;;)
     {
         if (marketUnitSlot>=CAMPAIGN_MARKET_UNIT_SLOTS) abort();
         if (marketUnitKinds[marketUnitSlot]!=CAMPAIGN_VACANT_UNIT_KIND)
         {
-            if (visibleRow==selectedRow) break;
+            if (visibleRow==marketUnitListSelectedRow) break;
             ++visibleRow;
         }
         ++marketUnitSlot;
     }
     selectedMarketUnitByteOffset=marketUnitSlot*sizeof(uint16_t);
     selectedMarketUnitSlot=marketUnitSlot;
-    selectedMarketUnitKind=marketUnitKinds[selectedMarketUnitByteOffset/sizeof(uint16_t)];
+    selectedMarketUnitKind=marketUnitKinds[marketUnitSlot];
     return CAMPAIGN_CONTINUE_MARKET_MECH_DETAIL;
 }
 

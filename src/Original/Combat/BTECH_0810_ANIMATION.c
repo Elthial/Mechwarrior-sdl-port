@@ -9,8 +9,7 @@ void BtechBindAnimationResourceAndScale(BtechPooledWorldObject *object,uint16_t 
 {
     if (!object) abort();
     object->object.prefix.resourceId=resourceId;
-    uint32_t extent=BtechGetResourceScaledValue(resourceId);
-    object->object.prefix.resourceScaledValue=extent;
+    object->object.prefix.resourceScaledValue=BtechGetResourceScaledValue(resourceId);
 }
 
 /*0810:9C06. Non-player gait/fall/recovery/launch sequence controller. The

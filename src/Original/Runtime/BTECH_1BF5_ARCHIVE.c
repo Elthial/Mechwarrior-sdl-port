@@ -145,8 +145,7 @@ uint16_t BtechReadArchiveSourceBytes(uint8_t *destination,uint16_t bytes)
     if (remaining<bytes) bytes=(uint16_t)remaining;
     if (!remaining) return 0;
     archive->compressedPosition+=bytes; /* BEFORE the possibly short read. */
-    uint16_t read=(uint16_t)BtechReadStreamElements(destination,1,bytes,archive->stream);
-    return read;
+    return BtechReadStreamElements(destination,1,bytes,archive->stream);
 }
 
 /*1BF5:3C82. WORD increment of the two BYTE cursors retains the carry alias. */

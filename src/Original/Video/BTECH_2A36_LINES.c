@@ -13,7 +13,7 @@ void BtechEgaDrawLine(uint16_t firstX,uint16_t firstY,uint16_t secondX,uint16_t 
     uint16_t row=(uint16_t)(firstY*2)>>1;
     if (row>=COMBAT_SCREEN_HEIGHT) abort(); /* Other row-table owners are outside this caller scope. */
     uint16_t cursor=graphicsRowOffsets[row];
-    cursor=(uint16_t)(cursor+(firstX>>0x0003));
+    cursor += (firstX>>0x0003);
     uint8_t mask=egaLinePixelMask;
     if (firstX==secondX&&firstY==secondY)
     {
@@ -35,7 +35,7 @@ void BtechEgaDrawLine(uint16_t firstX,uint16_t firstY,uint16_t secondX,uint16_t 
         {
             uint16_t crossedByte=mask&0x01;
             mask=(uint8_t)((mask>>0x01)|(mask<<0x07)); // ROR, not SHR to zero.
-            if (crossedByte)cursor=(uint16_t)(cursor+0x0001);
+            if (crossedByte)++cursor;
             (void)btechHostReadVideoByte(page,cursor);
             btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,COMBAT_EGA_BIT_MASK_REGISTER|((uint16_t)mask<<0x0008));
             btechHostWriteVideoByte(page,cursor,colour);
@@ -56,7 +56,7 @@ void BtechEgaDrawLine(uint16_t firstX,uint16_t firstY,uint16_t secondX,uint16_t 
         {
             (void)btechHostReadVideoByte(page,cursor);
             btechHostWriteVideoByte(page,cursor,colour);
-            cursor=(uint16_t)(cursor+rowStep);
+            cursor += rowStep;
             --pixelsRemaining;
         } while ((pixelsRemaining&0x8000)==0x0000); // DEC CX/JS, NOT signed <=0.
         return;
@@ -71,14 +71,14 @@ void BtechEgaDrawLine(uint16_t firstX,uint16_t firstY,uint16_t secondX,uint16_t 
         {
             uint16_t crossedByte=mask&0x01;
             mask=(uint8_t)((mask>>0x01)|(mask<<0x07));
-            if (crossedByte)cursor=(uint16_t)(cursor+0x0001);
+            if (crossedByte)++cursor;
             (void)btechHostReadVideoByte(page,cursor);
             btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,COMBAT_EGA_BIT_MASK_REGISTER|((uint16_t)mask<<0x0008));
             btechHostWriteVideoByte(page,cursor,colour);
             // The two native branches order their final decrement differently.
             // Byte-wrap branch can finish without its otherwise matching Y step.
             if (crossedByte&&--pixelsRemaining==0x0000)break;
-            cursor=(uint16_t)(cursor+rowStep);
+            cursor += rowStep;
             (void)btechHostReadVideoByte(page,cursor);
             btechHostWriteVideoByte(page,cursor,colour);
             if (!crossedByte&&--pixelsRemaining==0x0000)break;
@@ -106,15 +106,15 @@ void BtechEgaDrawLine(uint16_t firstX,uint16_t firstY,uint16_t secondX,uint16_t 
             runPixels=egaLineRemainingBeforeRun;
             remainingMajorPixels=0x0000;
         }
-        else remainingMajorPixels=(uint16_t)(remainingMajorPixels-runPixels);
+        else remainingMajorPixels -= runPixels;
         do
         {
-            if (steep)cursor=(uint16_t)(cursor+rowStep);
+            if (steep)cursor += rowStep;
             else
             {
                 uint16_t crossedByte=mask&0x01;
                 mask=(uint8_t)((mask>>0x01)|(mask<<0x07));
-                if (crossedByte)cursor=(uint16_t)(cursor+0x0001);
+                if (crossedByte)++cursor;
             }
             (void)btechHostReadVideoByte(page,cursor);
             btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,COMBAT_EGA_BIT_MASK_REGISTER|((uint16_t)mask<<0x0008));
@@ -125,13 +125,13 @@ void BtechEgaDrawLine(uint16_t firstX,uint16_t firstY,uint16_t secondX,uint16_t 
         {
             uint16_t crossedByte=mask&0x01;
             mask=(uint8_t)((mask>>0x01)|(mask<<0x07));
-            if (crossedByte)cursor=(uint16_t)(cursor+0x0001);
+            if (crossedByte)++cursor;
             (void)btechHostReadVideoByte(page,cursor);
             btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,COMBAT_EGA_BIT_MASK_REGISTER|((uint16_t)mask<<0x0008));
         }
         else
         {
-            cursor=(uint16_t)(cursor+rowStep);
+            cursor += rowStep;
             (void)btechHostReadVideoByte(page,cursor); // Shallow Y step reuses current bit mask, no OUT.
         }
         btechHostWriteVideoByte(page,cursor,colour);
