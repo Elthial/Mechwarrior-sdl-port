@@ -58,7 +58,7 @@ uint8_t BtechTestUnitMovementBoundary(uint16_t unitSlot)
     if (unitSlot)
     {
         if (!activeUnitControl) abort();
-        if (activeUnitControl->controlState!=COMBAT_TACTICAL_RETREATING)
+        if (activeUnitControl->tacticalState!=COMBAT_TACTICAL_RETREATING)
         {
             uint8_t classify=activeUnitControl->commandCode==COMBAT_ORDER_ATTACK_ENEMY;
             if (!classify && activeUnitControl->trackedPosition[2]>-1)

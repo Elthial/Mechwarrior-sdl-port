@@ -29,8 +29,7 @@ typedef struct BtechWeaponDefinition {
     uint16_t criticalSlots,unidentifiedField10;
 } BtechWeaponDefinition;
 
-/* Runtime records are ordinary naturally aligned C objects. Native suffixes
- * identify field provenance, NOT sizeof/offsetof contracts for binary IO. */
+/* Runtime records are naturally aligned C objects, not binary file layouts. */
 typedef struct BtechBodyReferencePoint
 { int16_t componentA,componentB,componentC; } BtechBodyReferencePoint;
 typedef struct BtechWeaponMount
@@ -79,7 +78,10 @@ typedef struct BtechUnitControlState
     int32_t orderDestinationPosition[3];
     int16_t trackedUnitOrSpecialSlot;
     uint16_t sideIndex,unitSlot;
-    int16_t targetUnitSlot,combatValueOrBoundaryCode,lastAiFiringTargetSlot,lastDirectHitUnitSlot;
+    int16_t targetUnitSlot;
+    /* Positive condition score; negative disabled/exit codes. Not Battle Value. */
+    int16_t combatValueOrBoundaryCode;
+    int16_t lastAiFiringTargetSlot,lastDirectHitUnitSlot;
     uint16_t targetSelectionCount;
     int16_t navigationReferenceSlot;
     int32_t trackedPosition[3];
@@ -87,9 +89,10 @@ typedef struct BtechUnitControlState
     int32_t lastVisiblePosition[3];
     uint16_t avoidanceReverseFlag,avoidanceTurnIndex;
     uint8_t maneuverFlags,unidentifiedField14;
-    uint16_t doubleWeaponRange;
-    int16_t weaponRangeMinusMargin,quarterWeaponRange;
-    uint16_t controlState,decisionCountdown;
+    /* Longest operational, reloaded weapon range; ammunition is not tested here. */
+    uint16_t twiceReadyWeaponRange;
+    int16_t readyWeaponRangeMinusMargin,quarterReadyWeaponRange;
+    uint16_t tacticalState,decisionCountdown;
     uint8_t unidentifiedField16[2];
     uint16_t animationSequence,biasedHeadingSnapshot;
     uint8_t animationRequestFlags;

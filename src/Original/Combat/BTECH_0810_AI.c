@@ -114,7 +114,7 @@ void BtechCoordinateSpecialObjectiveUnits(void)
                 int32_t objectiveDistance=unitDistancesToSpecialTarget[slot],targetDistance=(int32_t)unitDistances[slot][threat];
                 BtechUnitControlState *control=&unitControls[slot];
                 if (!objectiveDistance || targetDistance<=0 || objectiveDistance>=OBJECTIVE_DEFENDER_RADIUS || control->combatValueOrBoundaryCode<=0 || targetDistance>=nearestDefender) continue;
-                if (control->controlState!=TACTICAL_DEFENDING)
+                if (control->tacticalState!=TACTICAL_DEFENDING)
                 {
                     if (control->targetUnitSlot==threat && objectiveDistance<incomingDistance) {alreadyCovered=true;break;}
                 }
@@ -125,13 +125,13 @@ void BtechCoordinateSpecialObjectiveUnits(void)
                 int32_t doubledDistance=(uint32_t)unitDistancesToSpecialTarget[defender]<<1;
                 if (unitDistancesToSpecialTarget[threat]<doubledDistance)
                 {
-                    unitControls[defender].targetUnitSlot=threat;unitControls[defender].controlState=TACTICAL_CHARGING;
+                    unitControls[defender].targetUnitSlot=threat;unitControls[defender].tacticalState=TACTICAL_CHARGING;
                     unitDistancesToSpecialTarget[defender]=0;
                     BtechSelectActiveUnitContext(defender);
                     if (!unitBindings[threat].positionedLeftLeg || !activeUnitPositionedObject) abort();
                     BtechPosition3D *target=&unitBindings[threat].positionedLeftLeg->object.prefix.position;
                     BtechPosition3D *root=&activeUnitPositionedObject->object.prefix.position;
-                    BtechSteerActiveUnitHeading(BtechCalculateVectorHeading(target->positionA-root->positionA,target->positionB-root->positionB));
+                    BtechApplyActiveUnitTacticalSteering(BtechCalculateVectorHeading(target->positionA-root->positionA,target->positionB-root->positionB));
                 }
             }
             unitDistancesToSpecialTarget[threat]=0;
@@ -140,7 +140,7 @@ void BtechCoordinateSpecialObjectiveUnits(void)
     for (uint16_t slot=0;slot<COMBAT_MECH_SLOTS;++slot)
     {
         activeMechState=unitBindings[slot].mech;
-        if (!activeMechState || unitControls[slot].controlState!=TACTICAL_DEFENDING) continue;
+        if (!activeMechState || unitControls[slot].tacticalState!=TACTICAL_DEFENDING) continue;
         BtechSelectActiveUnitContext(slot);
         BtechPosition3D destination={0};
         if (activeUnitControl->commandCode==COMBAT_ORDER_ACT_ON_OWN)

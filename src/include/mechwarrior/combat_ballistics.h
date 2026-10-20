@@ -50,6 +50,6 @@ extern uint16_t hitLocationRows[ATTACK_ARCS][HIT_LOCATION_ROLLS],rangeHitModifie
 int16_t BtechClassifyWeaponRange(uint16_t firingSlot,uint16_t targetSlot,uint16_t weaponKind);
 int16_t BtechTestAiFiringCandidate(const BtechPosition3D *position,uint32_t distance,uint16_t flags);
 int16_t BtechSelectAiWeaponMountForDistance(int16_t distance);
-void BtechFireAiWeaponAtUnit(int16_t targetSlot,int16_t weaponKind,uint16_t bodyLocation);
+void BtechFireAiWeaponAtUnit(int16_t targetUnitSlot,int16_t weaponKind,uint16_t firingBodyLocation);
 void BtechChooseAiTargetAndFire(void);
 #endif

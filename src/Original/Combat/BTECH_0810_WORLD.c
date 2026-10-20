@@ -328,7 +328,7 @@ void BtechLoadScenarioAndWorld(uint16_t scenarioIndex)
         specialTargetDamageRemaining=SPECIAL_TARGET_INITIAL_DAMAGE;
         specialTargetObject=BtechAllocatePooledWorldObject(otherShapeResourceBase+SPECIAL_TARGET_SHAPE_DELTA,&position);
         specialTargetObject->object.prefix.renderFlags|=WORLD_OBJECT_SPECIAL_TARGET;
-        unknownWorldObject=specialTargetObject;
+        objectiveVisibilityObject=specialTargetObject;
     }
     BtechCloseStreamFile(stream);
     for (uint16_t slot=0;slot<COMBAT_MECH_SLOTS;++slot)

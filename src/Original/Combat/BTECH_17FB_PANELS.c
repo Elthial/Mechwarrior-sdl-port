@@ -42,8 +42,8 @@ void BtechDrawUnitOrderPanels(void)
             BtechDrawNearText(pilotDefinitionNameDirectory[deployedPilotIds[unitSlot]],x,ORDER_PANEL_NAME_Y);
             BtechDrawThreeByThreeMarker((uint16_t)(x+ORDER_PANEL_MARKER_X),ORDER_PANEL_MARKER_Y,markerColour,friendlyMarker);
             BtechDrawNearText(mechTemplateNameDirectory[mech->templateIndex],x,ORDER_PANEL_CHASSIS_Y);
-            if (control->controlState>=ORDER_TACTICAL_LABELS) abort();
-            BtechDrawNearText(tacticalOrderLabels[control->controlState],x,ORDER_PANEL_TACTICAL_Y);
+            if (control->tacticalState>=ORDER_TACTICAL_LABELS) abort();
+            BtechDrawNearText(tacticalOrderLabels[control->tacticalState],x,ORDER_PANEL_TACTICAL_Y);
             textForegroundColour=ORDER_PANEL_TEXT_COLOUR;
             uint16_t displayOrder=ORDER_DISPLAY_RETREATED;
             if (control->combatValueOrBoundaryCode>-2)

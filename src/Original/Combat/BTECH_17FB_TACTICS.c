@@ -29,7 +29,7 @@ void BtechScoreAndSelectTacticalTarget(void)
         else magnitude=difference;
         if (magnitude>maximumValueDifference) maximumValueDifference=magnitude;
     }
-    if (!anyEligible) {active->controlState=COMBAT_TACTICAL_UNENGAGED;return;}
+    if (!anyEligible) {active->tacticalState=COMBAT_TACTICAL_UNENGAGED;return;}
     for (uint16_t slot=0;slot<COMBAT_MECH_SLOTS;++slot)
     {
         if (!eligible[slot]) continue;
@@ -52,7 +52,7 @@ void BtechScoreAndSelectTacticalTarget(void)
         if (score>bestScore) {bestScore=score;active->targetUnitSlot=slot;}
     }
     if (bestScore>0) ++unitControls[active->targetUnitSlot].targetSelectionCount;
-    else active->controlState=TACTICAL_AVOIDING;
+    else active->tacticalState=TACTICAL_AVOIDING;
 }
 
 /*17FB:2741. Either pre-existing latch prevents updates. Both may be set;

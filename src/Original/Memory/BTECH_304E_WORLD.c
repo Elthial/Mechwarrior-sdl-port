@@ -40,7 +40,8 @@ uint16_t cameraReferenceVector[3];
 BtechUnitBinding *playerUnitBinding;
 BtechMechState *playerMechState;
 BtechMechTemplate *playerMechTemplate;
-BtechPooledWorldObject *playerPoseObject,*orderMapCameraObject,*specialTargetObject,*unknownWorldObject;
+BtechPooledWorldObject *playerPoseObject,*orderMapCameraObject,*specialTargetObject;
+BtechPooledWorldObject *objectiveVisibilityObject;
 BtechCameraContext *orderMapCameraContext,*playerPoseCameraContext;
 uint16_t specialTargetDamageRemaining;
 uint8_t runtimeDelayActive,joystickPairInstalled[2],joystickAxisCentres[4];
@@ -261,7 +262,7 @@ void BtechInitializeFreshWorldOwners(const uint8_t *data)
     playerPoseObject=NULL;
     orderMapCameraObject=NULL;
     specialTargetObject=NULL;
-    unknownWorldObject=NULL;
+    objectiveVisibilityObject=NULL;
     orderMapCameraContext=NULL;
     playerPoseCameraContext=NULL;
     specialTargetDamageRemaining=0;

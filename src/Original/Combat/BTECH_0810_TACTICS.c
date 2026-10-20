@@ -25,29 +25,29 @@ void BtechSelectActiveUnitContext(uint16_t unitSlot)
 uint16_t BtechShouldDisengageForWeaponsOrStructure(void)
 {
     if (!activeMechTemplate || !activeMechState) abort();
-    int16_t mount=0,count=(int16_t)activeMechTemplate->weaponMountCount;
-    for (;mount<count;++mount)
+    int16_t mountIndex=0,weaponMountCount=(int16_t)activeMechTemplate->weaponMountCount;
+    for (;mountIndex<weaponMountCount;++mountIndex)
     {
-        if (mount>=COMBAT_WEAPON_MOUNTS) abort();
-        int16_t kind=activeMechTemplate->weaponMounts[mount].weaponKind;
-        if (kind<0 || kind>=COMBAT_WEAPON_KINDS) abort();
-        int16_t ammo=weaponDefinitions[kind].ammoFamily;
-        if ((uint16_t)ammo!=COMBAT_AMMO_NONE)
+        if (mountIndex>=COMBAT_WEAPON_MOUNTS) abort();
+        int16_t weaponKind=activeMechTemplate->weaponMounts[mountIndex].weaponKind;
+        if (weaponKind<0 || weaponKind>=COMBAT_WEAPON_KINDS) abort();
+        int16_t ammoFamily=weaponDefinitions[weaponKind].ammoFamily;
+        if ((uint16_t)ammoFamily!=COMBAT_AMMO_NONE)
         {
-            if ((uint16_t)ammo>=COMBAT_AMMO_FAMILIES) abort();
-            if (!activeMechState->ammoSalvosRemaining[ammo]) continue;
+            if ((uint16_t)ammoFamily>=COMBAT_AMMO_FAMILIES) abort();
+            if (!activeMechState->ammoSalvosRemaining[ammoFamily]) continue;
         }
-        if (activeMechState->weapons[mount].operational) break;
+        if (activeMechState->weapons[mountIndex].operational) break;
     }
-    if (mount==count) return 1;
+    if (mountIndex==weaponMountCount) return 1;
     uint16_t maximumStructure=0,currentStructure=0;
     for (uint16_t location=0;location<COMBAT_BODY_LOCATIONS;++location)
     {
         maximumStructure+=activeMechTemplate->maximumInternalStructure[location];
         currentStructure+=activeMechState->currentInternalStructure[location];
     }
-    int16_t halfMaximum=(maximumStructure>>1)|(maximumStructure&0x8000);
-    return halfMaximum>=(int16_t)currentStructure;
+    int16_t halfMaximumStructure=(maximumStructure>>1)|(maximumStructure&0x8000);
+    return halfMaximumStructure>=(int16_t)currentStructure;
 }
 
 /*0810:7B5A. Special-target geometry precedes ordinary visibility checks.
@@ -60,14 +60,14 @@ uint8_t BtechHasNearbyVisibleThreat(void)
     {
         if (!activeUnitPositionedObject || !specialTargetObject) abort();
         int32_t distance=(int32_t)BtechApproximatePlanarDistance(&activeUnitPositionedObject->object.prefix.position,&specialTargetObject->object.prefix.position);
-        if (control->weaponRangeMinusMargin>distance
+        if (control->readyWeaponRangeMinusMargin>distance
             && (control->commandCode==COMBAT_ORDER_ACT_ON_OWN || control->commandCode==TACTICAL_ORDER_ATTACK || control->commandCode==TACTICAL_ORDER_MOVE_ATTACK)) return 1;
     }
     if (control->unitSlot>=COMBAT_MECH_SLOTS) abort();
     for (uint16_t slot=0;slot<COMBAT_MECH_SLOTS;++slot)
         if (unitBindings[slot].mech && unitControls[slot].sideIndex!=control->sideIndex
             && unitVisibility[control->unitSlot][slot] && unitControls[slot].combatValueOrBoundaryCode>0
-            && (int32_t)unitDistances[control->unitSlot][slot]<(int16_t)control->doubleWeaponRange)
+            && (int32_t)unitDistances[control->unitSlot][slot]<(int16_t)control->twiceReadyWeaponRange)
         {
             return 1;
         }
@@ -81,9 +81,9 @@ void BtechRefreshTargetAndNavigate(void)
     BtechScoreAndSelectTacticalTarget();
     if (activeUnitControl->targetUnitSlot>=0)
     {
-        uint16_t target=activeUnitControl->targetUnitSlot;
-        if (target>=COMBAT_MECH_SLOTS) abort(); /* Native special/adjacent-control alias. */
-        const int32_t *lastSeen=unitControls[target].lastVisiblePosition;
+        uint16_t targetUnitSlot=activeUnitControl->targetUnitSlot;
+        if (targetUnitSlot>=COMBAT_MECH_SLOTS) abort(); /* Native special/adjacent-control alias. */
+        const int32_t *lastSeen=unitControls[targetUnitSlot].lastVisiblePosition;
         BtechPosition3D destination={(uint32_t)lastSeen[0],(uint32_t)lastSeen[1],(uint32_t)lastSeen[2]};
         BtechNavigateActiveUnitTowardPosition(&destination);
         activeUnitControl->navigationReferenceSlot=activeUnitControl->targetUnitSlot;
@@ -105,20 +105,20 @@ void BtechUpdateUnitWeaponRangeThresholds(void)
         if (!mech) continue;
         if (mech->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
         BtechMechTemplate *chassis=&mechTemplates[mech->templateIndex];
-        int16_t greatestRange=0;
+        int16_t longestReadyWeaponRange=0;
         for (int16_t mount=0;mount<(int16_t)chassis->weaponMountCount;++mount)
         {
             if (mount>=COMBAT_WEAPON_MOUNTS) abort();
             if (!mech->weapons[mount].operational || mech->weapons[mount].reloadTicksRemaining) continue;
-            int16_t kind=chassis->weaponMounts[mount].weaponKind;
-            if (kind<0 || kind>=COMBAT_WEAPON_KINDS) abort();
-            int16_t range=weaponDefinitions[kind].longRangeBoundary;
-            if (range>greatestRange) greatestRange=range;
+            int16_t weaponKind=chassis->weaponMounts[mount].weaponKind;
+            if (weaponKind<0 || weaponKind>=COMBAT_WEAPON_KINDS) abort();
+            int16_t longRangeBoundary=weaponDefinitions[weaponKind].longRangeBoundary;
+            if (longRangeBoundary>longestReadyWeaponRange) longestReadyWeaponRange=longRangeBoundary;
         }
         BtechUnitControlState *control=&unitControls[slot];
-        control->doubleWeaponRange=(uint16_t)(greatestRange*TACTICAL_RANGE_SCALE*2);
-        control->weaponRangeMinusMargin=(int16_t)(greatestRange*TACTICAL_RANGE_SCALE-TACTICAL_RANGE_MARGIN);
-        uint16_t scaledRange=greatestRange*TACTICAL_RANGE_SCALE;
-        control->quarterWeaponRange=(int16_t)((scaledRange>>TACTICAL_QUARTER_RANGE_SHIFT)|((scaledRange&0x8000)?0xC000:0));
+        control->twiceReadyWeaponRange=(uint16_t)(longestReadyWeaponRange*TACTICAL_RANGE_SCALE*2);
+        control->readyWeaponRangeMinusMargin=(int16_t)(longestReadyWeaponRange*TACTICAL_RANGE_SCALE-TACTICAL_RANGE_MARGIN);
+        uint16_t readyWeaponRange=longestReadyWeaponRange*TACTICAL_RANGE_SCALE;
+        control->quarterReadyWeaponRange=(int16_t)((readyWeaponRange>>TACTICAL_QUARTER_RANGE_SHIFT)|((readyWeaponRange&0x8000)?0xC000:0));
     }
 }

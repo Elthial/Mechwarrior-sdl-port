@@ -27,9 +27,9 @@ extern uint16_t opposingSideFirstUnitSlots[2];
 void BtechUpdateAiMechUnits(void);
 void BtechCoordinateSpecialObjectiveUnits(void);
 void BtechUpdateTacticalNavigation(void);
-/* Optional host-only transport of reused BP-0E, not native source arguments. */
+/* Choose engagement tactics from lance orders, visible threats and mission goals. */
 void BtechSelectUnitTacticalState(void);
-void BtechSteerActiveUnitHeading(uint16_t desiredHeading);
+void BtechApplyActiveUnitTacticalSteering(uint16_t desiredHeading);
 void BtechSelectActiveUnitContext(uint16_t unitSlot);
 uint16_t BtechShouldDisengageForWeaponsOrStructure(void);
 uint8_t BtechHasNearbyVisibleThreat(void);

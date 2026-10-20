@@ -30,6 +30,6 @@ uint8_t BtechSelectAndApplyCriticalLoss(BtechMechState *mech,int16_t bodyLocatio
 uint8_t BtechApplyDestroyedBodyLocationEffects(BtechMechState *mech,int16_t bodyLocation);
 BtechPooledWorldObject *BtechGetUnitRenderPartByArmorLocation(uint16_t unitSlot,int16_t armorLocation);
 void BtechQueueBodyDestructionEmitter(uint16_t unitSlot,int16_t armorLocation);
-void BtechApplyArmorAndInternalDamage(uint16_t unitSlot,int16_t armorLocation,int16_t damage);
+void BtechApplyArmorAndInternalDamage(uint16_t unitSlot,int16_t armorLocation,int16_t remainingDamage);
 void BtechApplySpecialTargetDamage(int16_t damage);
 #endif

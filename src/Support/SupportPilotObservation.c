@@ -61,16 +61,16 @@ void SupportPilotObserve(PilotObservation *view,bool combatActive)
             for(unsigned i=0;i<COMBAT_BODY_LOCATIONS;++i)target->internal+=binding->mech->currentInternalStructure[i];
         }
     }
-    if(specialTargetObject && unknownWorldObject &&
-        (unknownWorldObject->object.prefix.flags&WORLD_OBJECT_TARGET_PROBE_VISIBLE)
-        && (unknownWorldObject->object.prefix.renderFlags&OBJECT_PROJECTED_VISIBLE))
+    if(specialTargetObject && objectiveVisibilityObject &&
+        (objectiveVisibilityObject->object.prefix.flags&WORLD_OBJECT_TARGET_PROBE_VISIBLE)
+        && (objectiveVisibilityObject->object.prefix.renderFlags&OBJECT_PROJECTED_VISIBLE))
     {
         PilotTarget *target=&view->targets[COMBAT_MECH_SLOTS];
         target->known=target->visible=true;target->alive=specialTargetDamageRemaining!=0;
         target->hostile=sideObjectiveRules[0]==OBJECTIVE_SPECIAL_TARGET;
         target->position=ReadPosition(&specialTargetObject->object.prefix);
-        target->screenX=unknownWorldObject->object.projectedScreenA;
-        target->screenY=unknownWorldObject->object.projectedScreenB;
+        target->screenX=objectiveVisibilityObject->object.projectedScreenA;
+        target->screenY=objectiveVisibilityObject->object.projectedScreenB;
         target->underReticle=selectedHitObject==&specialTargetObject->object.prefix;
         target->internal=specialTargetDamageRemaining;
     }

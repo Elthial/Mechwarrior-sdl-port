@@ -59,7 +59,7 @@ void BtechUpdateTargetPanelAndReticle(uint16_t targetUnitSlot)
     int16_t width=(ratio-(ratio<0))/2+TARGET_RETICLE_MINIMUM_WIDTH;
     int16_t halfWidth=(width-(width<0))/2;
     /* NativeC958+slot8 aliases the existing C968 special projected object. */
-    BtechPooledWorldObject *projected=targetUnitSlot==COMBAT_SPECIAL_TARGET_SLOT?unknownWorldObject:unitLastDrawParts[targetUnitSlot];
+    BtechPooledWorldObject *projected=targetUnitSlot==COMBAT_SPECIAL_TARGET_SLOT?objectiveVisibilityObject:unitLastDrawParts[targetUnitSlot];
     if (!projected) abort();
     uint16_t x=projected->object.projectedScreenA-halfWidth;
     uint16_t y=projected->object.projectedScreenB-width;

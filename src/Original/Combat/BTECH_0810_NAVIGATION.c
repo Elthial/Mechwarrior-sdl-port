@@ -57,7 +57,7 @@ void BtechSteerActiveUnitAroundObstacles(uint16_t desiredHeading,uint8_t forward
     else
     {
         if (!activeMechTemplate || !activeMechState) abort();
-        if (activeUnitControl->controlState!=NAVIGATION_TACTICAL_CHARGING && activeUnitControl->controlState!=NAVIGATION_TACTICAL_CHARGING_BASE
+        if (activeUnitControl->tacticalState!=NAVIGATION_TACTICAL_CHARGING && activeUnitControl->tacticalState!=NAVIGATION_TACTICAL_CHARGING_BASE
             && activeMechTemplate->jumpJetGroupCount && !heatInhibitFlags[0] && activeUnitControl->movementMode!=MOVEMENT_MODE_JUMP
             && (int16_t)activeMechState->jumpCharge>NAVIGATION_JUMP_CHARGE_MINIMUM)
         {
@@ -119,7 +119,7 @@ uint8_t BtechIsAvoidanceProbeBlocked(uint16_t probe)
                 || ((int32_t)lookX< -COMBAT_BOUNDARY_LIMIT_A && activeUnitControl->trackedPosition[0]< -COMBAT_BOUNDARY_LIMIT_A)
                 || ((int32_t)lookY>COMBAT_BOUNDARY_LIMIT_B && activeUnitControl->trackedPosition[1]>COMBAT_BOUNDARY_LIMIT_B)
                 || ((int32_t)lookY< -COMBAT_BOUNDARY_LIMIT_B && activeUnitControl->trackedPosition[1]< -COMBAT_BOUNDARY_LIMIT_B);
-        if (activeUnitControl->controlState!=NAVIGATION_TACTICAL_FLEEING && !sameBoundary) return 1;
+        if (activeUnitControl->tacticalState!=NAVIGATION_TACTICAL_FLEEING && !sameBoundary) return 1;
     }
     for (uint16_t sample=0;sample<AVOIDANCE_PROBES;++sample)
     {
