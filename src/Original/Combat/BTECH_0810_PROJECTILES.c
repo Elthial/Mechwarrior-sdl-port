@@ -52,25 +52,25 @@ impact:
 uint8_t BtechSteerProjectileAndTestOvershoot(BtechProjectileState *projectile)
 {
     if (projectile->targetUnitSlot==COMBAT_PROJECTILE_NO_TARGET) return 0;
-    BtechPooledWorldObject *object=projectile->worldObject;
-    if (!object) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !object");
-    const BtechPosition3D *target=BtechGetUnitBodyReferencePosition(projectile->targetUnitSlot,(int16_t)projectile->targetArmorLocation);
-    BtechWorldObjectPrefix *pose=&object->object.prefix;
-    uint32_t deltaA=target->positionA-pose->position.positionA,deltaB=target->positionB-pose->position.positionB;
-    uint16_t heading=BtechCalculateVectorHeading(deltaA,deltaB);
-    int16_t error=heading-pose->orientationC;
-    uint16_t magnitude=error==INT16_MIN?INT16_MAX:error<0?(uint16_t)(0-(uint16_t)error):(uint16_t)error;
-    uint8_t overshoot=magnitude>COMBAT_PROJECTILE_OVERSHOOT_ANGLE;
-    uint16_t turn=magnitude>COMBAT_PROJECTILE_TURN_LIMIT?COMBAT_PROJECTILE_TURN_LIMIT:magnitude;
-    object->orientationSteps[2]=(int16_t)(error<0?(uint16_t)(0-turn):turn);
-    uint32_t distance=BtechApproximatePlanarDistance(&pose->position,target);
-    uint32_t negativeHeight=0-(target->positionC-pose->position.positionC);
-    uint16_t pitch=BtechCalculateVectorHeading(negativeHeight,distance);
-    error=(int16_t)(pitch-pose->orientationA);
-    magnitude=error==INT16_MIN?INT16_MAX:error<0?(uint16_t)(0-(uint16_t)error):(uint16_t)error;
-    turn=magnitude>COMBAT_PROJECTILE_TURN_LIMIT?COMBAT_PROJECTILE_TURN_LIMIT:magnitude;
-    object->orientationSteps[0]=(int16_t)(error<0?(uint16_t)(0-turn):turn);
-    return overshoot;
+    BtechPooledWorldObject *projectileObject=projectile->worldObject;
+    if (!projectileObject) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !projectileObject");
+    const BtechPosition3D *targetPosition=BtechGetUnitBodyReferencePosition(projectile->targetUnitSlot,(int16_t)projectile->targetArmorLocation);
+    BtechWorldObjectPrefix *projectilePose=&projectileObject->object.prefix;
+    uint32_t targetDeltaA=targetPosition->positionA-projectilePose->position.positionA,targetDeltaB=targetPosition->positionB-projectilePose->position.positionB;
+    uint16_t targetHeading=BtechCalculateVectorHeading(targetDeltaA,targetDeltaB);
+    int16_t yawError=targetHeading-projectilePose->orientationC;
+    uint16_t yawErrorMagnitude=yawError==INT16_MIN?INT16_MAX:yawError<0?(uint16_t)(0-(uint16_t)yawError):(uint16_t)yawError;
+    uint8_t overshotTarget=yawErrorMagnitude>COMBAT_PROJECTILE_OVERSHOOT_ANGLE;
+    uint16_t yawTurnStep=yawErrorMagnitude>COMBAT_PROJECTILE_TURN_LIMIT?COMBAT_PROJECTILE_TURN_LIMIT:yawErrorMagnitude;
+    projectileObject->orientationSteps[2]=(int16_t)(yawError<0?(uint16_t)(0-yawTurnStep):yawTurnStep);
+    uint32_t targetPlanarDistance=BtechApproximatePlanarDistance(&projectilePose->position,targetPosition);
+    uint32_t negativeAltitudeDelta=0-(targetPosition->positionC-projectilePose->position.positionC);
+    uint16_t targetPitch=BtechCalculateVectorHeading(negativeAltitudeDelta,targetPlanarDistance);
+    int16_t pitchError=(int16_t)(targetPitch-projectilePose->orientationA);
+    uint16_t pitchErrorMagnitude=pitchError==INT16_MIN?INT16_MAX:pitchError<0?(uint16_t)(0-(uint16_t)pitchError):(uint16_t)pitchError;
+    uint16_t pitchTurnStep=pitchErrorMagnitude>COMBAT_PROJECTILE_TURN_LIMIT?COMBAT_PROJECTILE_TURN_LIMIT:pitchErrorMagnitude;
+    projectileObject->orientationSteps[0]=(int16_t)(pitchError<0?(uint16_t)(0-pitchTurnStep):pitchTurnStep);
+    return overshotTarget;
 }
 
 /*0810:5D3E. Special-target capacity is independent of Mech armour. */
@@ -88,16 +88,16 @@ uint8_t BtechTestProjectileAgainstSpecialObject(BtechProjectileState *projectile
 int16_t BtechCalculateProjectileImpactDamage(const BtechProjectileState *projectile)
 {
     if (projectile->profileIndex>=COMBAT_PROJECTILE_PROFILES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: projectile->profileIndex>=COMBAT_PROJECTILE_PROFILES");
-    uint16_t kind=projectileProfiles[projectile->profileIndex].weaponKind;
-    if (kind>=COMBAT_WEAPON_KINDS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: kind>=COMBAT_WEAPON_KINDS");
-    if (kind==COMBAT_WEAPON_AC5) return (int16_t)weaponDefinitions[kind].damageOrMissileCount;
-    int16_t row=missileClusterRowByWeapon[kind];
-    if ((uint16_t)row>=COMBAT_MISSILE_CLUSTER_ROWS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (uint16_t)row>=COMBAT_MISSILE_CLUSTER_ROWS");
+    uint16_t weaponKind=projectileProfiles[projectile->profileIndex].weaponKind;
+    if (weaponKind>=COMBAT_WEAPON_KINDS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: weaponKind>=COMBAT_WEAPON_KINDS");
+    if (weaponKind==COMBAT_WEAPON_AC5) return (int16_t)weaponDefinitions[weaponKind].damageOrMissileCount;
+    int16_t clusterRow=missileClusterRowByWeapon[weaponKind];
+    if ((uint16_t)clusterRow>=COMBAT_MISSILE_CLUSTER_ROWS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (uint16_t)clusterRow>=COMBAT_MISSILE_CLUSTER_ROWS");
     uint16_t firstDie=BtechRandomBelowBound(DICE_1D6);
     uint16_t secondDie=BtechRandomBelowBound(DICE_1D6);
-    uint16_t damage=missileClusterRows[row][firstDie+secondDie];
-    if (kind!=COMBAT_WEAPON_LRM5) damage<<=COMBAT_SRM_DAMAGE_SHIFT;
-    return (int16_t)damage;
+    uint16_t missilesHit=missileClusterRows[clusterRow][firstDie+secondDie];
+    if (weaponKind!=COMBAT_WEAPON_LRM5) return (int16_t)(missilesHit<<COMBAT_SRM_DAMAGE_SHIFT);
+    return (int16_t)missilesHit;
 }
 
 /*0810:59A4. Record allocation is separate from pooled-object allocation. */
@@ -131,18 +131,18 @@ BtechProjectileState *BtechAllocateProjectileFromWeaponProfile(int16_t weaponKin
 BtechProjectileState *BtechSpawnUnitWeaponProjectile(uint16_t unitSlot,int16_t weaponKind,const BtechPosition3D *placement)
 {
     if (unitSlot>=COMBAT_MECH_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: unitSlot>=COMBAT_MECH_SLOTS");
-    BtechPooledWorldObject *torso=unitBindings[unitSlot].torso,*root=unitBindings[unitSlot].positionedLeftLeg;
+    BtechPooledWorldObject *firingTorsoObject=unitBindings[unitSlot].torso,*firingLegObject=unitBindings[unitSlot].positionedLeftLeg;
     BtechProjectileState *projectile=BtechAllocateProjectileFromWeaponProfile(weaponKind,placement);
     if (projectile)
     {
         projectile->firingUnitSlot=unitSlot;
-        BtechWorldObjectPrefix *pose=&projectile->worldObject->object.prefix;
-        BtechMechState *mech=unitBindings[unitSlot].mech;
-        if (!root || !torso || !mech) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !root || !torso || !mech");
-        pose->orientationA=root->object.prefix.orientationA-mech->aimPitch;
-        if (unitControls[unitSlot].movementMode==MOVEMENT_MODE_FALLEN_POSE) pose->orientationA+=COMBAT_PROJECTILE_FALLEN_PITCH_BIAS;
-        pose->orientationB=root->object.prefix.orientationB;
-        pose->orientationC=root->object.prefix.orientationC+torso->object.prefix.orientationC;
+        BtechWorldObjectPrefix *projectilePose=&projectile->worldObject->object.prefix;
+        BtechMechState *firingMech=unitBindings[unitSlot].mech;
+        if (!firingLegObject || !firingTorsoObject || !firingMech) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !firingLegObject || !firingTorsoObject || !firingMech");
+        projectilePose->orientationA=firingLegObject->object.prefix.orientationA-firingMech->aimPitch;
+        if (unitControls[unitSlot].movementMode==MOVEMENT_MODE_FALLEN_POSE) projectilePose->orientationA+=COMBAT_PROJECTILE_FALLEN_PITCH_BIAS;
+        projectilePose->orientationB=firingLegObject->object.prefix.orientationB;
+        projectilePose->orientationC=firingLegObject->object.prefix.orientationC+firingTorsoObject->object.prefix.orientationC;
         projectile->worldObject->orientationSteps[0]=0;
         projectile->worldObject->orientationSteps[1]=COMBAT_PROJECTILE_ROLL_STEP;
         projectile->worldObject->orientationSteps[2]=0;
@@ -161,15 +161,15 @@ void BtechResetProjectileHandles(void)
 void BtechFirePlayerWeaponProjectile(uint16_t mountIndex)
 {
     if (!playerMechTemplate || mountIndex>=COMBAT_WEAPON_MOUNTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerMechTemplate || mountIndex>=COMBAT_WEAPON_MOUNTS");
-    const BtechWeaponMount *mount=&playerMechTemplate->weaponMounts[mountIndex];
-    if (mount->bodyLocation>=COMBAT_BODY_LOCATIONS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mount->bodyLocation>=COMBAT_BODY_LOCATIONS");
-    BtechPosition3D *position=BtechGetUnitBodyReferencePosition(0,(int16_t)bodyLocationReferenceIndices[mount->bodyLocation]);
-    BtechProjectileState *projectile=BtechSpawnUnitWeaponProjectile(0,mount->weaponKind,position);
+    const BtechWeaponMount *weaponMount=&playerMechTemplate->weaponMounts[mountIndex];
+    if (weaponMount->bodyLocation>=COMBAT_BODY_LOCATIONS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: weaponMount->bodyLocation>=COMBAT_BODY_LOCATIONS");
+    BtechPosition3D *launchPosition=BtechGetUnitBodyReferencePosition(0,(int16_t)bodyLocationReferenceIndices[weaponMount->bodyLocation]);
+    BtechProjectileState *projectile=BtechSpawnUnitWeaponProjectile(0,weaponMount->weaponKind,launchPosition);
     if (!projectile) return; /* No projectile means no guidance target or fabricated hit. */
-    uint16_t target,armor;BtechMapSelectedRenderPartToArmorLocation(&armor,&target);
-    if (target)
+    uint16_t targetUnitSlot,targetArmorLocation;BtechMapSelectedRenderPartToArmorLocation(&targetArmorLocation,&targetUnitSlot);
+    if (targetUnitSlot)
     {
-        projectile->targetUnitSlot=target;projectile->targetArmorLocation=armor;
+        projectile->targetUnitSlot=targetUnitSlot;projectile->targetArmorLocation=targetArmorLocation;
     }
 }
 

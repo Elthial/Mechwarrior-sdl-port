@@ -32,7 +32,7 @@ void BtechAdvancePlayerGroupedWeaponSelection(void);
 extern uint32_t unitDistances[COMBAT_MECH_SLOTS][COMBAT_MECH_SLOTS];
 void BtechRefreshUnitDistanceMatrix(void);
 void BtechMapSelectedRenderPartToArmorLocation(uint16_t *armorLocation,uint16_t *unitSlot);
-void BtechBuildPlayerDirectShotGeometry(int16_t distance,const BtechWeaponMount *mount,uint8_t impactEffect);
+void BtechBuildPlayerDirectShotGeometry(int16_t shotDistance,const BtechWeaponMount *weaponMount,uint8_t spawnImpactEffect);
 void BtechFirePlayerDirectWeapon(uint16_t mountIndex);
 enum { WEAPON_RANGE_WORLD_SCALE=0x1E0,WEAPON_RANGE_BANDS=5,
     WEAPON_RANGE_BOUNDARIES=4,WEAPON_RANGE_BEYOND_LONG=4,ATTACK_ARCS=4,HIT_LOCATION_ROLLS=11,

@@ -12,105 +12,105 @@
 /*0810:461E. Accounting belongs to099A; do not debit heat/ammunition twice. */
 void BtechFirePlayerDirectWeapon(uint16_t mountIndex)
 {
-    BtechMechState *player=unitBindings[0].mech;
-    if (!player || player->templateIndex>=COMBAT_MECH_TEMPLATES || mountIndex>=COMBAT_WEAPON_MOUNTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !player || player->templateIndex>=COMBAT_MECH_TEMPLATES || mountIndex>=COMBAT_WEAPON_MOUNTS");
-    const BtechWeaponMount *mount=&mechTemplates[player->templateIndex].weaponMounts[mountIndex];
-    if ((uint16_t)mount->weaponKind>=COMBAT_WEAPON_KINDS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (uint16_t)mount->weaponKind>=COMBAT_WEAPON_KINDS");
-    const BtechWeaponDefinition *weapon=&weaponDefinitions[mount->weaponKind];
-    int32_t distance;
-    uint8_t impactEffect=0;
+    BtechMechState *playerMech=unitBindings[0].mech;
+    if (!playerMech || playerMech->templateIndex>=COMBAT_MECH_TEMPLATES || mountIndex>=COMBAT_WEAPON_MOUNTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerMech || playerMech->templateIndex>=COMBAT_MECH_TEMPLATES || mountIndex>=COMBAT_WEAPON_MOUNTS");
+    const BtechWeaponMount *weaponMount=&mechTemplates[playerMech->templateIndex].weaponMounts[mountIndex];
+    if ((uint16_t)weaponMount->weaponKind>=COMBAT_WEAPON_KINDS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (uint16_t)weaponMount->weaponKind>=COMBAT_WEAPON_KINDS");
+    const BtechWeaponDefinition *weaponDefinition=&weaponDefinitions[weaponMount->weaponKind];
+    int32_t shotDistanceWorld;
+    uint8_t spawnImpactEffect=0;
     if (!selectedHitObject)
     {
         if (!playerPoseObject || !playerMechState) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerPoseObject || !playerMechState");
-        int16_t pitch=playerPoseObject->object.prefix.orientationA-playerMechState->aimPitch;
-        distance=(int16_t)((uint16_t)(weapon->longRangeBoundary<<DIRECT_SHOT_RANGE_SHIFT)*DIRECT_SHOT_RANGE_MULTIPLIER);
-        if (pitch<0)
+        int16_t shotPitch=playerPoseObject->object.prefix.orientationA-playerMechState->aimPitch;
+        shotDistanceWorld=(int16_t)((uint16_t)(weaponDefinition->longRangeBoundary<<DIRECT_SHOT_RANGE_SHIFT)*DIRECT_SHOT_RANGE_MULTIPLIER);
+        if (shotPitch<0)
         {
-            int16_t negativeSine=0-BtechLookupSine((uint16_t)pitch);
-            if (negativeSine)
+            int16_t downwardAimSine=0-BtechLookupSine((uint16_t)shotPitch);
+            if (downwardAimSine)
             {
                 if (!playerUnitBinding || !playerUnitBinding->positionedLeftLeg) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerUnitBinding || !playerUnitBinding->positionedLeftLeg");
-                uint32_t numerator=playerUnitBinding->positionedLeftLeg->object.prefix.position.positionC<<ORIENTATION_FRACTION_BITS;
-                int16_t groundDistance=(int16_t)BtechDivideSignedDword(numerator,(uint32_t)negativeSine);
-                if ((int32_t)groundDistance<distance)
-                {BtechBuildPlayerDirectShotGeometry(groundDistance,mount,1);return;}
+                uint32_t scaledPlayerAltitude=playerUnitBinding->positionedLeftLeg->object.prefix.position.positionC<<ORIENTATION_FRACTION_BITS;
+                int16_t groundIntersectionDistance=(int16_t)BtechDivideSignedDword(scaledPlayerAltitude,(uint32_t)downwardAimSine);
+                if ((int32_t)groundIntersectionDistance<shotDistanceWorld)
+                {BtechBuildPlayerDirectShotGeometry(groundIntersectionDistance,weaponMount,1);return;}
             }
         }
     }
     else
     {
         if (!playerUnitBinding || !playerUnitBinding->torso) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerUnitBinding || !playerUnitBinding->torso");
-        distance=(int32_t)BtechApproximatePlanarDistance(&playerUnitBinding->torso->object.prefix.position,&selectedHitObject->position);
-        uint32_t scaled=BtechShiftSignedDwordRight((uint32_t)distance,DIRECT_SHOT_RANGE_SHIFT);
-        int16_t range=(int16_t)BtechDivideSignedDword(scaled,DIRECT_SHOT_RANGE_MULTIPLIER);
-        const uint16_t boundaries[]={weapon->minimumRange,weapon->shortRangeBoundary,weapon->mediumRangeBoundary,weapon->longRangeBoundary};
-        uint16_t boundary=0;
-        while (boundary<WEAPON_RANGE_BOUNDARIES && (int16_t)boundaries[boundary]<range) ++boundary;
-        if (boundary==WEAPON_RANGE_BEYOND_LONG)
-            distance=(int16_t)((uint16_t)(weaponDefinitions[mount->weaponKind].longRangeBoundary<<DIRECT_SHOT_RANGE_SHIFT)*DIRECT_SHOT_RANGE_MULTIPLIER);
+        shotDistanceWorld=(int32_t)BtechApproximatePlanarDistance(&playerUnitBinding->torso->object.prefix.position,&selectedHitObject->position);
+        uint32_t shiftedTargetDistance=BtechShiftSignedDwordRight((uint32_t)shotDistanceWorld,DIRECT_SHOT_RANGE_SHIFT);
+        int16_t targetRangeUnits=(int16_t)BtechDivideSignedDword(shiftedTargetDistance,DIRECT_SHOT_RANGE_MULTIPLIER);
+        const uint16_t rangeBoundaries[]={weaponDefinition->minimumRange,weaponDefinition->shortRangeBoundary,weaponDefinition->mediumRangeBoundary,weaponDefinition->longRangeBoundary};
+        uint16_t rangeBand=0;
+        while (rangeBand<WEAPON_RANGE_BOUNDARIES && (int16_t)rangeBoundaries[rangeBand]<targetRangeUnits) ++rangeBand;
+        if (rangeBand==WEAPON_RANGE_BEYOND_LONG)
+            shotDistanceWorld=(int16_t)((uint16_t)(weaponDefinitions[weaponMount->weaponKind].longRangeBoundary<<DIRECT_SHOT_RANGE_SHIFT)*DIRECT_SHOT_RANGE_MULTIPLIER);
         else
         {
-            uint16_t targetUnit,targetArmor;
-            BtechMapSelectedRenderPartToArmorLocation(&targetArmor,&targetUnit);
-            if (!targetUnit)
+            uint16_t targetUnitSlot,targetArmorLocation;
+            BtechMapSelectedRenderPartToArmorLocation(&targetArmorLocation,&targetUnitSlot);
+            if (!targetUnitSlot)
             {
-                uint16_t projectile=0;
-                for (;projectile<COMBAT_PROJECTILE_SLOTS;++projectile)
+                uint16_t projectileSlot=0;
+                for (;projectileSlot<COMBAT_PROJECTILE_SLOTS;++projectileSlot)
                 {
-                    BtechPooledWorldObject *object=projectiles[projectile].worldObject;
-                    if (object && &object->object.prefix==selectedHitObject)
-                    {BtechDestroyProjectileAndSpawnEffect(&projectiles[projectile]);break;}
+                    BtechPooledWorldObject *projectileObject=projectiles[projectileSlot].worldObject;
+                    if (projectileObject && &projectileObject->object.prefix==selectedHitObject)
+                    {BtechDestroyProjectileAndSpawnEffect(&projectiles[projectileSlot]);break;}
                 }
                 /* Native reloads selected object AFTER projectile destruction. */
                 if (specialTargetObject && &specialTargetObject->object.prefix==selectedHitObject)
-                    BtechApplySpecialTargetDamage((int16_t)weaponDefinitions[mount->weaponKind].damageOrMissileCount);
-                impactEffect=projectile==COMBAT_PROJECTILE_SLOTS;
+                    BtechApplySpecialTargetDamage((int16_t)weaponDefinitions[weaponMount->weaponKind].damageOrMissileCount);
+                spawnImpactEffect=projectileSlot==COMBAT_PROJECTILE_SLOTS;
             }
             else
             {
-                unitControls[0].lastDirectHitUnitSlot=(int16_t)targetUnit;
+                unitControls[0].lastDirectHitUnitSlot=(int16_t)targetUnitSlot;
                 BtechPlaySoundIfEnabled(DIRECT_HIT_SOUND,DIRECT_HIT_SOUND_PRIORITY);
-                BtechApplyArmorAndInternalDamage(targetUnit,(int16_t)targetArmor,(int16_t)weaponDefinitions[mount->weaponKind].damageOrMissileCount);
-                impactEffect=1;
+                BtechApplyArmorAndInternalDamage(targetUnitSlot,(int16_t)targetArmorLocation,(int16_t)weaponDefinitions[weaponMount->weaponKind].damageOrMissileCount);
+                spawnImpactEffect=1;
             }
         }
     }
-    BtechBuildPlayerDirectShotGeometry((int16_t)distance,mount,impactEffect);
+    BtechBuildPlayerDirectShotGeometry((int16_t)shotDistanceWorld,weaponMount,spawnImpactEffect);
 }
 
 /*0810:4803. Armour output precedes unit output. Slot0 means no other Mech. */
 void BtechMapSelectedRenderPartToArmorLocation(uint16_t *armorLocation,uint16_t *unitSlot)
 {
-    uint16_t armor=COMBAT_ARMOR_LEFT_ARM,matched=0;
+    uint16_t hitArmorLocation=COMBAT_ARMOR_LEFT_ARM,matchedUnitSlot=0;
     if (selectedHitObject)
-        for (uint16_t slot=1;slot<COMBAT_MECH_SLOTS;++slot)
+        for (uint16_t candidateUnitSlot=1;candidateUnitSlot<COMBAT_MECH_SLOTS;++candidateUnitSlot)
         {
-            BtechUnitBinding *binding=&unitBindings[slot];
-            if (!binding->mech) continue;
-            BtechWorldObjectPrefix *selected=selectedHitObject;
-            if (binding->leftArm && &binding->leftArm->object.prefix==selected) armor=COMBAT_ARMOR_LEFT_ARM;
-            else if (binding->rightArm && &binding->rightArm->object.prefix==selected) armor=COMBAT_ARMOR_RIGHT_ARM;
-            else if (binding->positionedLeftLeg && &binding->positionedLeftLeg->object.prefix==selected) armor=COMBAT_ARMOR_LEFT_LEG;
-            else if (binding->rightLeg && &binding->rightLeg->object.prefix==selected) armor=COMBAT_ARMOR_RIGHT_LEG;
-            else if (binding->torso && &binding->torso->object.prefix==selected)
+            BtechUnitBinding *targetBinding=&unitBindings[candidateUnitSlot];
+            if (!targetBinding->mech) continue;
+            BtechWorldObjectPrefix *hitPart=selectedHitObject;
+            if (targetBinding->leftArm && &targetBinding->leftArm->object.prefix==hitPart) hitArmorLocation=COMBAT_ARMOR_LEFT_ARM;
+            else if (targetBinding->rightArm && &targetBinding->rightArm->object.prefix==hitPart) hitArmorLocation=COMBAT_ARMOR_RIGHT_ARM;
+            else if (targetBinding->positionedLeftLeg && &targetBinding->positionedLeftLeg->object.prefix==hitPart) hitArmorLocation=COMBAT_ARMOR_LEFT_LEG;
+            else if (targetBinding->rightLeg && &targetBinding->rightLeg->object.prefix==hitPart) hitArmorLocation=COMBAT_ARMOR_RIGHT_LEG;
+            else if (targetBinding->torso && &targetBinding->torso->object.prefix==hitPart)
             {
-                if (!playerUnitBinding || !playerUnitBinding->positionedLeftLeg || !playerUnitBinding->torso || !binding->positionedLeftLeg) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerUnitBinding || !playerUnitBinding->positionedLeftLeg || !playerUnitBinding->torso || !binding->positionedLeftLeg");
-                uint16_t heading=playerUnitBinding->positionedLeftLeg->object.prefix.orientationC;
-                heading-=binding->positionedLeftLeg->object.prefix.orientationC;
-                heading-=binding->torso->object.prefix.orientationC;
-                heading+=playerUnitBinding->torso->object.prefix.orientationC;
-                heading+=DIRECT_TORSO_HEADING_BIAS;
+                if (!playerUnitBinding || !playerUnitBinding->positionedLeftLeg || !playerUnitBinding->torso || !targetBinding->positionedLeftLeg) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerUnitBinding || !playerUnitBinding->positionedLeftLeg || !playerUnitBinding->torso || !targetBinding->positionedLeftLeg");
+                uint16_t relativeTorsoHeading=playerUnitBinding->positionedLeftLeg->object.prefix.orientationC;
+                relativeTorsoHeading-=targetBinding->positionedLeftLeg->object.prefix.orientationC;
+                relativeTorsoHeading-=targetBinding->torso->object.prefix.orientationC;
+                relativeTorsoHeading+=playerUnitBinding->torso->object.prefix.orientationC;
+                relativeTorsoHeading+=DIRECT_TORSO_HEADING_BIAS;
                 /* Native impossible unsigned front interval is intentional. */
-                if (heading<DIRECT_TORSO_FRONT_LOWER && heading>DIRECT_TORSO_FRONT_UPPER) armor=COMBAT_ARMOR_CENTER_TORSO;
-                else if (heading<DIRECT_TORSO_LEFT_LIMIT) armor=COMBAT_ARMOR_LEFT_TORSO;
-                else if (heading<DIRECT_TORSO_REAR_LIMIT) armor=COMBAT_ARMOR_REAR_CENTER_TORSO;
-                else armor=COMBAT_ARMOR_RIGHT_TORSO;
+                if (relativeTorsoHeading<DIRECT_TORSO_FRONT_LOWER && relativeTorsoHeading>DIRECT_TORSO_FRONT_UPPER) hitArmorLocation=COMBAT_ARMOR_CENTER_TORSO;
+                else if (relativeTorsoHeading<DIRECT_TORSO_LEFT_LIMIT) hitArmorLocation=COMBAT_ARMOR_LEFT_TORSO;
+                else if (relativeTorsoHeading<DIRECT_TORSO_REAR_LIMIT) hitArmorLocation=COMBAT_ARMOR_REAR_CENTER_TORSO;
+                else hitArmorLocation=COMBAT_ARMOR_RIGHT_TORSO;
             }
-            else if (binding->head && &binding->head->object.prefix==selected) armor=COMBAT_ARMOR_HEAD;
+            else if (targetBinding->head && &targetBinding->head->object.prefix==hitPart) hitArmorLocation=COMBAT_ARMOR_HEAD;
             else continue;
-            matched=slot;break;
+            matchedUnitSlot=candidateUnitSlot;break;
         }
-    *armorLocation=armor;*unitSlot=matched;
+    *armorLocation=hitArmorLocation;*unitSlot=matchedUnitSlot;
 }
 
 /* Only installed, operational weapons with ammunition can be selected. */
