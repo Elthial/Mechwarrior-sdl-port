@@ -58,7 +58,7 @@ uint16_t bodyDamageEffectResourceDeltas[COMBAT_BODY_EFFECT_FRAMES];
 BtechBodyReferencePoint fallenBodyReferenceBanks[COMBAT_MECH_TEMPLATES][COMBAT_ARMOR_LOCATIONS];
 BtechPosition3D bodyReferenceWorldPosition;
 uint32_t jumpGroundHeight;
-uint16_t unitMovementBoundaryHistory[COMBAT_MECH_SLOTS];
+uint16_t unitMovementObstructionHistory[COMBAT_MECH_SLOTS];
 uint16_t aiCandidateTargetSlot,aiCandidateDistance;
 uint16_t hitLocationRows[ATTACK_ARCS][HIT_LOCATION_ROLLS],rangeHitModifiers[WEAPON_RANGE_BANDS];
 int16_t avoidanceStepX,avoidanceStepY;
@@ -215,7 +215,7 @@ void BtechInitializeFreshWorldOwners(const uint8_t *data)
     memset(unitDistancesToSpecialTarget,0,sizeof(unitDistancesToSpecialTarget));
     memset(tacticalThreatUnitSlots,0,sizeof(tacticalThreatUnitSlots));
     memset(tacticalThreatHeadings,0,sizeof(tacticalThreatHeadings));
-    for (uint16_t slot=0;slot<COMBAT_MECH_SLOTS;++slot) unitMovementBoundaryHistory[slot]=0;
+    for (uint16_t slot=0;slot<COMBAT_MECH_SLOTS;++slot) unitMovementObstructionHistory[slot]=0;
     for (uint16_t slot=0;slot<COMBAT_PROJECTILE_SLOTS;++slot) projectiles[slot]=(BtechProjectileState){0};
     for (uint16_t row=0;row<COMBAT_MECH_SLOTS;++row)
         for (uint16_t column=0;column<COMBAT_MECH_SLOTS;++column) unitDistances[row][column]=0;
