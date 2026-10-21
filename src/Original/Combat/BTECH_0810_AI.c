@@ -14,7 +14,7 @@ void BtechUpdateAiMechUnits(void)
 {
     for (uint16_t slot=0;slot<COMBAT_MECH_SLOTS;++slot) unitControls[slot].targetSelectionCount=0;
     BtechRefreshLastVisibleUnitPositions();
-    BtechRecalculateUnitCombatValuesAndBoundaries();
+    BtechRecalculateUnitConditionScoresAndExitCodes();
     BtechUpdateUnitWeaponRangeThresholds();
     BtechUpdateSideCompletionFlags();
     activeUnitControl=&unitControls[1];
@@ -28,11 +28,11 @@ void BtechUpdateAiMechUnits(void)
         if (activeMechState->templateIndex>=COMBAT_MECH_TEMPLATES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: activeMechState->templateIndex>=COMBAT_MECH_TEMPLATES");
         activeMechTemplate=&mechTemplates[activeMechState->templateIndex];
         activeUnitTorsoObject=unitBindings[slot].torso;
-        if (activeUnitControl->combatValueOrBoundaryCode<-1) continue;
+        if (activeUnitControl->conditionScoreOrExitCode<COMBAT_MECH_DISABLED_VALUE) continue;
         if (!activeUnitPositionedObject) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !activeUnitPositionedObject");
         if (activeUnitControl->movementMode==MOVEMENT_MODE_JUMP)
         {
-            if (activeUnitControl->combatValueOrBoundaryCode!=COMBAT_MECH_DISABLED_VALUE
+            if (activeUnitControl->conditionScoreOrExitCode!=COMBAT_MECH_DISABLED_VALUE
                 && activeMechState->currentInternalStructure[COMBAT_BODY_RIGHT_LEG]
                 && activeMechState->currentInternalStructure[COMBAT_BODY_LEFT_LEG]) goto tacticalUpdate;
             BtechSetActiveUnitGroundOrJumpMotion(activeUnitPositionedObject->object.prefix.orientationC,MOTION_DIRECTION_STOP);
@@ -45,7 +45,7 @@ void BtechUpdateAiMechUnits(void)
             activeUnitControl->biasedHeadingSnapshot=activeUnitPositionedObject->object.prefix.orientationC+AVOIDANCE_HALF_TURN;
         }
 tacticalUpdate:
-        if (activeUnitControl->combatValueOrBoundaryCode!=COMBAT_MECH_DISABLED_VALUE)
+        if (activeUnitControl->conditionScoreOrExitCode!=COMBAT_MECH_DISABLED_VALUE)
         {
             uint16_t mode=activeUnitControl->movementMode;
             if (mode!=MOVEMENT_MODE_FALLEN_POSE && mode!=MOVEMENT_MODE_FALLING && mode!=MOVEMENT_MODE_RECOVERING)
@@ -102,7 +102,7 @@ void BtechCoordinateSpecialObjectiveUnits(void)
             uint16_t threat=0,firstTarget=opposingSideFirstUnitSlots[side];
             if (firstTarget>COMBAT_MECH_SLOTS-COMBAT_LANCE_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: firstTarget>COMBAT_MECH_SLOTS-COMBAT_LANCE_SLOTS");
             for (uint16_t slot=firstTarget;slot<firstTarget+COMBAT_LANCE_SLOTS;++slot)
-                if (unitDistancesToSpecialTarget[slot] && unitControls[slot].combatValueOrBoundaryCode>0 && unitDistancesToSpecialTarget[slot]<nearestTarget)
+                if (unitDistancesToSpecialTarget[slot] && unitControls[slot].conditionScoreOrExitCode>COMBAT_CONDITION_SCORE_MINIMUM && unitDistancesToSpecialTarget[slot]<nearestTarget)
                 {nearestTarget=unitDistancesToSpecialTarget[slot];threat=slot;}
             if (nearestTarget==OBJECTIVE_CANDIDATE_DISTANCE_LIMIT) {noTargetsRemaining=true;continue;}
             int32_t nearestDefender=OBJECTIVE_CANDIDATE_DISTANCE_LIMIT;
@@ -114,7 +114,7 @@ void BtechCoordinateSpecialObjectiveUnits(void)
             {
                 int32_t objectiveDistance=unitDistancesToSpecialTarget[slot],targetDistance=(int32_t)unitDistances[slot][threat];
                 BtechUnitControlState *control=&unitControls[slot];
-                if (!objectiveDistance || targetDistance<=0 || objectiveDistance>=OBJECTIVE_DEFENDER_RADIUS || control->combatValueOrBoundaryCode<=0 || targetDistance>=nearestDefender) continue;
+                if (!objectiveDistance || targetDistance<=0 || objectiveDistance>=OBJECTIVE_DEFENDER_RADIUS || control->conditionScoreOrExitCode<=COMBAT_CONDITION_SCORE_MINIMUM || targetDistance>=nearestDefender) continue;
                 if (control->tacticalState!=TACTICAL_DEFENDING)
                 {
                     if (control->targetUnitSlot==threat && objectiveDistance<incomingDistance) {alreadyCovered=true;break;}

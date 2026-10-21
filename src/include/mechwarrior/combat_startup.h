@@ -22,7 +22,7 @@ extern uint8_t aiUpdatesSuppressed,unidentifiedField22;
 void BtechProgramMain(uint16_t argumentCount,const char *const *arguments);
 void BtechFlashPlayerMechLoss(void);
 extern uint16_t combatTickCounter,playerTargetSlot,selectedWeaponMount,aimReticleScreenY;
-extern int16_t heatEffectTiers[COMBAT_MECH_SLOTS];
+extern int16_t heatAimJitterTiers[COMBAT_MECH_SLOTS];
 extern uint16_t radarRangeShift,viewScaleShift,requestedPlayerForwardStepScale,unidentifiedField21;
 extern uint16_t playerSpecialTargetLandingLatch;
 extern uint8_t mountGroupMode,headingRadarSelected,playerImpactThisTick;

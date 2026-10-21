@@ -29,7 +29,7 @@ void BtechNavigateActiveUnitTowardPosition(const BtechPosition3D *destinationPos
     {BtechSetActiveUnitGroundOrJumpMotion(activeUnitPositionedObject->object.prefix.orientationC,MOTION_DIRECTION_STOP);return;}
     if (!activeMechTemplate || !activeMechState) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !activeMechTemplate || !activeMechState");
     if (activeMechTemplate->jumpJetGroupCount!=activeMechState->destroyedJumpJetGroups
-        && activeUnitControl->combatValueOrBoundaryCode>0 && (int16_t)activeMechState->gyroHits<COMBAT_GYRO_DESTROYED_HITS
+        && activeUnitControl->conditionScoreOrExitCode>COMBAT_CONDITION_SCORE_MINIMUM && (int16_t)activeMechState->gyroHits<COMBAT_GYRO_DESTROYED_HITS
         && activeUnitControl->movementMode!=MOVEMENT_MODE_JUMP && (int16_t)activeMechState->jumpCharge>NAVIGATION_JUMP_CHARGE_MINIMUM)
     {
         uint32_t distanceToDestination=BtechApproximatePlanarDistance(destinationPosition,&activeUnitPositionedObject->object.prefix.position);

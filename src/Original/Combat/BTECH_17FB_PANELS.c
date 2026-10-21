@@ -26,7 +26,7 @@ void BtechDrawUnitOrderPanels(void)
         const BtechMechTemplate *chassis=&mechTemplates[mech->templateIndex];
         uint16_t x=lanceOrderPanelTextX[panel];
         int16_t trackedSlot=control->trackedUnitOrSpecialSlot;
-        if (trackedSlot>0 && trackedSlot<COMBAT_MECH_SLOTS && unitControls[trackedSlot].combatValueOrBoundaryCode<0)
+        if (trackedSlot>0 && trackedSlot<COMBAT_MECH_SLOTS && unitControls[trackedSlot].conditionScoreOrExitCode<COMBAT_CONDITION_SCORE_MINIMUM)
         {
             control->trackedUnitOrSpecialSlot=-1;
             control->commandCode=COMBAT_ORDER_ACT_ON_OWN;
@@ -47,7 +47,7 @@ void BtechDrawUnitOrderPanels(void)
             BtechDrawNearText(tacticalOrderLabels[control->tacticalState],x,ORDER_PANEL_TACTICAL_Y);
             textForegroundColour=ORDER_PANEL_TEXT_COLOUR;
             uint16_t displayOrder=ORDER_DISPLAY_RETREATED;
-            if (control->combatValueOrBoundaryCode>-2)
+            if (control->conditionScoreOrExitCode>COMBAT_EXIT_CODE_THRESHOLD)
             {
                 displayOrder=control->commandCode;
                 if (displayOrder)

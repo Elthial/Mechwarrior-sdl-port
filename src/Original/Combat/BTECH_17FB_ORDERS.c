@@ -50,7 +50,7 @@ uint16_t BtechGetMechConditionColour(int16_t unitSlot)
     if (mech->sensorHits==COMBAT_SENSORS_DESTROYED_HITS) --band;
     if (mech->lifeSupportHits==1) --band;
     if (mech->engineHits==COMBAT_ENGINE_HIT_LIMIT || mech->gyroHits==COMBAT_GYRO_DESTROYED_HITS || mech->cockpitDisabled==1) band=0;
-    if (band<0 || (uint16_t)unitControls[unitSlot].combatValueOrBoundaryCode==COMBAT_DISABLED_UNIT_VALUE) band=0;
+    if (band<0 || (uint16_t)unitControls[unitSlot].conditionScoreOrExitCode==COMBAT_DISABLED_UNIT_VALUE) band=0;
     if (hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES || band>=ORDER_CONDITION_BANDS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES || band>=ORDER_CONDITION_BANDS"); /* Unsupported upper-band adjacent palette alias. */
     return hudColourSchemes[hudColourSchemeIndex].orderConditionColours[band];
 }
@@ -125,7 +125,7 @@ void BtechSeedSelectedOrderTracking(void)
         else
             for (uint16_t slot=COMBAT_LANCE_SLOTS;slot<COMBAT_MECH_SLOTS;++slot)
                 if (unitBindings[slot].mech && unitControls[slot].positionKnowledgeCode!=COMBAT_POSITION_UNKNOWN
-                    && unitControls[slot].combatValueOrBoundaryCode>-1)
+                    && unitControls[slot].conditionScoreOrExitCode>COMBAT_MECH_DISABLED_VALUE)
                 {control->trackedUnitOrSpecialSlot=(int16_t)slot;break;}
     }
     control->navigationReferenceSlot=control->trackedUnitOrSpecialSlot;
@@ -159,7 +159,7 @@ void BtechEditSelectedUnitOrders(void)
     {
         if (orderPanelMode==ORDER_PANEL_SUMMARY || (int16_t)orderPanelMode>=ORDER_PANEL_DAMAGE) goto navigation;
         if (selectedLanceOrderPanel>=ORDER_WINGMATE_PANELS || !lanceOrderControls[selectedLanceOrderPanel]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: selectedLanceOrderPanel>=ORDER_WINGMATE_PANELS || !lanceOrderControls[selectedLanceOrderPanel]");
-        if (lanceOrderControls[selectedLanceOrderPanel]->combatValueOrBoundaryCode>=0) goto navigation;
+        if (lanceOrderControls[selectedLanceOrderPanel]->conditionScoreOrExitCode>=COMBAT_CONDITION_SCORE_MINIMUM) goto navigation;
     }
     if (orderPanelMode==ORDER_PANEL_SUMMARY)
     {
@@ -168,14 +168,14 @@ void BtechEditSelectedUnitOrders(void)
         case ORDER_ACTION_COMMAND:
             if (selectedLanceOrderPanel>=ORDER_WINGMATE_PANELS || !lanceOrderControls[selectedLanceOrderPanel]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: selectedLanceOrderPanel>=ORDER_WINGMATE_PANELS || !lanceOrderControls[selectedLanceOrderPanel]");
             control=lanceOrderControls[selectedLanceOrderPanel];
-            if (control->combatValueOrBoundaryCode<=0) goto navigation;
+            if (control->conditionScoreOrExitCode<=COMBAT_CONDITION_SCORE_MINIMUM) goto navigation;
             orderPanelMode=ORDER_PANEL_COMMAND;pendingOrderCommand=control->commandCode;
             selectedOrderPanelRow=control->commandCode+orderSelectionFirstRows[1];
             break;
         case ORDER_ACTION_REFERENCE:
             if (selectedLanceOrderPanel>=ORDER_WINGMATE_PANELS || !lanceOrderControls[selectedLanceOrderPanel]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: selectedLanceOrderPanel>=ORDER_WINGMATE_PANELS || !lanceOrderControls[selectedLanceOrderPanel]");
             control=lanceOrderControls[selectedLanceOrderPanel];
-            if (control->combatValueOrBoundaryCode<=0) goto navigation;
+            if (control->conditionScoreOrExitCode<=COMBAT_CONDITION_SCORE_MINIMUM) goto navigation;
             if (control->commandCode==COMBAT_ORDER_ACT_ON_OWN)
             {
                 switch (sideObjectiveRules[0])
@@ -271,7 +271,7 @@ navigation:
                 {
                     if ((uint16_t)candidate>=COMBAT_MECH_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (uint16_t)candidate>=COMBAT_MECH_SLOTS");
                     if (unitBindings[candidate].mech && unitControls[candidate].sideIndex==1
-                        && unitControls[candidate].combatValueOrBoundaryCode>-1 && unitControls[candidate].positionKnowledgeCode!=COMBAT_POSITION_UNKNOWN)
+                        && unitControls[candidate].conditionScoreOrExitCode>COMBAT_MECH_DISABLED_VALUE && unitControls[candidate].positionKnowledgeCode!=COMBAT_POSITION_UNKNOWN)
                         target=candidate;
                 }
                 if (target>=0) break;

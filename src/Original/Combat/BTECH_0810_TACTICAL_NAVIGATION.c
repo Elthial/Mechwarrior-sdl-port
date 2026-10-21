@@ -42,14 +42,14 @@ void BtechUpdateTacticalNavigation(void)
         {
             int16_t targetConditionOrBoundaryCode;
             if (control->targetUnitSlot==COMBAT_SPECIAL_TARGET_SLOT)
-                targetConditionOrBoundaryCode=specialTargetObject && specialTargetDamageRemaining?0:-1;
+                targetConditionOrBoundaryCode=specialTargetObject && specialTargetDamageRemaining?COMBAT_CONDITION_SCORE_MINIMUM:COMBAT_MECH_DISABLED_VALUE;
             else
             {
                 if ((uint16_t)control->targetUnitSlot>=COMBAT_MECH_SLOTS)
                     /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (uint16_t)control->targetUnitSlot>=COMBAT_MECH_SLOTS");
-                targetConditionOrBoundaryCode=unitControls[control->targetUnitSlot].combatValueOrBoundaryCode;
+                targetConditionOrBoundaryCode=unitControls[control->targetUnitSlot].conditionScoreOrExitCode;
             }
-            if (targetConditionOrBoundaryCode>-1) return;
+            if (targetConditionOrBoundaryCode>COMBAT_MECH_DISABLED_VALUE) return;
         }
         if (control->tacticalState==TACTICAL_DEFENDING) return;
     }
@@ -176,15 +176,15 @@ void BtechSelectUnitTacticalState(void)
     }
     uint16_t threatCount=0,strongestThreatHeadingIndex=0,selectedHeading=root->orientationC;
     int16_t combinedThreatValue=0,strongestThreatSlot=-1;
-    int16_t savedPlayerConditionScore=unitControls[0].combatValueOrBoundaryCode;
+    int16_t savedPlayerConditionScore=unitControls[0].conditionScoreOrExitCode;
     int16_t halfPlayerConditionScore=((uint16_t)savedPlayerConditionScore>>1)|((uint16_t)savedPlayerConditionScore&0x8000);
-    unitControls[0].combatValueOrBoundaryCode=(int16_t)(savedPlayerConditionScore+halfPlayerConditionScore);
+    unitControls[0].conditionScoreOrExitCode=(int16_t)(savedPlayerConditionScore+halfPlayerConditionScore);
     if (control->unitSlot>=COMBAT_MECH_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: control->unitSlot>=COMBAT_MECH_SLOTS");
     for (uint16_t slot=0;slot<COMBAT_MECH_SLOTS;++slot)
     {
         if (!unitBindings[slot].mech) continue;
         BtechUnitControlState *enemy=&unitControls[slot];
-        if (enemy->sideIndex==control->sideIndex || enemy->combatValueOrBoundaryCode<=0 || !unitVisibility[slot][control->unitSlot]) continue;
+        if (enemy->sideIndex==control->sideIndex || enemy->conditionScoreOrExitCode<=COMBAT_CONDITION_SCORE_MINIMUM || !unitVisibility[slot][control->unitSlot]) continue;
         int16_t halfEngagementRange=((uint16_t)enemy->readyWeaponRangeMinusMargin>>1)|((uint16_t)enemy->readyWeaponRangeMinusMargin&0x8000);
         int16_t threatEngagementRange=halfEngagementRange+enemy->readyWeaponRangeMinusMargin;
         if (threatEngagementRange<=(int32_t)unitDistances[slot][control->unitSlot]) continue;
@@ -194,12 +194,12 @@ void BtechSelectUnitTacticalState(void)
         int16_t threatFacingDifference=enemyRoot->object.prefix.orientationC+enemyTorso->object.prefix.orientationC-heading+AVOIDANCE_HALF_TURN;
         if (threatFacingDifference>=TACTICAL_THREAT_FACING_LIMIT) continue; /* Signed one-sided, not abs(angle). */
         tacticalThreatUnitSlots[threatCount]=slot;tacticalThreatHeadings[threatCount]=heading;
-        combinedThreatValue=(int16_t)(combinedThreatValue+enemy->combatValueOrBoundaryCode);
-        if (strongestThreatSlot<0 || unitControls[strongestThreatSlot].combatValueOrBoundaryCode<enemy->combatValueOrBoundaryCode)
+        combinedThreatValue=(int16_t)(combinedThreatValue+enemy->conditionScoreOrExitCode);
+        if (strongestThreatSlot<0 || unitControls[strongestThreatSlot].conditionScoreOrExitCode<enemy->conditionScoreOrExitCode)
         {strongestThreatHeadingIndex=threatCount;strongestThreatSlot=slot;}
         ++threatCount;
     }
-    unitControls[0].combatValueOrBoundaryCode=savedPlayerConditionScore;
+    unitControls[0].conditionScoreOrExitCode=savedPlayerConditionScore;
     if (threatCount)
     {
         if (control->tacticalState==TACTICAL_CHARGING_BASE)
@@ -212,8 +212,8 @@ void BtechSelectUnitTacticalState(void)
         control->targetUnitSlot=strongestThreatSlot;selectedHeading=tacticalThreatHeadings[strongestThreatHeadingIndex];
         if (control->tacticalState!=TACTICAL_WANDERING)
         {
-            if ((int16_t)(control->combatValueOrBoundaryCode*3)<combinedThreatValue) control->tacticalState=TACTICAL_FLEEING;
-            else if (unitControls[strongestThreatSlot].combatValueOrBoundaryCode>(int16_t)(control->combatValueOrBoundaryCode*2)) control->tacticalState=TACTICAL_AVOIDING;
+            if ((int16_t)(control->conditionScoreOrExitCode*3)<combinedThreatValue) control->tacticalState=TACTICAL_FLEEING;
+            else if (unitControls[strongestThreatSlot].conditionScoreOrExitCode>(int16_t)(control->conditionScoreOrExitCode*2)) control->tacticalState=TACTICAL_AVOIDING;
         }
     }
     else if (control->tacticalState==TACTICAL_CHARGING_BASE)

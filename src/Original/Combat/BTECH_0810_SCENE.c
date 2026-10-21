@@ -43,8 +43,8 @@ void BtechRenderCockpitSceneAndHud(void)
     uint16_t viewportYSum=playerPoseCameraContext->clipMaximumB+playerPoseCameraContext->clipMinimumB;
     aimReticleScreenY=(uint16_t)((uint16_t)projectedAim+(uint16_t)((int16_t)viewportYSum>>1));
     drawPageSelector=backPageSelector;
-    uint16_t probeY=BtechRandomSignedSpread(heatEffectTiers[0])+aimReticleScreenY;
-    uint16_t probeX=BtechRandomSignedSpread(heatEffectTiers[0])+COMBAT_SCREEN_WIDTH/2;
+    uint16_t probeY=BtechRandomSignedSpread(heatAimJitterTiers[0])+aimReticleScreenY;
+    uint16_t probeX=BtechRandomSignedSpread(heatAimJitterTiers[0])+COMBAT_SCREEN_WIDTH/2;
     BtechBeginSelectionPixelProbe(probeX,probeY);
     BtechRenderObjectList(playerPoseCameraContext,cockpitWorldObjects,(int16_t)cockpitWorldObjectCount);
     BtechRemoveBodyHeadingFromMechParts();

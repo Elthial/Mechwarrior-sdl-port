@@ -53,7 +53,7 @@ void BtechDrawHeadingRadar(void)
     uint16_t heading=player->orientationC+playerUnitBinding->torso->object.prefix.orientationC;
     for (uint16_t slot=1;slot<COMBAT_MECH_SLOTS;++slot)
     {
-        if (unitControls[slot].combatValueOrBoundaryCode<=-2) continue;
+        if (unitControls[slot].conditionScoreOrExitCode<=COMBAT_EXIT_CODE_THRESHOLD) continue;
         uint16_t paletteIndex;
         if (!unitControls[slot].sideIndex) paletteIndex=hudColourSchemeIndex?Combat_Pal_EGA_Black:Combat_Pal_EGA_LightBlue;
         else

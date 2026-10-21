@@ -17,16 +17,16 @@ void BtechScoreAndSelectTacticalTarget(void)
     {
         BtechUnitControlState *candidate=&unitControls[slot];
         eligible[slot]=unitBindings[slot].mech && candidate->sideIndex!=active->sideIndex
-            && candidate->positionKnowledgeCode!=COMBAT_POSITION_UNKNOWN && candidate->combatValueOrBoundaryCode>0;
+            && candidate->positionKnowledgeCode!=COMBAT_POSITION_UNKNOWN && candidate->conditionScoreOrExitCode>COMBAT_CONDITION_SCORE_MINIMUM;
         if (!eligible[slot]) continue;
         anyEligible=1;
         int32_t distance=unitDistances[active->unitSlot][slot];
         if (distance>=maximumDistanceLow) maximumDistanceLow=(int16_t)distance;
-        int16_t difference=active->combatValueOrBoundaryCode-candidate->combatValueOrBoundaryCode;
+        int16_t difference=active->conditionScoreOrExitCode-candidate->conditionScoreOrExitCode;
         int16_t magnitude;
         if ((uint16_t)difference==0x8000) magnitude=INT16_MAX;
-        else if (active->combatValueOrBoundaryCode<candidate->combatValueOrBoundaryCode)
-            magnitude=(int16_t)(candidate->combatValueOrBoundaryCode-active->combatValueOrBoundaryCode);
+        else if (active->conditionScoreOrExitCode<candidate->conditionScoreOrExitCode)
+            magnitude=(int16_t)(candidate->conditionScoreOrExitCode-active->conditionScoreOrExitCode);
         else magnitude=difference;
         if (magnitude>maximumValueDifference) maximumValueDifference=magnitude;
     }
@@ -35,8 +35,8 @@ void BtechScoreAndSelectTacticalTarget(void)
     {
         if (!eligible[slot]) continue;
         BtechUnitControlState *candidate=&unitControls[slot];
-        int16_t candidateValue=candidate->targetSelectionCount?0:candidate->combatValueOrBoundaryCode;
-        int16_t difference=(int16_t)(active->combatValueOrBoundaryCode-candidateValue),score=0;
+        int16_t candidateValue=candidate->targetSelectionCount?0:candidate->conditionScoreOrExitCode;
+        int16_t difference=(int16_t)(active->conditionScoreOrExitCode-candidateValue),score=0;
         if (difference>TACTICAL_TARGET_VALUE_FLOOR)
         {
             int16_t distanceHeadroom=maximumDistanceLow-(uint16_t)unitDistances[slot][active->unitSlot];
@@ -61,14 +61,15 @@ void BtechScoreAndSelectTacticalTarget(void)
 void BtechUpdateSideCompletionFlags(void)
 {
     if (sideCompletionFlags[0] || sideCompletionFlags[1]) return;
-    for (uint16_t side=0;side<2;++side)
-        if (BtechTestSideEliminationOrExitObjective(side<1)
-            || (sideObjectiveRules[side]==OBJECTIVE_SPECIAL_TARGET && !specialTargetDamageRemaining)) sideCompletionFlags[side]=1;
+    /* Side 0 tests side 1, and vice versa; the callee can also set its own latch. */
+    for (uint16_t benefitingSideIndex=0;benefitingSideIndex<2;++benefitingSideIndex)
+        if (BtechTestSideEliminationOrExitObjective(benefitingSideIndex<1)
+            || (sideObjectiveRules[benefitingSideIndex]==OBJECTIVE_SPECIAL_TARGET && !specialTargetDamageRemaining)) sideCompletionFlags[benefitingSideIndex]=1;
     if (sideCompletionFlags[1] || sideCompletionFlags[0]) return;
     sideCompletionFlags[1]=1;sideCompletionFlags[0]=1;
-    for (uint16_t slot=0;slot<COMBAT_MECH_SLOTS;++slot)
-        if (unitBindings[slot].mech && unitControls[slot].combatValueOrBoundaryCode>0)
-            sideCompletionFlags[unitControls[slot].sideIndex<1]=0;
+    for (uint16_t survivingUnitSlot=0;survivingUnitSlot<COMBAT_MECH_SLOTS;++survivingUnitSlot)
+        if (unitBindings[survivingUnitSlot].mech && unitControls[survivingUnitSlot].conditionScoreOrExitCode>COMBAT_CONDITION_SCORE_MINIMUM)
+            sideCompletionFlags[unitControls[survivingUnitSlot].sideIndex<1]=0;
 }
 
 /*17FB:27F2. Withdrawal success sets THIS side but returns not-eliminated.
@@ -76,24 +77,24 @@ void BtechUpdateSideCompletionFlags(void)
 uint8_t BtechTestSideEliminationOrExitObjective(uint16_t sideIndex)
 {
     if (sideIndex>=2) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: sideIndex>=2");
-    uint8_t noUnitsRemaining=1;
-    uint16_t rule=sideObjectiveRules[sideIndex];
-    uint8_t allowedBoundaryMask=scenarioSelectors.sideBoundaryMasks[sideIndex];
-    for (uint16_t slot=0;slot<COMBAT_MECH_SLOTS;++slot)
+    uint8_t noMechsStillInBattle=1;
+    uint16_t sideObjectiveRule=sideObjectiveRules[sideIndex];
+    uint8_t allowedExitBoundaryMask=scenarioSelectors.sideBoundaryMasks[sideIndex];
+    for (uint16_t unitSlot=0;unitSlot<COMBAT_MECH_SLOTS;++unitSlot)
     {
-        BtechUnitControlState *control=&unitControls[slot];
-        if (!unitBindings[slot].mech || control->sideIndex!=sideIndex || control->combatValueOrBoundaryCode==COMBAT_MECH_DISABLED_VALUE) continue;
-        int16_t boundary=0-(uint16_t)(control->combatValueOrBoundaryCode+2);
-        if (boundary<0) noUnitsRemaining=0;
+        BtechUnitControlState *evaluatedUnitControl=&unitControls[unitSlot];
+        if (!unitBindings[unitSlot].mech || evaluatedUnitControl->sideIndex!=sideIndex || evaluatedUnitControl->conditionScoreOrExitCode==COMBAT_MECH_DISABLED_VALUE) continue;
+        int16_t exitBoundaryIndex=0-(uint16_t)(evaluatedUnitControl->conditionScoreOrExitCode+COMBAT_EXIT_CODE_OFFSET);
+        if (exitBoundaryIndex<0) noMechsStillInBattle=0;
         else
         {
-            if (boundary>=TACTICAL_BOUNDARY_CODES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: boundary>=TACTICAL_BOUNDARY_CODES"); /* Adjacent authored0EB6 table alias. */
-            if ((allowedBoundaryMask&boundaryMaskByCode[boundary]) && rule==OBJECTIVE_WITHDRAW)
+            if (exitBoundaryIndex>=TACTICAL_BOUNDARY_CODES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: exitBoundaryIndex>=TACTICAL_BOUNDARY_CODES"); /* Adjacent authored0EB6 table alias. */
+            if ((allowedExitBoundaryMask&boundaryMaskByCode[exitBoundaryIndex]) && sideObjectiveRule==OBJECTIVE_WITHDRAW)
             {
                 sideCompletionFlags[sideIndex]=1;
-                noUnitsRemaining=0;
+                noMechsStillInBattle=0;
             }
         }
     }
-    return noUnitsRemaining;
+    return noMechsStillInBattle;
 }

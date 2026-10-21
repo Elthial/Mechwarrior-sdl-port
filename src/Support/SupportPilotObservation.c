@@ -20,7 +20,7 @@ void SupportPilotObserve(PilotObservation *view,bool combatActive)
     const BtechPooledWorldObject *body=playerUnitBinding->positionedLeftLeg;
     if(!body || !playerUnitBinding->torso)return;
     view->cockpit=combatDispatchState==COMBAT_SCREEN_COCKPIT && combatTickCounter!=0;
-    view->alive=unitControls[0].combatValueOrBoundaryCode>0;
+    view->alive=unitControls[0].conditionScoreOrExitCode>COMBAT_CONDITION_SCORE_MINIMUM;
     view->missionComplete=sideCompletionFlags[0] || sideCompletionFlags[1];
     view->fallen=unitControls[0].movementMode==MOVEMENT_MODE_FALLEN_POSE;
     view->heatInhibited=heatInhibitFlags[0]!=0;view->heat=playerMechState->heatUnits;
@@ -44,7 +44,7 @@ void SupportPilotObserve(PilotObservation *view,bool combatActive)
         target->known=target->visible || unitVisibility[0][slot]!=0;
         if(!target->known)continue;
         target->hostile=unitControls[slot].sideIndex!=unitControls[0].sideIndex;
-        target->alive=unitControls[slot].combatValueOrBoundaryCode>0;
+        target->alive=unitControls[slot].conditionScoreOrExitCode>COMBAT_CONDITION_SCORE_MINIMUM;
         target->position=ReadPosition(&binding->positionedLeftLeg->object.prefix);
         if(target->visible)
         {

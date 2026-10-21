@@ -139,7 +139,7 @@ void BtechProcessPlayerControls(void)
     else if ((previousFireButtonState && !fireButton) || scanCode==COMBAT_KEY_SPACE || fireCycleActive)
     {
         BtechWeaponState *weapon=&playerMechState->weapons[selectedWeaponMount];
-        if (weapon->reloadTicksRemaining || heatInhibitFlags[0] || unitControls[0].combatValueOrBoundaryCode<=0 || !weapon->operational)
+        if (weapon->reloadTicksRemaining || heatInhibitFlags[0] || unitControls[0].conditionScoreOrExitCode<=COMBAT_CONDITION_SCORE_MINIMUM || !weapon->operational)
             fireCycleActive=0;
         else
         {

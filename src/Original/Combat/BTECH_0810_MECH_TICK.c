@@ -37,48 +37,48 @@ void BtechAdvanceWeaponReloadTimers(void)
  * aim jitter tier and fire/jump inhibition. No invented shutdown state. */
 void BtechUpdateUnitHeatEffects(void)
 {
-    for (uint16_t slot=0;slot<COMBAT_MECH_SLOTS;++slot)
+    for (uint16_t unitSlot=0;unitSlot<COMBAT_MECH_SLOTS;++unitSlot)
     {
-        BtechMechState *mech=unitBindings[slot].mech;
-        if (!mech) continue; /* Absent slots keep old derived entries. */
-        uint16_t referenceProduct=mech->movementReferenceScale*COMBAT_MOVEMENT_HEAT_REFERENCE_MULTIPLIER;
+        BtechMechState *heatedMech=unitBindings[unitSlot].mech;
+        if (!heatedMech) continue; /* Absent slots keep old derived entries. */
+        uint16_t movementHeatProductLow=heatedMech->movementReferenceScale*COMBAT_MOVEMENT_HEAT_REFERENCE_MULTIPLIER;
         /* Native LOW IMUL word, then SAR7, before either signed division. */
-        int16_t movementThreshold=(referenceProduct>>COMBAT_MOVEMENT_HEAT_REFERENCE_SHIFT)
-            | (referenceProduct&0x8000?0xFE00:0);
-        if (unitControls[slot].movementMode!=MOVEMENT_MODE_JUMP)
+        int16_t movementHeatReference=(movementHeatProductLow>>COMBAT_MOVEMENT_HEAT_REFERENCE_SHIFT)
+            | (movementHeatProductLow&0x8000?0xFE00:0);
+        if (unitControls[unitSlot].movementMode!=MOVEMENT_MODE_JUMP)
         {
-            const BtechPooledWorldObject *body=unitBindings[slot].positionedLeftLeg;
-            if (!body) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !body");
-            int16_t movement=body->forwardStepScale;
-            if (movement==INT16_MIN) movement=INT16_MAX;
-            else if (movement<0) movement=-movement;
-            int16_t runningThreshold=(uint16_t)movementThreshold*MOVEMENT_HEAT_UPPER_THRESHOLD_MULTIPLIER;
-            if (movement>runningThreshold/MOVEMENT_HEAT_THRESHOLD_DIVISOR) mech->heatUnits+=MOVEMENT_HEAT_UPPER_INCREMENT;
-            else if (movement>movementThreshold/MOVEMENT_HEAT_THRESHOLD_DIVISOR) ++mech->heatUnits;
+            const BtechPooledWorldObject *movingMechObject=unitBindings[unitSlot].positionedLeftLeg;
+            if (!movingMechObject) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !movingMechObject");
+            int16_t absoluteForwardStep=movingMechObject->forwardStepScale;
+            if (absoluteForwardStep==INT16_MIN) absoluteForwardStep=INT16_MAX;
+            else if (absoluteForwardStep<0) absoluteForwardStep=-absoluteForwardStep;
+            int16_t runningHeatThresholdNumerator=(uint16_t)movementHeatReference*MOVEMENT_HEAT_UPPER_THRESHOLD_MULTIPLIER;
+            if (absoluteForwardStep>runningHeatThresholdNumerator/MOVEMENT_HEAT_THRESHOLD_DIVISOR) heatedMech->heatUnits+=MOVEMENT_HEAT_UPPER_INCREMENT;
+            else if (absoluteForwardStep>movementHeatReference/MOVEMENT_HEAT_THRESHOLD_DIVISOR) ++heatedMech->heatUnits;
         }
-        mech->heatUnits+=mech->engineHits*COMBAT_ENGINE_HIT_HEAT;
-        if (mech->templateIndex>=COMBAT_MECH_TEMPLATES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mech->templateIndex>=COMBAT_MECH_TEMPLATES");
-        uint16_t sinks=mechTemplates[mech->templateIndex].heatSinkCount-mech->destroyedHeatSinks;
-        if (mech->doubleCoolingFlag || combatLandscapeIndex==COMBAT_ARCTIC_LANDSCAPE) sinks*=DOUBLE_COOLING_MULTIPLIER;
-        int16_t dissipated=sinks*HEAT_SINK_COOLING_NUMERATOR;
-        mech->heatUnits-=dissipated/HEAT_SINK_COOLING_DENOMINATOR;
-        if ((int16_t)mech->heatUnits<=0) mech->heatUnits=0;
-        else if ((int16_t)mech->heatUnits>=COMBAT_HEAT_CLAMP_MAXIMUM) mech->heatUnits=COMBAT_HEAT_CLAMP_MAXIMUM;
-        heatSpeedPenalties[slot]=0;
-        int16_t penaltyBudget=mech->heatUnits-COMBAT_HEAT_SPEED_TIER_STEP;
-        while (penaltyBudget>0)
+        heatedMech->heatUnits+=heatedMech->engineHits*COMBAT_ENGINE_HIT_HEAT;
+        if (heatedMech->templateIndex>=COMBAT_MECH_TEMPLATES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: heatedMech->templateIndex>=COMBAT_MECH_TEMPLATES");
+        uint16_t effectiveCoolingSinkCount=mechTemplates[heatedMech->templateIndex].heatSinkCount-heatedMech->destroyedHeatSinks;
+        if (heatedMech->doubleCoolingFlag || combatLandscapeIndex==COMBAT_ARCTIC_LANDSCAPE) effectiveCoolingSinkCount*=DOUBLE_COOLING_MULTIPLIER;
+        int16_t coolingNumeratorLow=effectiveCoolingSinkCount*HEAT_SINK_COOLING_NUMERATOR;
+        heatedMech->heatUnits-=coolingNumeratorLow/HEAT_SINK_COOLING_DENOMINATOR;
+        if ((int16_t)heatedMech->heatUnits<=0) heatedMech->heatUnits=0;
+        else if ((int16_t)heatedMech->heatUnits>=COMBAT_HEAT_CLAMP_MAXIMUM) heatedMech->heatUnits=COMBAT_HEAT_CLAMP_MAXIMUM;
+        heatSpeedPenalties[unitSlot]=0;
+        int16_t remainingSpeedPenaltyHeat=heatedMech->heatUnits-COMBAT_HEAT_SPEED_TIER_STEP;
+        while (remainingSpeedPenaltyHeat>0)
         {
-            heatSpeedPenalties[slot]+=COMBAT_HEAT_SPEED_TIER_PENALTY;
-            penaltyBudget-=COMBAT_HEAT_SPEED_TIER_STEP;
+            heatSpeedPenalties[unitSlot]+=COMBAT_HEAT_SPEED_TIER_PENALTY;
+            remainingSpeedPenaltyHeat-=COMBAT_HEAT_SPEED_TIER_STEP;
         }
-        heatEffectTiers[slot]=-1;
+        heatAimJitterTiers[unitSlot]=-1;
         do
         {
-            ++heatEffectTiers[slot];
-            if ((uint16_t)heatEffectTiers[slot]>=COMBAT_HEAT_THRESHOLDS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (uint16_t)heatEffectTiers[slot]>=COMBAT_HEAT_THRESHOLDS");
+            ++heatAimJitterTiers[unitSlot];
+            if ((uint16_t)heatAimJitterTiers[unitSlot]>=COMBAT_HEAT_THRESHOLDS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (uint16_t)heatAimJitterTiers[unitSlot]>=COMBAT_HEAT_THRESHOLDS");
         }
-        while ((int16_t)heatEffectThresholds[heatEffectTiers[slot]]<=(int16_t)mech->heatUnits);
-        heatInhibitFlags[slot]=(int16_t)mech->heatUnits>COMBAT_HEAT_INHIBIT_THRESHOLD;
+        while ((int16_t)heatAimJitterThresholds[heatAimJitterTiers[unitSlot]]<=(int16_t)heatedMech->heatUnits);
+        heatInhibitFlags[unitSlot]=(int16_t)heatedMech->heatUnits>COMBAT_HEAT_INHIBIT_THRESHOLD;
     }
 }
 

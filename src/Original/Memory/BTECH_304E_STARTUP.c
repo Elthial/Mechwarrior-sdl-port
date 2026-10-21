@@ -13,7 +13,7 @@ uint16_t fireCycleStartMount,requestedTorsoAngle,previousAimButtonState;
 uint16_t previousFireButtonState,fireCycleActive,requestedAimPitch,unidentifiedField24;
 
 uint16_t combatTickCounter,playerTargetSlot,selectedWeaponMount,aimReticleScreenY;
-int16_t heatEffectTiers[COMBAT_MECH_SLOTS];
+int16_t heatAimJitterTiers[COMBAT_MECH_SLOTS];
 uint8_t targetDamagePanelDirty[COMBAT_MECH_SLOTS],specialTargetDamagePanelDirty;
 uint16_t radarRangeShift,viewScaleShift,requestedPlayerForwardStepScale,unidentifiedField21;
 uint16_t playerSpecialTargetLandingLatch;
@@ -105,7 +105,7 @@ void BtechInitializeFreshStartupOwners(const uint8_t *data)
     for (uint16_t slot=0;slot<2;++slot)
         sideCompletionFlags[slot]=0;
     for (uint16_t slot=0;slot<COMBAT_MECH_SLOTS;++slot)
-    {unitLastDrawParts[slot]=NULL;heatEffectTiers[slot]=0;heatSpeedPenalties[slot]=0;heatInhibitFlags[slot]=0;}
+    {unitLastDrawParts[slot]=NULL;heatAimJitterTiers[slot]=0;heatSpeedPenalties[slot]=0;heatInhibitFlags[slot]=0;}
     selectedWeaponMount=MwReadNativeWord(data,0x0E24);
     radarRangeShift=MwReadNativeWord(data,0x0E20);
     viewScaleShift=MwReadNativeWord(data,0x0E22);

@@ -67,7 +67,7 @@ void BtechApplyJumpMotion(uint16_t desiredHeading,uint16_t movementDirection)
     uint32_t scaledFeetAltitude=BtechShiftSignedDwordRight(feetAltitude,AI_JUMP_CHARGE_HEIGHT_SHIFT);
     uint32_t altitudeChargeRequirement=BtechDivideSignedDword(scaledFeetAltitude,(int16_t)jumpMechTemplate->jumpAcceleration);
     int16_t requiredJumpCharge=(uint16_t)altitudeChargeRequirement+AI_JUMP_CHARGE_RESERVE;
-    uint8_t jumpCapabilityLost=activeUnitControl->combatValueOrBoundaryCode==COMBAT_MECH_DISABLED_VALUE
+    uint8_t jumpCapabilityLost=activeUnitControl->conditionScoreOrExitCode==COMBAT_MECH_DISABLED_VALUE
         || !activeMechState->currentInternalStructure[COMBAT_BODY_RIGHT_LEG]
         || !activeMechState->currentInternalStructure[COMBAT_BODY_LEFT_LEG]
         || activeMechTemplate->jumpJetGroupCount==activeMechState->destroyedJumpJetGroups;
@@ -142,7 +142,7 @@ void BtechAdvanceActiveAiUnitMotion(void)
             movingMechObject=activeUnitPositionedObject;
             movingMechObject->object.prefix.position.positionC=jumpGroundHeight+(uint32_t)(int16_t)chassisHalfHeight;
             movingMechObject->positionSteps[2]=0;
-            if (activeUnitControl->combatValueOrBoundaryCode!=COMBAT_MECH_DISABLED_VALUE
+            if (activeUnitControl->conditionScoreOrExitCode!=COMBAT_MECH_DISABLED_VALUE
                 && activeMechState->currentInternalStructure[COMBAT_BODY_LEFT_LEG]
                 && activeMechState->currentInternalStructure[COMBAT_BODY_RIGHT_LEG])
                 activeUnitControl->animationRequestFlags|=ANIMATION_REQUEST_LANDING;

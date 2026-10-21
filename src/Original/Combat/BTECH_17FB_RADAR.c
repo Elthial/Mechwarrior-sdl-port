@@ -62,7 +62,7 @@ void BtechDrawTerrainRadar(void)
     uint16_t paletteIndex=hudColourSchemes[hudColourSchemeIndex].radarFriendly;
     for (uint16_t slot=1;slot<COMBAT_MECH_SLOTS;++slot)
     {
-        if (!unitBindings[slot].mech || unitControls[slot].combatValueOrBoundaryCode<=-2) continue;
+        if (!unitBindings[slot].mech || unitControls[slot].conditionScoreOrExitCode<=COMBAT_EXIT_CODE_THRESHOLD) continue;
         if (slot>=COMBAT_FRIENDLY_SLOTS)
         {
             if (!unitVisibility[0][slot]) continue;

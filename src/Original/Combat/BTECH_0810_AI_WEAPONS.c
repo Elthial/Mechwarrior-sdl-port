@@ -196,7 +196,7 @@ void BtechChooseAiTargetAndFire(void)
         uint16_t blocksFire=unitControls[slot].sideIndex==activeUnitControl->sideIndex;
         if (activeUnitControl->unitSlot>=COMBAT_MECH_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: activeUnitControl->unitSlot>=COMBAT_MECH_SLOTS");
         if (!blocksFire && !unitVisibility[activeUnitControl->unitSlot][slot]) continue;
-        if (unitControls[slot].combatValueOrBoundaryCode<0) blocksFire=1;
+        if (unitControls[slot].conditionScoreOrExitCode<COMBAT_CONDITION_SCORE_MINIMUM) blocksFire=1;
         if (!unitBindings[slot].positionedLeftLeg || !activeUnitPositionedObject) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !unitBindings[slot].positionedLeftLeg || !activeUnitPositionedObject");
         const BtechPosition3D *position=&unitBindings[slot].positionedLeftLeg->object.prefix.position;
         uint32_t distance=blocksFire?BtechApproximatePlanarDistance(&activeUnitPositionedObject->object.prefix.position,position)

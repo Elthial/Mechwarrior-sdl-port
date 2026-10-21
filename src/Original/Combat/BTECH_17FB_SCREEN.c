@@ -91,7 +91,7 @@ void BtechRefreshLanceOrderScreen(void)
         if (selectedLanceOrderPanel>=ORDER_WINGMATE_PANELS || !lanceOrderControls[selectedLanceOrderPanel]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: selectedLanceOrderPanel>=ORDER_WINGMATE_PANELS || !lanceOrderControls[selectedLanceOrderPanel]");
         const BtechUnitControlState *control=lanceOrderControls[selectedLanceOrderPanel];
         uint16_t unitSlot=control->unitSlot;
-        if (control->trackedPosition[2]>=0 && control->combatValueOrBoundaryCode>0)
+        if (control->trackedPosition[2]>=0 && control->conditionScoreOrExitCode>COMBAT_CONDITION_SCORE_MINIMUM)
         {
             /* A typed read-only argument value replaces native control+20,
              * not a cast between unrelated C struct and int32 array types. */

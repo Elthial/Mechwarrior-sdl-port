@@ -137,7 +137,7 @@ void BtechApplyUnitCollisionDamage(uint16_t movingUnitSlot,uint16_t contactedUni
         BtechApplyArmorAndInternalDamage(movingUnitSlot,COMBAT_ARMOR_RIGHT_LEG,collisionDamage/CONTACT_LIMB_DAMAGE_DIVISOR);
         BtechClearObjectMotionTail(contactedMechBinding->positionedLeftLeg); /* Reload binding after collisionDamage. */
         uint32_t collisionFactorDifference=movingCollisionFactor-contactedCollisionFactor;
-        int16_t knockdownThreshold=unitControls[contactedUnitSlot].combatValueOrBoundaryCode==COMBAT_MECH_DISABLED_VALUE?CONTACT_DISABLED_FALL_THRESHOLD:CONTACT_FALL_THRESHOLD;
+        int16_t knockdownThreshold=unitControls[contactedUnitSlot].conditionScoreOrExitCode==COMBAT_MECH_DISABLED_VALUE?CONTACT_DISABLED_FALL_THRESHOLD:CONTACT_FALL_THRESHOLD;
         if ((int32_t)collisionFactorDifference>0
             && (int32_t)BtechDivideSignedDword(collisionFactorDifference,(uint32_t)contactedTonnageSquared)>knockdownThreshold)
         {unitControls[contactedUnitSlot].animationRequestFlags|=ANIMATION_REQUEST_FALL_POSE;return;}

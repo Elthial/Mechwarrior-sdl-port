@@ -67,7 +67,7 @@ uint8_t BtechHasNearbyVisibleThreat(void)
     if (control->unitSlot>=COMBAT_MECH_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: control->unitSlot>=COMBAT_MECH_SLOTS");
     for (uint16_t slot=0;slot<COMBAT_MECH_SLOTS;++slot)
         if (unitBindings[slot].mech && unitControls[slot].sideIndex!=control->sideIndex
-            && unitVisibility[control->unitSlot][slot] && unitControls[slot].combatValueOrBoundaryCode>0
+            && unitVisibility[control->unitSlot][slot] && unitControls[slot].conditionScoreOrExitCode>COMBAT_CONDITION_SCORE_MINIMUM
             && (int32_t)unitDistances[control->unitSlot][slot]<(int16_t)control->twiceReadyWeaponRange)
         {
             return 1;

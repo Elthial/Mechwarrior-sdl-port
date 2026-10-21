@@ -24,7 +24,7 @@ void BtechExportCombatResultsAndTransition(uint16_t resultCode)
     campaignResultExchange.result=(uint8_t)resultCode;
     uint16_t disabledEnemies=0;
     for (uint16_t slot=COMBAT_LANCE_SLOTS;slot<COMBAT_MECH_SLOTS;++slot)
-        if (unitBindings[slot].mech && (uint16_t)unitControls[slot].combatValueOrBoundaryCode==COMBAT_DISABLED_UNIT_VALUE)
+        if (unitBindings[slot].mech && (uint16_t)unitControls[slot].conditionScoreOrExitCode==COMBAT_DISABLED_UNIT_VALUE)
             ++disabledEnemies;
     campaignResultExchange.disabledEnemyCount.low=(uint8_t)disabledEnemies;
     for (uint16_t slot=0;slot<COMBAT_LANCE_SLOTS;++slot)
@@ -92,7 +92,7 @@ void BtechExportCombatResultsAndTransition(uint16_t resultCode)
     for (uint16_t slot=COMBAT_LANCE_SLOTS;slot<COMBAT_MECH_SLOTS && (int16_t)salvageEntryCount<CAMPAIGN_ROSTER_SLOTS;++slot)
     {
         const BtechMechState *mech=unitBindings[slot].mech;
-        if (mech && (uint16_t)unitControls[slot].combatValueOrBoundaryCode==COMBAT_DISABLED_UNIT_VALUE
+        if (mech && (uint16_t)unitControls[slot].conditionScoreOrExitCode==COMBAT_DISABLED_UNIT_VALUE
             && resultCode==COMBAT_RESULT_SUCCESS && sideObjectiveRules[0]!=OBJECTIVE_WITHDRAW)
         {
             uint8_t condition=BtechCalculateSalvageConditionPercent(mech);

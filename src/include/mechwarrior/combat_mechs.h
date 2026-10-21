@@ -17,7 +17,14 @@ enum { COMBAT_MECH_SLOTS=8,COMBAT_LANCE_SLOTS=4,COMBAT_MECH_TEMPLATES=8,
     COMBAT_MOVEMENT_HEAT_REFERENCE_MULTIPLIER=0x48,COMBAT_MOVEMENT_HEAT_REFERENCE_SHIFT=7,
     COMBAT_ARCTIC_LANDSCAPE=2,COMBAT_JUMP_RECHARGE_STEP=2,
     COMBAT_HEAT_UNITS_PER_DISPLAY_POINT=0x50,COMBAT_ACTUATOR_SPEED_SHIFT=2,
-    COMBAT_WEAPON_CONDITION_SCORE_SHIFT=1,COMBAT_MECH_DISABLED_VALUE=-1 };
+    COMBAT_WEAPON_CONDITION_SCORE_SHIFT=1 };
+
+/* Nonnegative scores are distinct from disabled and exited Mechs. Zero is a
+ * valid score; callers deliberately differ between > minimum and >= minimum.
+ * Boundary indices 0..3 encode as -2..-5; <= threshold also retains the native
+ * treatment of more-negative values. Do not add a lower-bound check. */
+enum { COMBAT_CONDITION_SCORE_MINIMUM=0,COMBAT_MECH_DISABLED_VALUE=-1,
+    COMBAT_EXIT_CODE_OFFSET=2,COMBAT_EXIT_CODE_THRESHOLD=-COMBAT_EXIT_CODE_OFFSET };
 
 enum { COMBAT_ACTUATOR_LEFT_LEG=2,COMBAT_ACTUATOR_RIGHT_LEG=3 };
 
@@ -79,8 +86,9 @@ typedef struct BtechUnitControlState
     int16_t trackedUnitOrSpecialSlot;
     uint16_t sideIndex,unitSlot;
     int16_t targetUnitSlot;
-    /* Positive condition score; negative disabled/exit codes. Not Battle Value. */
-    int16_t combatValueOrBoundaryCode;
+    /* Condition score, -1 disabled, or -(boundary index + COMBAT_EXIT_CODE_OFFSET).
+     * This shared original WORD is not tabletop Battle Value. */
+    int16_t conditionScoreOrExitCode;
     int16_t lastAiFiringTargetSlot,lastDirectHitUnitSlot;
     uint16_t targetSelectionCount;
     int16_t navigationReferenceSlot;
@@ -112,11 +120,11 @@ enum { COMBAT_POSITION_UNKNOWN=0,COMBAT_POSITION_REMEMBERED=1,COMBAT_POSITION_VI
 void BtechBuildTemplateMaximumCombatScores(void);
 uint8_t BtechClassifyUnitWorldBoundary(uint16_t unitSlot);
 void BtechRefreshLastVisibleUnitPositions(void);
-void BtechRecalculateUnitCombatValuesAndBoundaries(void);
+void BtechRecalculateUnitConditionScoresAndExitCodes(void);
 extern BtechMechState mechStates[COMBAT_MECH_SLOTS];
 extern BtechUnitBinding unitBindings[COMBAT_MECH_SLOTS];
 extern BtechUnitControlState unitControls[COMBAT_MECH_SLOTS];
-extern uint16_t heatEffectThresholds[COMBAT_HEAT_THRESHOLDS];
+extern uint16_t heatAimJitterThresholds[COMBAT_HEAT_THRESHOLDS];
 extern uint16_t heatSpeedPenalties[COMBAT_MECH_SLOTS],heatInhibitFlags[COMBAT_MECH_SLOTS];
 void BtechAdvanceWeaponReloadTimers(void);
 void BtechUpdateUnitHeatEffects(void);

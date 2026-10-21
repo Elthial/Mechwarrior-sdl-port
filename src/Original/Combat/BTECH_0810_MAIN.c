@@ -13,6 +13,10 @@
 #include "mechwarrior/combat_orders.h"
 #include <stdlib.h>
 
+/* Local loop sentinels, not additional campaign result values. 0019 uses FFFF
+ * to defer result export or skip the countdown before the final INC wraps to 0. */
+enum { COMBAT_RESULT_UNRESOLVED=0xFFFF,COMBAT_TICK_RESTART_SENTINEL=0xFFFF };
+
 /* Run the combat mission: update MechWarriors, BattleMechs, weapons and effects,
  * draw the active cockpit/tactical screen, then resolve the contract outcome.
  *0810:0019. Preserve the connected EGA mission loop and call/write order;
@@ -21,7 +25,7 @@
 void BtechProgramMain(uint16_t argumentCount,const char *const *arguments)
 {
     uint8_t outcomeCountdownActive=0;
-    uint16_t outcomeStartTick; /* Assigned before every first active-countdown use. */
+    uint16_t outcomeCountdownStartTick; /* Assigned before every first active-countdown use. */
     savedArgumentCount=argumentCount;savedArguments=arguments;
     BtechInitializeCombatRuntime();
     for (;;)
@@ -58,44 +62,44 @@ void BtechProgramMain(uint16_t argumentCount,const char *const *arguments)
         }
         BtechUnregisterTransientWorldObjects();
         BtechDampJumpMotion();
-        int16_t playerValue=unitControls[0].combatValueOrBoundaryCode;
-        if (playerValue<0)
+        int16_t playerConditionOrExitCode=unitControls[0].conditionScoreOrExitCode;
+        if (playerConditionOrExitCode<COMBAT_CONDITION_SCORE_MINIMUM)
         {
-            uint16_t result=UINT16_MAX;
-            if (playerValue<-1)
+            uint16_t missionResult=COMBAT_RESULT_UNRESOLVED;
+            if (playerConditionOrExitCode<COMBAT_MECH_DISABLED_VALUE)
             {
-                uint16_t boundaryIndex=-((int32_t)playerValue+2);
-                result=COMBAT_RESULT_RETREAT;
+                uint16_t exitBoundaryIndex=-((int32_t)playerConditionOrExitCode+COMBAT_EXIT_CODE_OFFSET);
+                missionResult=COMBAT_RESULT_RETREAT;
                 if (sideObjectiveRules[0]==OBJECTIVE_WITHDRAW)
                 {
                     /* Use the same four-edge decoding as the withdrawal
                      * objective check. Other game state is not an exit mask. */
-                    if (boundaryIndex<TACTICAL_BOUNDARY_CODES
-                        && (scenarioSelectors.sideBoundaryMasks[0]&boundaryMaskByCode[boundaryIndex]))
-                        result=COMBAT_RESULT_SUCCESS;
+                    if (exitBoundaryIndex<TACTICAL_BOUNDARY_CODES
+                        && (scenarioSelectors.sideBoundaryMasks[0]&boundaryMaskByCode[exitBoundaryIndex]))
+                        missionResult=COMBAT_RESULT_SUCCESS;
                 }
             }
             else
             {
                 if (!playerMechState) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerMechState");
-                if (playerMechState->lifeSupportHits==2 || playerMechState->cockpitDisabled)
-                {BtechFlashPlayerMechLoss();result=1;}
+                if (playerMechState->lifeSupportHits==COMBAT_LIFE_SUPPORT_HIT_LIMIT || playerMechState->cockpitDisabled)
+                {BtechFlashPlayerMechLoss();missionResult=COMBAT_RESULT_FAILURE;}
             }
-            if (result!=UINT16_MAX)
+            if (missionResult!=COMBAT_RESULT_UNRESOLVED)
             {
-                BtechExportCombatResultsAndTransition(result);
-                combatTickCounter=UINT16_MAX;outcomeCountdownActive=0;
+                BtechExportCombatResultsAndTransition(missionResult);
+                combatTickCounter=COMBAT_TICK_RESTART_SENTINEL;outcomeCountdownActive=0;
             }
         }
-        if (combatTickCounter!=UINT16_MAX && (sideCompletionFlags[0] || sideCompletionFlags[1]))
+        if (combatTickCounter!=COMBAT_TICK_RESTART_SENTINEL && (sideCompletionFlags[0] || sideCompletionFlags[1]))
         {
-            if (!outcomeCountdownActive) {outcomeStartTick=combatTickCounter;outcomeCountdownActive=1;}
-            uint16_t remaining=outcomeStartTick-combatTickCounter+COMBAT_OUTCOME_DELAY_TICKS;
-            if (!remaining || (combatDispatchState==COMBAT_SCREEN_COCKPIT && combatInputScanCode==COMBAT_KEY_ESCAPE))
+            if (!outcomeCountdownActive) {outcomeCountdownStartTick=combatTickCounter;outcomeCountdownActive=1;}
+            uint16_t outcomeTicksRemaining=outcomeCountdownStartTick-combatTickCounter+COMBAT_OUTCOME_DELAY_TICKS;
+            if (!outcomeTicksRemaining || (combatDispatchState==COMBAT_SCREEN_COCKPIT && combatInputScanCode==COMBAT_KEY_ESCAPE))
             {
-                uint16_t result=1-(int16_t)(int8_t)sideCompletionFlags[0];
-                BtechExportCombatResultsAndTransition(result);
-                outcomeCountdownActive=0;combatTickCounter=UINT16_MAX;
+                uint16_t missionResult=COMBAT_RESULT_FAILURE-(int16_t)(int8_t)sideCompletionFlags[0];
+                BtechExportCombatResultsAndTransition(missionResult);
+                outcomeCountdownActive=0;combatTickCounter=COMBAT_TICK_RESTART_SENTINEL;
             }
         }
         playerImpactThisTick=0;
