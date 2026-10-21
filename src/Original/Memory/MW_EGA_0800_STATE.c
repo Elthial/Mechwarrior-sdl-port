@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/ega_campaign.h"
 #include <stddef.h>
 #include <stdlib.h>
@@ -145,7 +146,7 @@ uint8_t EgaReadOverlayByte(uint16_t offset)
             return (uint8_t)(span->words[relativeOffset / 2] >> ((relativeOffset & 1) * 8));
         return span->bytes[relativeOffset];
     }
-    abort(); /* Layout bridge bug, not a new native validation. */
+    /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Layout bridge bug, not a new native validation."); /* Layout bridge bug, not a new native validation. */
 }
 void EgaWriteOverlayByte(uint16_t offset, uint8_t value)
 {
@@ -163,7 +164,7 @@ void EgaWriteOverlayByte(uint16_t offset, uint8_t value)
         else span->bytes[relativeOffset] = value;
         return;
     }
-    abort();
+    /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("EGA overlay write has no mapped state owner.");
 }
 uint16_t EgaReadOverlayWord(uint16_t offset)
 {

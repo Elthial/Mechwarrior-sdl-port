@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_scene.h"
 #include "mechwarrior/combat_startup.h"
 #include <stdlib.h>
@@ -8,7 +9,7 @@ void BtechOrderMechRenderParts(BtechCameraContext *camera,BtechWorldObjectPrefix
 {
     for (int16_t index=0;index<count;++index)
     {
-        if (index>=COMBAT_WORLD_OBJECTS || !objects[index]) abort();
+        if (index>=COMBAT_WORLD_OBJECTS || !objects[index]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: index>=COMBAT_WORLD_OBJECTS || !objects[index]");
         if ((int16_t)objects[index]->resourceId<(int16_t)firstMechShapeResourceId) continue;
         for (uint16_t slot=1;slot<COMBAT_MECH_SLOTS;++slot)
         {
@@ -17,14 +18,14 @@ void BtechOrderMechRenderParts(BtechCameraContext *camera,BtechWorldObjectPrefix
             const BtechPosition3D *position=&binding->torso->object.prefix.position;
             const BtechPosition3D *candidate=&objects[index]->position;
             if (position->positionA!=candidate->positionA || position->positionB!=candidate->positionB || position->positionC!=candidate->positionC) continue;
-            if (!camera || !camera->viewObject) abort();
+            if (!camera || !camera->viewObject) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !camera || !camera->viewObject");
             uint32_t deltaA=position->positionA-camera->viewObject->position.positionA;
             uint32_t deltaB=position->positionB-camera->viewObject->position.positionB;
             uint16_t heading=BtechCalculateVectorHeadingFar(deltaA,deltaB);
             int16_t relativeHeading=heading-binding->torso->object.prefix.orientationC+0x8000;
-            if (!binding->mech) abort();
+            if (!binding->mech) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !binding->mech");
             int16_t chassis=binding->mech->templateIndex;
-            if (index+5>=COMBAT_WORLD_OBJECTS) abort(); /* Native following-owner overwrite, not a count-tail guard. */
+            if (index+5>=COMBAT_WORLD_OBJECTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: index+5>=COMBAT_WORLD_OBJECTS"); /* Native following-owner overwrite, not a count-tail guard. */
             if (chassis>=0 && chassis<COMBAT_MECH_TEMPLATES)
             {
                 if (relativeHeading>=0)
@@ -54,8 +55,8 @@ void BtechOrderMechRenderParts(BtechCameraContext *camera,BtechWorldObjectPrefix
                 }
             }
             for (uint16_t part=0;part<5;++part)
-            {if (!objects[index+part]) abort();objects[index+part]->renderFlags&=(uint8_t)~OBJECT_LAST_MECH_DRAW_PART;}
-            if (!objects[index+5]) abort();
+            {if (!objects[index+part]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !objects[index+part]");objects[index+part]->renderFlags&=(uint8_t)~OBJECT_LAST_MECH_DRAW_PART;}
+            if (!objects[index+5]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !objects[index+5]");
             objects[index+5]->renderFlags|=OBJECT_LAST_MECH_DRAW_PART;
             unitLastDrawParts[slot]=(BtechPooledWorldObject *)objects[index+5];
             index+=5;break;

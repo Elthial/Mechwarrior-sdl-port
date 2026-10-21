@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_import.h"
 #include <stdlib.h>
 
@@ -10,7 +11,7 @@ enum { SALVAGE_ENGINE_WEIGHT=30,SALVAGE_SENSOR_WEIGHT=5,SALVAGE_COCKPIT_WEIGHT=3
  * weighted condition percentage, not C-bills or Battle Value. No clamping. */
 uint8_t BtechCalculateSalvageConditionPercent(const BtechMechState *mech)
 {
-    if (!mech || mech->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
+    if (!mech || mech->templateIndex>=COMBAT_MECH_TEMPLATES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mech || mech->templateIndex>=COMBAT_MECH_TEMPLATES");
     const BtechMechTemplate *chassis=&mechTemplates[mech->templateIndex];
     int16_t engine=(int16_t)((COMBAT_ENGINE_HIT_LIMIT-mech->engineHits)*SALVAGE_ENGINE_WEIGHT)/COMBAT_ENGINE_HIT_LIMIT;
     int16_t sensors=(int16_t)((COMBAT_SENSORS_DESTROYED_HITS-mech->sensorHits)*SALVAGE_SENSOR_WEIGHT)/COMBAT_SENSORS_DESTROYED_HITS;
@@ -19,19 +20,19 @@ uint8_t BtechCalculateSalvageConditionPercent(const BtechMechState *mech)
     int16_t operationalMounts=0;
     for (int16_t mount=0;mount<(int16_t)chassis->weaponMountCount;++mount)
     {
-        if (mount>=COMBAT_WEAPON_MOUNTS) abort();
+        if (mount>=COMBAT_WEAPON_MOUNTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mount>=COMBAT_WEAPON_MOUNTS");
         if (mech->weapons[mount].operational) ++operationalMounts;
     }
-    if (!chassis->weaponMountCount) abort(); /* Native divide fault, not invented zero score. */
+    if (!chassis->weaponMountCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !chassis->weaponMountCount"); /* Native divide fault, not invented zero score. */
     subtotal+=(int16_t)(operationalMounts*SALVAGE_WEAPON_WEIGHT)/(int16_t)chassis->weaponMountCount;
     uint16_t remaining=0,maximum=0;
     for (uint16_t armor=0;armor<COMBAT_ARMOR_LOCATIONS;++armor)
     {maximum+=chassis->maximumArmor[armor];remaining+=mech->currentArmor[armor];}
     for (uint16_t body=0;body<COMBAT_BODY_LOCATIONS;++body)
     {maximum+=chassis->maximumInternalStructure[body];remaining+=mech->currentInternalStructure[body];}
-    if (!maximum) abort();
+    if (!maximum) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !maximum");
     int32_t protection=(int16_t)(remaining*SALVAGE_ARMOR_STRUCTURE_WEIGHT)/(int16_t)maximum;
-    if (protection<INT16_MIN || protection>INT16_MAX) abort(); /* Native IDIV overflow. */
+    if (protection<INT16_MIN || protection>INT16_MAX) /* Port emulation of a native CPU fault. */ MW_NATIVE_FAULT("Rejected condition: protection<INT16_MIN || protection>INT16_MAX"); /* Native IDIV overflow. */
     return (uint8_t)(subtotal+protection);
 }
 
@@ -51,7 +52,7 @@ void BtechDistributeCampaignReserveAmmo(void)
             {
                 BtechMechState *mech=unitBindings[slot].mech;
                 if (!mech) continue;
-                if (mech->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
+                if (mech->templateIndex>=COMBAT_MECH_TEMPLATES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mech->templateIndex>=COMBAT_MECH_TEMPLATES");
                 const BtechMechTemplate *chassis=&mechTemplates[mech->templateIndex];
                 if ((int16_t)chassis->initialAmmoSalvos[family]>(int16_t)mech->ammoSalvosRemaining[family])
                 {++mech->ammoSalvosRemaining[family];--remaining;distributed=1;}
@@ -70,7 +71,7 @@ void BtechRecoverFriendlyMechCondition(void)
     {
         BtechMechState *mech=unitBindings[slot].mech;
         if (!mech) continue;
-        if (mech->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
+        if (mech->templateIndex>=COMBAT_MECH_TEMPLATES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mech->templateIndex>=COMBAT_MECH_TEMPLATES");
         const BtechMechTemplate *chassis=&mechTemplates[mech->templateIndex];
         mech->destroyedHeatSinks=(uint16_t)((int16_t)(mech->destroyedHeatSinks*STAGE_RECOVERY_NUMERATOR)/STAGE_RECOVERY_DENOMINATOR);
         mech->lifeSupportHits=(uint16_t)((int16_t)(mech->lifeSupportHits*STAGE_RECOVERY_NUMERATOR)/STAGE_RECOVERY_DENOMINATOR);
@@ -86,7 +87,7 @@ void BtechRecoverFriendlyMechCondition(void)
         }
         for (int16_t mount=0;(int16_t)chassis->weaponMountCount>mount;++mount)
         {
-            if (mount>=COMBAT_WEAPON_MOUNTS) abort();
+            if (mount>=COMBAT_WEAPON_MOUNTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mount>=COMBAT_WEAPON_MOUNTS");
             if (!mech->weapons[mount].operational && (int16_t)BtechRandomBelowBound(STAGE_WEAPON_RECOVERY_BOUND)>STAGE_WEAPON_RECOVERY_THRESHOLD)
                 mech->weapons[mount].operational=1;
         }

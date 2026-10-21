@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_resources.h"
 #include "mechwarrior/combat_heap.h"
 #include "mechwarrior/native_address.h"
@@ -17,20 +18,20 @@ BtechResourceBank BtechDecodeAndRelocateResourceBank(const char *filename)
     for (;;)
     {
         uint16_t offset=count*4;
-        if ((uint32_t)offset+4>bank.allocation.byteCount) abort();
+        if ((uint32_t)offset+4>bank.allocation.byteCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (uint32_t)offset+4>bank.allocation.byteCount");
         if (!(MwReadNativeWord(bank.allocation.bytes,offset)|MwReadNativeWord(bank.allocation.bytes,offset+2))) break;
-        if (++count==0x4000) abort(); /* Missing terminator would wrap the native cursor. */
+        if (++count==0x4000) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: ++count==0x4000"); /* Missing terminator would wrap the native cursor. */
     }
     bank.resources=calloc((size_t)count+1,sizeof(*bank.resources));
     bank.decodedResources=calloc(count?count:1,sizeof(*bank.decodedResources));
     bank.decodedResourceCount=count;
-    if (!bank.resources || !bank.decodedResources) abort();
+    if (!bank.resources || !bank.decodedResources) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !bank.resources || !bank.decodedResources");
     for (uint16_t index=0;index<count;++index)
     {
         uint16_t offset=MwReadNativeWord(bank.allocation.bytes,index*4);
         uint16_t paragraph=MwReadNativeWord(bank.allocation.bytes,index*4+2);
         uint32_t paragraphBytes=(uint32_t)paragraph<<4;
-        if (offset>0xFFF2 || paragraphBytes+offset+14>bank.allocation.byteCount) abort();
+        if (offset>0xFFF2 || paragraphBytes+offset+14>bank.allocation.byteCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: offset>0xFFF2 || paragraphBytes+offset+14>bank.allocation.byteCount");
         BtechShapeResource *resource=&bank.decodedResources[index];
         bank.resources[index]=resource;
         resource->paragraphBase=bank.allocation.bytes+paragraphBytes;
@@ -43,10 +44,10 @@ BtechResourceBank BtechDecodeAndRelocateResourceBank(const char *filename)
         uint16_t entryOffset=MwReadNativeWord(resource->header,0x0C);
         if (resource->entryCount<=0) continue;
         resource->entries=calloc((uint16_t)resource->entryCount,sizeof(*resource->entries));
-        if (!resource->entries) abort();
+        if (!resource->entries) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !resource->entries");
         for (int16_t entryIndex=0;entryIndex<resource->entryCount;++entryIndex,entryOffset+=8)
         {
-            if (entryOffset>0xFFF8 || paragraphBytes+entryOffset+8>bank.allocation.byteCount) abort();
+            if (entryOffset>0xFFF8 || paragraphBytes+entryOffset+8>bank.allocation.byteCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: entryOffset>0xFFF8 || paragraphBytes+entryOffset+8>bank.allocation.byteCount");
             const uint8_t *encodedEntry=resource->paragraphBase+entryOffset;
             BtechRenderEntry *entry=&resource->entries[entryIndex];
             entry->firstVectorIndex=encodedEntry[0];entry->vectorCount=encodedEntry[1];
@@ -56,31 +57,31 @@ BtechResourceBank BtechDecodeAndRelocateResourceBank(const char *filename)
             uint16_t vectorCount=entry->vectorCount;
             if (vectorCount<=entry->firstVectorIndex) vectorCount=(uint16_t)entry->firstVectorIndex+1;
             entry->vectors=calloc(vectorCount,sizeof(*entry->vectors));
-            if (!entry->vectors) abort();
+            if (!entry->vectors) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !entry->vectors");
             for (uint16_t vector=0;vector<vectorCount;++vector,vectorOffset+=6)
             {
-                if (vectorOffset>0xFFFA || paragraphBytes+vectorOffset+6>bank.allocation.byteCount) abort();
+                if (vectorOffset>0xFFFA || paragraphBytes+vectorOffset+6>bank.allocation.byteCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: vectorOffset>0xFFFA || paragraphBytes+vectorOffset+6>bank.allocation.byteCount");
                 for (uint16_t axis=0;axis<3;++axis) entry->vectors[vector][axis]=MwReadNativeWord(resource->paragraphBase,vectorOffset+axis*2);
             }
             /* A zero variant limit still selects row zero in19CE. Its count
              * zero LOD backs up one eight-byte record; retain that neighbour. */
             uint32_t variants=entry->variantCount?entry->variantCount:1;
             entry->variants=calloc(variants,sizeof(*entry->variants));
-            if (!entry->variants) abort();
+            if (!entry->variants) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !entry->variants");
             for (uint32_t variantIndex=0;variantIndex<variants;++variantIndex,variantOffset+=4)
             {
-                if (variantOffset>0xFFFC || paragraphBytes+variantOffset+4>bank.allocation.byteCount) abort();
+                if (variantOffset>0xFFFC || paragraphBytes+variantOffset+4>bank.allocation.byteCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: variantOffset>0xFFFC || paragraphBytes+variantOffset+4>bank.allocation.byteCount");
                 BtechRenderVariant *variant=&entry->variants[variantIndex];
                 variant->primitiveCount=(int16_t)MwReadNativeWord(resource->paragraphBase,variantOffset);
                 uint16_t primitiveOffset=MwReadNativeWord(resource->paragraphBase,variantOffset+2);
                 uint16_t primitives=variant->primitiveCount>0?(uint16_t)variant->primitiveCount:1;
                 BtechRenderPrimitive *storage=calloc((size_t)primitives+1,sizeof(*storage));
-                if (!storage) abort();
+                if (!storage) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !storage");
                 variant->primitives=storage+1;
                 for (int32_t primitiveIndex=variant->primitiveCount==0?-1:0;primitiveIndex<primitives;++primitiveIndex)
                 {
                     uint16_t at=primitiveOffset+primitiveIndex*8;
-                    if (at>0xFFF8 || paragraphBytes+at+8>bank.allocation.byteCount) abort();
+                    if (at>0xFFF8 || paragraphBytes+at+8>bank.allocation.byteCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: at>0xFFF8 || paragraphBytes+at+8>bank.allocation.byteCount");
                     BtechRenderPrimitive *primitive=&variant->primitives[primitiveIndex];
                     primitive->scaleLimit=resource->paragraphBase[at];
                     primitive->kind=resource->paragraphBase[(uint16_t)(at+1)];
@@ -97,10 +98,10 @@ BtechResourceBank BtechDecodeAndRelocateResourceBank(const char *filename)
                         uint16_t polygons=primitive->polygonPayload.polygonCount>0?(uint16_t)primitive->polygonPayload.polygonCount:0;
                         if (!polygons) continue;
                         primitive->polygonPayload.polygons=calloc(polygons,sizeof(*primitive->polygonPayload.polygons));
-                        if (!primitive->polygonPayload.polygons) abort();
+                        if (!primitive->polygonPayload.polygons) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !primitive->polygonPayload.polygons");
                         for (uint16_t polygonIndex=0;polygonIndex<polygons;++polygonIndex,polygonOffset+=8)
                         {
-                            if (polygonOffset>0xFFF8 || paragraphBytes+polygonOffset+8>bank.allocation.byteCount) abort();
+                            if (polygonOffset>0xFFF8 || paragraphBytes+polygonOffset+8>bank.allocation.byteCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: polygonOffset>0xFFF8 || paragraphBytes+polygonOffset+8>bank.allocation.byteCount");
                             const uint8_t *encodedPolygon=resource->paragraphBase+polygonOffset;
                             BtechRenderPolygon *polygon=&primitive->polygonPayload.polygons[polygonIndex];
                             polygon->flags=encodedPolygon[0];polygon->fillColour=encodedPolygon[1];polygon->lineColour=encodedPolygon[2];
@@ -108,7 +109,7 @@ BtechResourceBank BtechDecodeAndRelocateResourceBank(const char *filename)
                             uint16_t indicesOffset=MwReadNativeWord(encodedPolygon,6);
                             uint32_t available=bank.allocation.byteCount-paragraphBytes;
                             if (available>0x10000) available=0x10000;
-                            if (indicesOffset>=available || !memchr(resource->paragraphBase+indicesOffset,POLYGON_VERTEX_LIST_END,available-indicesOffset)) abort();
+                            if (indicesOffset>=available || !memchr(resource->paragraphBase+indicesOffset,POLYGON_VERTEX_LIST_END,available-indicesOffset)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: indicesOffset>=available || !memchr(resource->paragraphBase+indicesOffset,POLYGON_VERTEX_LIST_END,available-indicesOffset)");
                             polygon->vertexIndices=resource->paragraphBase+indicesOffset;
                         }
                     }
@@ -133,17 +134,17 @@ void BtechLoadCollisionResourceBank(const char *filename)
     for (;;)
     {
         uint16_t cursor=count*4;
-        if ((uint32_t)cursor+4>allocation.byteCount) abort();
+        if ((uint32_t)cursor+4>allocation.byteCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (uint32_t)cursor+4>allocation.byteCount");
         if (!(MwReadNativeWord(allocation.bytes,cursor)|MwReadNativeWord(allocation.bytes,cursor+2))) break;
-        if (++count==0x4000) abort();
+        if (++count==0x4000) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: ++count==0x4000");
     }
     surfaceResourceBank.surfaces=calloc((size_t)count+1,sizeof(BtechSurfaceDefinition *));
-    if (!surfaceResourceBank.surfaces) abort();
+    if (!surfaceResourceBank.surfaces) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !surfaceResourceBank.surfaces");
     for (uint16_t index=0;index<count;++index)
     {
         uint16_t offset=MwReadNativeWord(allocation.bytes,index*4),paragraph=MwReadNativeWord(allocation.bytes,index*4+2);
         uint32_t paragraphBytes=(uint32_t)paragraph<<4;
-        if ((uint32_t)offset+10>0x10000 || paragraphBytes+offset+10>allocation.byteCount) abort();
+        if ((uint32_t)offset+10>0x10000 || paragraphBytes+offset+10>allocation.byteCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (uint32_t)offset+10>0x10000 || paragraphBytes+offset+10>allocation.byteCount");
         /* Duplicate relocation pairs denote ONE immutable surface, preserving
          * descriptor identity in cached surface queries. This is IO only. */
         for (uint16_t prior=0;prior<index;++prior)
@@ -151,7 +152,7 @@ void BtechLoadCollisionResourceBank(const char *filename)
             {surfaceResourceBank.surfaces[index]=surfaceResourceBank.surfaces[prior];break;}
         if (surfaceResourceBank.surfaces[index]) continue;
         const uint8_t *base=allocation.bytes+paragraphBytes,*header=base+offset;
-        BtechSurfaceDefinition *surface=calloc(1,sizeof(*surface));if (!surface) abort();
+        BtechSurfaceDefinition *surface=calloc(1,sizeof(*surface));if (!surface) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !surface");
         surfaceResourceBank.surfaces[index]=surface;
         surface->extentA=MwReadNativeWord(header,0);surface->extentB=MwReadNativeWord(header,2);
         surface->directResultFlag=header[4];surface->priorityClass=header[5];
@@ -160,12 +161,12 @@ void BtechLoadCollisionResourceBank(const char *filename)
         if (surface->patchCount)
         {
             surface->patches=calloc(surface->patchCount,sizeof(BtechSurfacePatch));
-            if (!surface->patches) abort();
+            if (!surface->patches) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !surface->patches");
         }
         for (uint16_t patchIndex=0;patchIndex<surface->patchCount;++patchIndex)
         {
             uint16_t at=table+patchIndex*0x10;
-            if ((uint32_t)at+0x10>0x10000 || paragraphBytes+at+0x10>allocation.byteCount) abort();
+            if ((uint32_t)at+0x10>0x10000 || paragraphBytes+at+0x10>allocation.byteCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (uint32_t)at+0x10>0x10000 || paragraphBytes+at+0x10>allocation.byteCount");
             BtechSurfacePatch *patch=&surface->patches[patchIndex];
             for (uint16_t axis=0;axis<3;++axis) patch->orderingPlaneCoefficients[axis]=(int16_t)MwReadNativeWord(base,at+axis*2);
             patch->heightProductScale=base[at+6];patch->orientationResponseMagnitude=base[at+7];
@@ -173,11 +174,11 @@ void BtechLoadCollisionResourceBank(const char *filename)
             patch->baseHeight=(int16_t)MwReadNativeWord(base,at+0x0C);
             uint16_t boundaryOffset=MwReadNativeWord(base,at+0x0A);
             uint16_t boundaryCount=patch->boundaryCount?patch->boundaryCount:1; /* C8C0 reads first even when count0. */
-            patch->boundaries=calloc(boundaryCount,sizeof(BtechSurfaceBoundary));if (!patch->boundaries) abort();
+            patch->boundaries=calloc(boundaryCount,sizeof(BtechSurfaceBoundary));if (!patch->boundaries) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !patch->boundaries");
             for (uint16_t boundary=0;boundary<=boundaryCount;++boundary)
             {
                 uint16_t cursor=boundary==boundaryCount?MwReadNativeWord(base,at+0x0E):(uint16_t)(boundaryOffset+boundary*8);
-                if ((uint32_t)cursor+8>0x10000 || paragraphBytes+cursor+8>allocation.byteCount) abort();
+                if ((uint32_t)cursor+8>0x10000 || paragraphBytes+cursor+8>allocation.byteCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (uint32_t)cursor+8>0x10000 || paragraphBytes+cursor+8>allocation.byteCount");
                 BtechSurfaceBoundary *target=boundary==boundaryCount?&patch->heightBoundary:&patch->boundaries[boundary];
                 *target=(BtechSurfaceBoundary){(int16_t)MwReadNativeWord(base,cursor),(int16_t)MwReadNativeWord(base,cursor+2),
                     (int16_t)MwReadNativeWord(base,cursor+4),(int16_t)MwReadNativeWord(base,cursor+6)};
@@ -192,10 +193,10 @@ void BtechAllocateShapeBankRegistry(uint16_t count)
 {
     BtechHostRetainDetachedShapeRegistry(); /* Host ownership of the native orphan, no early free. */
     shapeResourceBankCount=count;
-    if (!count || (uint32_t)count*6>UINT16_MAX) abort();
+    if (!count || (uint32_t)count*6>UINT16_MAX) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !count || (uint32_t)count*6>UINT16_MAX");
     enum { NATIVE_SHAPE_BANK_BYTES=6 };
     shapeResourceBanks=BtechAllocateNearBytes((uint16_t)(count*NATIVE_SHAPE_BANK_BYTES),(size_t)count*sizeof(*shapeResourceBanks),BTECH_NEAR_SHAPE_BANKS);
-    if (!shapeResourceBanks) abort();
+    if (!shapeResourceBanks) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !shapeResourceBanks");
     shapeResourceBanks[0]=initialShapeResourceBank;
     for (uint16_t slot=1;slot<count;++slot) shapeResourceBanks[slot]=(BtechResourceBank){0};
 }
@@ -232,7 +233,7 @@ BtechResourceBank BtechDetachShapeResourceBank(uint16_t bankSlot)
 /*22B6:056A. Counts until the zero far pair, independent of cached count. */
 uint16_t BtechCountShapeResourceBankEntries(uint16_t bankSlot)
 {
-    if (bankSlot&0x8000 || bankSlot>=shapeResourceBankCount) abort();
+    if (bankSlot&0x8000 || bankSlot>=shapeResourceBankCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: bankSlot&0x8000 || bankSlot>=shapeResourceBankCount");
     const BtechResourceBank *bank=&shapeResourceBanks[bankSlot];
     uint16_t count=0;
     if (bank->resources) while (bank->resources[count]) ++count;
@@ -242,7 +243,7 @@ uint16_t BtechCountShapeResourceBankEntries(uint16_t bankSlot)
 /*22B6:065E. Validating and storing the directory precedes counting it. */
 void BtechBindShapeBankDirectory(BtechResourceBank bank,uint16_t bankSlot)
 {
-    if (bankSlot&0x8000 || bankSlot>=shapeResourceBankCount || shapeResourceBanks[bankSlot].resources) abort();
+    if (bankSlot&0x8000 || bankSlot>=shapeResourceBankCount || shapeResourceBanks[bankSlot].resources) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: bankSlot&0x8000 || bankSlot>=shapeResourceBankCount || shapeResourceBanks[bankSlot].resources");
     shapeResourceBanks[bankSlot]=bank;
     shapeResourceBanks[bankSlot].resourceCount=BtechCountShapeResourceBankEntries(bankSlot);
 }

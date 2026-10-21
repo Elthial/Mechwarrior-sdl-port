@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_render.h"
 #include <stdlib.h>
 
@@ -34,14 +35,14 @@ uint32_t BtechDivideSignedDwordNormalized(uint16_t numeratorLow, int16_t numerat
             numerator>>=0x0001;
             denominator>>=0x0001;
         } while ((denominator>>0x0010)!=0x0000);
-        if (!(uint16_t)denominator || numerator/(uint16_t)denominator>UINT16_MAX) abort();
+        if (!(uint16_t)denominator || numerator/(uint16_t)denominator>UINT16_MAX) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !(uint16_t)denominator || numerator/(uint16_t)denominator>UINT16_MAX");
         quotientLow=(uint16_t)(numerator/(uint16_t)denominator);
         quotientHigh=0x0000;
     }
     else if ((int16_t)denominator>(int16_t)(numerator>>0x0010))
     {
         // 6636 JLE is SIGNED WORD comparison, not unsigned quotient-fit reasoning.
-        if (!(uint16_t)denominator || numerator/(uint16_t)denominator>UINT16_MAX) abort();
+        if (!(uint16_t)denominator || numerator/(uint16_t)denominator>UINT16_MAX) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !(uint16_t)denominator || numerator/(uint16_t)denominator>UINT16_MAX");
         quotientLow=(uint16_t)(numerator/(uint16_t)denominator);
         quotientHigh=0x0000;
     }
@@ -50,11 +51,11 @@ uint32_t BtechDivideSignedDwordNormalized(uint16_t numeratorLow, int16_t numerat
         // 6641..664A: two actual WORD DIVs, high numerator first then remainder:low.
         uint16_t divisor=denominator;
         uint16_t numeratorHigh=numerator>>0x0010;
-        if (!divisor) abort();
+        if (!divisor) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !divisor");
         quotientHigh=(uint16_t)(numeratorHigh/divisor);
         uint16_t firstRemainder=(uint32_t)numeratorHigh-(uint32_t)quotientHigh*divisor;
         uint32_t remainingNumerator=((uint32_t)firstRemainder<<0x0010)|(uint16_t)numerator;
-        if (remainingNumerator/divisor>UINT16_MAX) abort();
+        if (remainingNumerator/divisor>UINT16_MAX) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: remainingNumerator/divisor>UINT16_MAX");
         quotientLow=(uint16_t)(remainingNumerator/divisor);
     }
     // Each native WORD DIV rejects zero and overflowing quotients before stores.

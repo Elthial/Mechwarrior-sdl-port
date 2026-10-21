@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_sound.h"
 #include <stdlib.h>
 
@@ -16,7 +17,7 @@ uint16_t BtechMusicMessageNoOperation(uint16_t statusDisplacement,uint16_t chann
 void BtechStartSoftwareMusicTrack(MwNativeByteView musicHeader,uint16_t headerOffset,bool selectorPresent)
 {
     uint16_t division=MwReadNativeViewWord(&musicHeader,(uint16_t)(headerOffset+4));
-    if (!softwareMusicDivisionScale || division/softwareMusicDivisionScale>UINT8_MAX) abort();
+    if (!softwareMusicDivisionScale || division/softwareMusicDivisionScale>UINT8_MAX) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !softwareMusicDivisionScale || division/softwareMusicDivisionScale>UINT8_MAX");
     uint16_t divided=((division%softwareMusicDivisionScale)<<8)|(division/softwareMusicDivisionScale);
     divided>>=1;softwareMusicRateShift=(uint8_t)divided;
     combatMidiStreamOffset=headerOffset+COMBAT_TONE_HEADER_BYTES;
@@ -36,7 +37,7 @@ void BtechTickSoftwareMusic(void)
         uint16_t statusDisplacement=(midiRunningStatus>>3)&0x0E;
         uint16_t channel=midiChannel;
         uint16_t message=midiMessageData[0]|((uint16_t)midiMessageData[1]<<8);
-        if (!audioMusicCallback) abort();
+        if (!audioMusicCallback) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !audioMusicCallback");
         uint16_t callbackResidue=audioMusicCallback(statusDisplacement,channel,message);
         BtechDecodeNextMidiEvent((uint8_t)(callbackResidue>>8));
         uint16_t delta=queuedMidiDeltaTicks;
@@ -49,13 +50,13 @@ void BtechTickSoftwareMusic(void)
             delay<<=1;delay+=delta;delay<<=1;
             delay=(delay&0x00FF)|((uint16_t)(uint8_t)((delay>>8)+(uint8_t)delta)<<8);
             delay<<=1;
-            if (!mpuTempoInterval) abort(); /* Parser's earlier writes survive the native DIV fault. */
+            if (!mpuTempoInterval) /* Port emulation of a native CPU fault. */ MW_NATIVE_FAULT("Rejected condition: !mpuTempoInterval"); /* Parser's earlier writes survive the native DIV fault. */
             delay/=mpuTempoInterval;
         }
         else
         {
             uint32_t product=(uint32_t)delta*MUSIC_TICK_MULTIPLIER;
-            if (!mpuTempoInterval || product/mpuTempoInterval>UINT16_MAX) abort();
+            if (!mpuTempoInterval || product/mpuTempoInterval>UINT16_MAX) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mpuTempoInterval || product/mpuTempoInterval>UINT16_MAX");
             delay=(uint16_t)(product/mpuTempoInterval);
             while (shift--) delay>>=1;
         }
@@ -106,7 +107,7 @@ nextTrack:
         {
             uint16_t tempo=MwReadNativeViewWord(&midiStreamData,(uint16_t)(cursor+2));
             midiTempoHighBytes=(tempo<<8)|(tempo>>8);
-            if (!midiTempoHighBytes || MIDI_TEMPO_DIVIDEND/midiTempoHighBytes>UINT16_MAX) abort();
+            if (!midiTempoHighBytes || MIDI_TEMPO_DIVIDEND/midiTempoHighBytes>UINT16_MAX) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !midiTempoHighBytes || MIDI_TEMPO_DIVIDEND/midiTempoHighBytes>UINT16_MAX");
             mpuTempoInterval=MIDI_TEMPO_DIVIDEND/midiTempoHighBytes;
             cursor+=5; /* Third tempo BYTE intentionally ignored. */
         }
@@ -124,7 +125,7 @@ nextTrack:
     }
     /* Native LOOP with length0 writes10000 bytes. Do not silently turn it
      * into an empty message or overwrite unrelated host objects. */
-    if (!midiMessageDataLength || midiMessageDataLength>sizeof(midiMessageData)) abort();
+    if (!midiMessageDataLength || midiMessageDataLength>sizeof(midiMessageData)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !midiMessageDataLength || midiMessageDataLength>sizeof(midiMessageData)");
     for (uint16_t byte=0;byte<midiMessageDataLength;++byte)
         midiMessageData[byte]=MwReadNativeViewByte(&midiStreamData,cursor++);
     combatMidiStreamOffset=cursor;return deltaHighByte;

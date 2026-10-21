@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_polygons.h"
 #include <stdlib.h>
 
@@ -12,10 +13,10 @@ void BtechAccumulateVerticalPolygonEdge(int16_t firstY,int16_t fixedX,int16_t se
     uint16_t fractionStep=0,integerStep=0;
     int16_t rowStep=1;
     uint16_t fraction=fractionStep;
-    if (rows>COMBAT_SCREEN_HEIGHT) abort();
+    if (rows>COMBAT_SCREEN_HEIGHT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: rows>COMBAT_SCREEN_HEIGHT");
     while (rows--)
     {
-        if (row>=COMBAT_SCREEN_HEIGHT || (polygonSpanBoundaryByteOffset!=0 && polygonSpanBoundaryByteOffset!=2)) abort();
+        if (row>=COMBAT_SCREEN_HEIGHT || (polygonSpanBoundaryByteOffset!=0 && polygonSpanBoundaryByteOffset!=2)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: row>=COMBAT_SCREEN_HEIGHT || (polygonSpanBoundaryByteOffset!=0 && polygonSpanBoundaryByteOffset!=2)");
         if (polygonSpanBoundaryByteOffset) polygonScanlineSpans[row].endpoints.right=currentX;
         else polygonScanlineSpans[row].endpoints.left=currentX;
         row += rowStep;
@@ -38,15 +39,15 @@ void BtechAccumulateYMajorPolygonEdge(int16_t firstY,int16_t firstX,int16_t seco
     uint8_t rows=inclusiveRows;
     int16_t rowStep=deltaY<0?-1:1;
     uint16_t width=secondX-firstX+1;
-    if (!inclusiveRows) abort();
+    if (!inclusiveRows) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !inclusiveRows");
     uint32_t quotient=((uint32_t)width<<16)/inclusiveRows;
-    if (quotient>UINT16_MAX) abort();
+    if (quotient>UINT16_MAX) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: quotient>UINT16_MAX");
     uint16_t fractionStep=(uint16_t)quotient,integerStep=0;
     uint16_t fraction=fractionStep;
-    if (rows>COMBAT_SCREEN_HEIGHT) abort();
+    if (rows>COMBAT_SCREEN_HEIGHT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: rows>COMBAT_SCREEN_HEIGHT");
     while (rows--)
     {
-        if (row>=COMBAT_SCREEN_HEIGHT || (polygonSpanBoundaryByteOffset!=0 && polygonSpanBoundaryByteOffset!=2)) abort();
+        if (row>=COMBAT_SCREEN_HEIGHT || (polygonSpanBoundaryByteOffset!=0 && polygonSpanBoundaryByteOffset!=2)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: row>=COMBAT_SCREEN_HEIGHT || (polygonSpanBoundaryByteOffset!=0 && polygonSpanBoundaryByteOffset!=2)");
         if (polygonSpanBoundaryByteOffset) polygonScanlineSpans[row].endpoints.right=currentX;
         else polygonScanlineSpans[row].endpoints.left=currentX;
         row += rowStep;
@@ -67,10 +68,10 @@ void BtechAccumulateDiagonalPolygonEdge(int16_t firstY,int16_t firstX,int16_t se
     uint16_t fractionStep=0,integerStep=firstX<secondX?1:UINT16_MAX;
     int16_t rowStep=1;
     uint16_t fraction=fractionStep;
-    if (rows>COMBAT_SCREEN_HEIGHT) abort();
+    if (rows>COMBAT_SCREEN_HEIGHT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: rows>COMBAT_SCREEN_HEIGHT");
     while (rows--)
     {
-        if (row>=COMBAT_SCREEN_HEIGHT || (polygonSpanBoundaryByteOffset!=0 && polygonSpanBoundaryByteOffset!=2)) abort();
+        if (row>=COMBAT_SCREEN_HEIGHT || (polygonSpanBoundaryByteOffset!=0 && polygonSpanBoundaryByteOffset!=2)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: row>=COMBAT_SCREEN_HEIGHT || (polygonSpanBoundaryByteOffset!=0 && polygonSpanBoundaryByteOffset!=2)");
         if (polygonSpanBoundaryByteOffset) polygonScanlineSpans[row].endpoints.right=currentX;
         else polygonScanlineSpans[row].endpoints.left=currentX;
         row += rowStep;
@@ -93,17 +94,17 @@ void BtechAccumulateDescendingXMajorPolygonEdge(int16_t firstY,int16_t firstX,in
     uint8_t rows=inclusiveRows;
     int16_t rowStep=deltaY<0?-1:1;
     uint16_t width=firstX-secondX+1;
-    if (!inclusiveRows) abort();
+    if (!inclusiveRows) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !inclusiveRows");
     uint16_t integerStep=width/inclusiveRows;
     uint16_t remainder=width%inclusiveRows;
     uint16_t fractionStep=((uint32_t)remainder<<16)/inclusiveRows;
     integerStep=(uint16_t)(0-(uint16_t)(integerStep+(fractionStep!=0)));
     fractionStep=(uint16_t)(0-fractionStep);
     uint16_t fraction=fractionStep;
-    if (rows>COMBAT_SCREEN_HEIGHT) abort();
+    if (rows>COMBAT_SCREEN_HEIGHT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: rows>COMBAT_SCREEN_HEIGHT");
     while (rows--)
     {
-        if (row>=COMBAT_SCREEN_HEIGHT || (polygonSpanBoundaryByteOffset!=0 && polygonSpanBoundaryByteOffset!=2)) abort();
+        if (row>=COMBAT_SCREEN_HEIGHT || (polygonSpanBoundaryByteOffset!=0 && polygonSpanBoundaryByteOffset!=2)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: row>=COMBAT_SCREEN_HEIGHT || (polygonSpanBoundaryByteOffset!=0 && polygonSpanBoundaryByteOffset!=2)");
         if (polygonSpanBoundaryByteOffset) polygonScanlineSpans[row].endpoints.right=currentX;
         else polygonScanlineSpans[row].endpoints.left=currentX;
         row += rowStep;
@@ -126,15 +127,15 @@ void BtechAccumulateAscendingXMajorPolygonEdge(int16_t firstY,int16_t firstX,int
     uint8_t rows=inclusiveRows;
     int16_t rowStep=deltaY<0?-1:1;
     uint16_t width=secondX-firstX+1;
-    if (!inclusiveRows) abort();
+    if (!inclusiveRows) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !inclusiveRows");
     uint16_t integerStep=width/inclusiveRows;
     uint16_t remainder=width%inclusiveRows;
     uint16_t fractionStep=((uint32_t)remainder<<16)/inclusiveRows;
     uint16_t fraction=fractionStep;
-    if (rows>COMBAT_SCREEN_HEIGHT) abort();
+    if (rows>COMBAT_SCREEN_HEIGHT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: rows>COMBAT_SCREEN_HEIGHT");
     while (rows--)
     {
-        if (row>=COMBAT_SCREEN_HEIGHT || (polygonSpanBoundaryByteOffset!=0 && polygonSpanBoundaryByteOffset!=2)) abort();
+        if (row>=COMBAT_SCREEN_HEIGHT || (polygonSpanBoundaryByteOffset!=0 && polygonSpanBoundaryByteOffset!=2)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: row>=COMBAT_SCREEN_HEIGHT || (polygonSpanBoundaryByteOffset!=0 && polygonSpanBoundaryByteOffset!=2)");
         if (polygonSpanBoundaryByteOffset) polygonScanlineSpans[row].endpoints.right=currentX;
         else polygonScanlineSpans[row].endpoints.left=currentX;
         row += rowStep;

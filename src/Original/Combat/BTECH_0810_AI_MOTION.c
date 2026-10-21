@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_movement.h"
 #include "mechwarrior/combat_pose.h"
 #include "mechwarrior/combat_surface.h"
@@ -20,15 +21,15 @@ int16_t BtechClampSignedDifferenceStep(uint16_t desired,uint16_t current,int16_t
  * Unlike099A, only POSITIVE acceleration is clamped; reverse uses SAR, not DIV. */
 void BtechSetActiveUnitGroundOrJumpMotion(uint16_t desiredHeading,uint16_t direction)
 {
-    if (!activeUnitControl) abort();
+    if (!activeUnitControl) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !activeUnitControl");
     if (activeUnitControl->movementMode==MOVEMENT_MODE_JUMP)
     {BtechApplyJumpMotion(desiredHeading,direction);return;}
     if (activeUnitControl->animationSequence!=ANIMATION_SEQUENCE_IDLE && activeUnitControl->animationSequence!=ANIMATION_SEQUENCE_WALK) return;
-    if (!activeUnitPositionedObject) abort();
+    if (!activeUnitPositionedObject) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !activeUnitPositionedObject");
     int16_t previousForwardStep=activeUnitPositionedObject->forwardStepScale,requestedForwardStep=0;
     if (direction!=MOTION_DIRECTION_STOP)
     {
-        if (!activeMechState || !activeMechTemplate || activeUnitControl->unitSlot>=COMBAT_MECH_SLOTS) abort();
+        if (!activeMechState || !activeMechTemplate || activeUnitControl->unitSlot>=COMBAT_MECH_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !activeMechState || !activeMechTemplate || activeUnitControl->unitSlot>=COMBAT_MECH_SLOTS");
         int16_t heatLimitedForwardStep=activeMechTemplate->maximumSpeedScale-heatSpeedPenalties[activeUnitControl->unitSlot];
         int16_t limitingLegActuatorCondition=activeMechState->actuatorCondition[COMBAT_ACTUATOR_LEFT_LEG];
         if (limitingLegActuatorCondition>(int16_t)activeMechState->actuatorCondition[COMBAT_ACTUATOR_RIGHT_LEG]) limitingLegActuatorCondition=(int16_t)activeMechState->actuatorCondition[COMBAT_ACTUATOR_RIGHT_LEG];
@@ -54,7 +55,7 @@ void BtechSetActiveUnitGroundOrJumpMotion(uint16_t desiredHeading,uint16_t direc
  * +04 is speed limit. Do not confuse them with displayScale/ground speed. */
 void BtechApplyJumpMotion(uint16_t desiredHeading,uint16_t direction)
 {
-    if (!activeMechTemplate || !activeUnitPositionedObject || !activeUnitControl || !activeMechState) abort();
+    if (!activeMechTemplate || !activeUnitPositionedObject || !activeUnitControl || !activeMechState) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !activeMechTemplate || !activeUnitPositionedObject || !activeUnitControl || !activeMechState");
     BtechMechTemplate *chassis=activeMechTemplate;
     BtechPooledWorldObject *motion=activeUnitPositionedObject;
     int16_t headingError=desiredHeading-motion->object.prefix.orientationC;
@@ -124,7 +125,7 @@ void BtechApplyJumpMotion(uint16_t desiredHeading,uint16_t direction)
  * rejection restores pose but not the surface cache; stopped cooling is stale. */
 void BtechAdvanceActiveAiUnitMotion(void)
 {
-    if (!activeUnitPositionedObject || !activeUnitControl || !activeMechTemplate || !activeMechState) abort();
+    if (!activeUnitPositionedObject || !activeUnitControl || !activeMechTemplate || !activeMechState) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !activeUnitPositionedObject || !activeUnitControl || !activeMechTemplate || !activeMechState");
     BtechPooledWorldObject *motion=activeUnitPositionedObject;
     BtechPosition3D savedPosition=motion->object.prefix.position;
     uint16_t savedOrientation[]={motion->object.prefix.orientationA,motion->object.prefix.orientationB,motion->object.prefix.orientationC};
@@ -149,7 +150,7 @@ void BtechAdvanceActiveAiUnitMotion(void)
                 activeUnitControl->animationRequestFlags|=ANIMATION_REQUEST_LANDING;
             else activeUnitControl->animationRequestFlags|=ANIMATION_REQUEST_FALL_POSE;
         }
-        if (activeUnitControl->unitSlot>=COMBAT_MECH_SLOTS) abort();
+        if (activeUnitControl->unitSlot>=COMBAT_MECH_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: activeUnitControl->unitSlot>=COMBAT_MECH_SLOTS");
         unitMovementBoundaryHistory[activeUnitControl->unitSlot]=0;
         return;
     }
@@ -158,10 +159,10 @@ void BtechAdvanceActiveAiUnitMotion(void)
     if (motion->forwardStepScale)
     {
         activeUnitControl->animationRequestFlags|=ANIMATION_REQUEST_WALK;
-        if (activeUnitControl->unitSlot>=COMBAT_MECH_SLOTS) abort();
+        if (activeUnitControl->unitSlot>=COMBAT_MECH_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: activeUnitControl->unitSlot>=COMBAT_MECH_SLOTS");
         uint16_t previousMovementBoundary=unitMovementBoundaryHistory[activeUnitControl->unitSlot];
         int16_t movementBoundary=(int8_t)BtechTestUnitMovementBoundary(activeUnitControl->unitSlot);
-        if (activeUnitControl->unitSlot>=COMBAT_MECH_SLOTS) abort();
+        if (activeUnitControl->unitSlot>=COMBAT_MECH_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: activeUnitControl->unitSlot>=COMBAT_MECH_SLOTS");
         unitMovementBoundaryHistory[activeUnitControl->unitSlot]=(uint16_t)movementBoundary;
         if ((unitMovementBoundaryHistory[activeUnitControl->unitSlot] && !previousMovementBoundary) || groundSurface==SURFACE_BLOCKS_GROUND_MOVEMENT)
         {

@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/campaign_music.h"
 #include "mechwarrior/combat_sound.h"
 #include <stdlib.h>
@@ -64,7 +65,7 @@ void MwStartAdlibVoice(MwMidiVoice *voice,MwMidiChannel *channel,uint16_t veloci
     opl->packedFrequency=adlibPackedNoteFrequencies[voice->translatedNote];
     opl->instrumentOffset=channel->instrumentOffset;
     uint16_t relative=opl->instrumentOffset-MIDI_INSTRUMENTS_OFFSET;
-    if (relative%sizeof(MwAdlibInstrument) || relative/sizeof(MwAdlibInstrument)>=MIDI_INSTRUMENT_COUNT) abort();
+    if (relative%sizeof(MwAdlibInstrument) || relative/sizeof(MwAdlibInstrument)>=MIDI_INSTRUMENT_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: relative%sizeof(MwAdlibInstrument) || relative/sizeof(MwAdlibInstrument)>=MIDI_INSTRUMENT_COUNT");
     const MwAdlibInstrument *instrument=&adlibInstruments[relative/sizeof(MwAdlibInstrument)];
     uint8_t reg=opl->operatorIndex;
     reg+=OPL_REGISTER_BANK_STEP;MwWriteAdlibRegisterPair(((uint16_t)instrument->modulatorFlags<<8)|reg,ADLIB_INDEX_PORT);
@@ -119,7 +120,7 @@ void MwInitializeAdlibVoiceRouting(void)
 {
     for (uint16_t index=0;index<adlibBackend.selectedVoiceCount;++index)
     {
-        if (index>=MIDI_VOICE_CAPACITY) abort();
+        if (index>=MIDI_VOICE_CAPACITY) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: index>=MIDI_VOICE_CAPACITY");
         MwMidiVoice *voice=MwResolveMidiVoice(adlibBackend.voicePoolOffset+index*sizeof(MwMidiVoice));
         voice->adlib.channelIndex=adlibVoiceRoutes[index][0];
         voice->adlib.operatorIndex=adlibVoiceRoutes[index][1];

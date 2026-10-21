@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_video.h"
 #include "mechwarrior/combat_startup.h"
 #include <stdlib.h>
@@ -6,7 +7,7 @@
  * retrace wait. The separate copy-source and drawing selectors stay stale. */
 void BtechEgaSwapScreenPages(uint16_t waitForRetrace)
 {
-    if (!btechHostReadBiosWord || !btechHostWritePortWord || (waitForRetrace && !btechHostReadPort)) abort();
+    if (!btechHostReadBiosWord || !btechHostWritePortWord || (waitForRetrace && !btechHostReadPort)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostReadBiosWord || !btechHostWritePortWord || (waitForRetrace && !btechHostReadPort)");
     uint16_t previousFrontPage=frontPageSelector;
     frontPageSelector=backPageSelector;
     backPageSelector=previousFrontPage;

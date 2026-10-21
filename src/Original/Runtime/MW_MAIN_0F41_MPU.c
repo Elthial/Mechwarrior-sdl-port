@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/campaign_music.h"
 #include "mechwarrior/combat_startup.h"
 #include <stdlib.h>
@@ -31,7 +32,7 @@ failed:
 /* MW_MAIN0F41:0946. Saved vector is a native identity, not a host pointer. */
 void MwInitializeMpuUartBackend(void)
 {
-    if (!mwMusicHardware.readInterruptVector || !mwMusicHardware.writeInterruptVector) abort();
+    if (!mwMusicHardware.readInterruptVector || !mwMusicHardware.writeInterruptVector) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwMusicHardware.readInterruptVector || !mwMusicHardware.writeInterruptVector");
     mwMusicHardware.setInterruptsEnabled(false);
     mwMusicHardware.writePort(MPU_STATUS_COMMAND_PORT,MPU_UART_COMMAND);
     mpuQueueWriteIndex=mpuQueueReadIndex=mpuQueueByteCount=0;
@@ -55,7 +56,7 @@ uint16_t MwQueueMpuByte(uint16_t midiWord)
 {
     while (mpuQueueByteCount>=MIDI_MPU_QUEUE_CAPACITY) mwMusicHardware.waitForInterrupt();
     mwMusicHardware.setInterruptsEnabled(false);
-    if (mpuQueueWriteIndex>=MIDI_MPU_QUEUE_CAPACITY) abort(); /* Unrepresented corrupt-index alias. */
+    if (mpuQueueWriteIndex>=MIDI_MPU_QUEUE_CAPACITY) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mpuQueueWriteIndex>=MIDI_MPU_QUEUE_CAPACITY"); /* Unrepresented corrupt-index alias. */
     mpuTransmitQueue[mpuQueueWriteIndex]=(uint8_t)midiWord;
     if (++mpuQueueWriteIndex>=MIDI_MPU_QUEUE_CAPACITY) mpuQueueWriteIndex=0;
     ++mpuQueueByteCount;
@@ -65,7 +66,7 @@ uint16_t MwQueueMpuByte(uint16_t midiWord)
 void MwTickMpuTransmitQueue(void)
 {
     if (!mpuQueueByteCount || (mwMusicHardware.readPort(MPU_STATUS_COMMAND_PORT)&MPU_WRITE_BUSY)) return;
-    if (mpuQueueReadIndex>=MIDI_MPU_QUEUE_CAPACITY) abort();
+    if (mpuQueueReadIndex>=MIDI_MPU_QUEUE_CAPACITY) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mpuQueueReadIndex>=MIDI_MPU_QUEUE_CAPACITY");
     mwMusicHardware.writePort(MPU_DATA_PORT,mpuTransmitQueue[mpuQueueReadIndex]);
     if (++mpuQueueReadIndex>=MIDI_MPU_QUEUE_CAPACITY) mpuQueueReadIndex=0;
     --mpuQueueByteCount;

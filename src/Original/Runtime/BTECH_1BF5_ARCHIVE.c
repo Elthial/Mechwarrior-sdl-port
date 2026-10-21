@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_runtime.h"
 #include "mechwarrior/combat_sound.h"
 #include "mechwarrior/combat_resources.h"
@@ -13,10 +14,10 @@
  * table indexing beyond its100 slots is unrelated-owner corruption. */
 uint16_t BtechSelectArchiveDescriptor(uint16_t handle)
 {
-    if (handle>=RESOURCE_ARCHIVE_SLOTS) abort();
+    if (handle>=RESOURCE_ARCHIVE_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: handle>=RESOURCE_ARCHIVE_SLOTS");
     selectedArchive=archiveDescriptors[handle];
     if (!selectedArchive) return 0;
-    if (!(selectedArchive->methodAndFlags&RESOURCE_FILE_FLAG)) abort();
+    if (!(selectedArchive->methodAndFlags&RESOURCE_FILE_FLAG)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !(selectedArchive->methodAndFlags&RESOURCE_FILE_FLAG)");
     archiveIoFlags=RESOURCE_FILE_FLAG;
     return 1;
 }
@@ -38,7 +39,7 @@ void BtechReleaseNearArchiveBlockIfNonzero(void *allocation)
  * stays open. Selected native reference is stale after release, not cleared. */
 uint16_t BtechReleaseArchiveDescriptor(uint16_t handle)
 {
-    if (handle>=RESOURCE_ARCHIVE_SLOTS) abort();
+    if (handle>=RESOURCE_ARCHIVE_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: handle>=RESOURCE_ARCHIVE_SLOTS");
     selectedArchive=archiveDescriptors[handle];
     if (selectedArchive)
     {
@@ -71,7 +72,7 @@ int16_t BtechAllocateArchiveDescriptor(const char *ignoredMode)
 uint16_t BtechAllocateArchiveMethodState(int16_t method,const char *mode)
 {
     if (method>RESOURCE_METHOD_LZW) return UINT16_MAX;
-    if (method<RESOURCE_METHOD_RAW || !BtechArchiveModeContainsRead(mode)) abort();
+    if (method<RESOURCE_METHOD_RAW || !BtechArchiveModeContainsRead(mode)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: method<RESOURCE_METHOD_RAW || !BtechArchiveModeContainsRead(mode)");
     selectedArchive->state=BtechAllocateZeroedNearElements(BTECH_NEAR_ARCHIVE_STATE_BYTES,1,BTECH_NEAR_ARCHIVE_STATE_BYTES,BTECH_NEAR_BYTES);
     if (!selectedArchive->state) return UINT16_MAX;
     if (method==RESOURCE_METHOD_LZW)
@@ -82,7 +83,7 @@ uint16_t BtechAllocateArchiveMethodState(int16_t method,const char *mode)
         if (!selectedArchive->workspace) return UINT16_MAX;
         if (selectedArchive->workspace!=borrowedArchiveWorkspace)
         {
-            if (!btechHostDosAllocationSelector) abort();
+            if (!btechHostDosAllocationSelector) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostDosAllocationSelector");
             selectedArchive->workspaceSelector=btechHostDosAllocationSelector((const uint8_t *)selectedArchive->workspace);
         }
     }
@@ -102,7 +103,7 @@ int16_t BtechOpenCompressedArchive(uint16_t method,FILE *stream,const char *mode
         {archive->streamIdentity=COMBAT_STREAM_TABLE+slot*COMBAT_STREAM_STRIDE;break;}
     archive->initialStreamPosition=(uint32_t)ftell(stream);
     archive->compressedPosition=5;
-    if (!BtechArchiveModeContainsRead(mode)) abort(); /* Unconverted writer. */
+    if (!BtechArchiveModeContainsRead(mode)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !BtechArchiveModeContainsRead(mode)"); /* Unconverted writer. */
     method=(uint8_t)BtechReadStreamByte(stream);
     archive->methodAndFlags=(uint8_t)method;
     if (BtechAllocateArchiveMethodState((int16_t)method,mode)==UINT16_MAX)
@@ -124,7 +125,7 @@ int16_t BtechOpenCompressedArchive(uint16_t method,FILE *stream,const char *mode
 uint16_t BtechFlushAndCloseCompressedArchive(uint16_t handle)
 {
     if (!BtechSelectArchiveDescriptor(handle)) return UINT16_MAX;
-    if (!(selectedArchive->methodAndFlags&RESOURCE_READ_FLAG)) abort();
+    if (!(selectedArchive->methodAndFlags&RESOURCE_READ_FLAG)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !(selectedArchive->methodAndFlags&RESOURCE_READ_FLAG)");
     BtechReleaseArchiveDescriptor(handle);
     return 0;
 }
@@ -161,7 +162,7 @@ uint16_t BtechEmitArchiveByte(uint16_t value)
     uint16_t pendingPair=pendingEnd|((uint16_t)archive->pendingRead<<8);
     ++pendingPair;
     archive->pendingEnd=(uint8_t)pendingPair;archive->pendingRead=(uint8_t)(pendingPair>>8);
-    if (pendingEnd>=0x80) abort(); /* Native state-allocation overrun is not host memory. */
+    if (pendingEnd>=0x80) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: pendingEnd>=0x80"); /* Native state-allocation overrun is not host memory. */
     archive->state[pendingEnd]=(uint8_t)value;
     return 0;
 }
@@ -176,7 +177,7 @@ void BtechDeliverPendingArchiveBytes(void)
     {delivered=archiveRemainingBytes;archive->pendingRead+=(uint8_t)delivered;}
     else {archive->pendingEnd=0;archive->pendingRead=0;}
     if (!delivered) return;
-    if (pendingRead+delivered>0x80) abort();
+    if (pendingRead+delivered>0x80) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: pendingRead+delivered>0x80");
     if (archiveIoFlags&RESOURCE_READ_FLAG) memcpy(archiveDestination,archive->state+pendingRead,delivered);
     archiveRemainingBytes-=delivered;archiveDestination+=delivered;
 }
@@ -194,7 +195,7 @@ uint16_t BtechDecodeArchiveBytes(uint16_t handle,uint16_t requestedBytes)
         case RESOURCE_METHOD_RAW:BtechDecodeRawArchive();break;
         case RESOURCE_METHOD_RLE:BtechDecodeRleArchive();break;
         case RESOURCE_METHOD_LZW:BtechDecodeLzwPacketStream();break;
-        default:abort();
+        default:/* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Fatal path under condition: archiveRemainingBytes");
         }
         if (archiveRemainingBytes) BtechDeliverPendingArchiveBytes();
     }
@@ -208,7 +209,7 @@ uint16_t BtechDecodeArchiveBytes(uint16_t handle,uint16_t requestedBytes)
 uint16_t BtechReadArchiveIntoFarBuffer(uint16_t handle,uint8_t *destination,uint16_t bytes)
 {
     if (!BtechSelectArchiveDescriptor(handle)) return UINT16_MAX;
-    if (bytes>0xFFF0) abort(); /* Outside the proved normalized non-wrapping request domain. */
+    if (bytes>0xFFF0) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: bytes>0xFFF0"); /* Outside the proved normalized non-wrapping request domain. */
     archiveDestination=destination;
     archiveIoFlags|=RESOURCE_READ_FLAG;
     return BtechDecodeArchiveBytes(handle,bytes);
@@ -240,7 +241,7 @@ void BtechDecodeRawArchive(void)
  * buffering an entire run lets447B deliver only the caller's requested prefix. */
 void BtechDecodeRleArchive(void)
 {
-    if (!(archiveIoFlags&RESOURCE_FILE_FLAG)) abort();
+    if (!(archiveIoFlags&RESOURCE_FILE_FLAG)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !(archiveIoFlags&RESOURCE_FILE_FLAG)");
     uint16_t keepReading=1;
     while (keepReading)
     {
@@ -284,7 +285,7 @@ uint16_t BtechDecodeRleLiteralRun(uint16_t bytes)
         return 1;
     }
     archive->pendingEnd+=(uint8_t)bytes;
-    if (bytes>0x80) abort();
+    if (bytes>0x80) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: bytes>0x80");
     BtechCopyArchiveStreamBytes(archive->state,bytes);
     return 0;
 }
@@ -300,7 +301,7 @@ uint16_t BtechDecodeRleRepeatedRun(uint16_t value,uint16_t bytes)
         return 1;
     }
     BtechArchiveDescriptor *archive=selectedArchive;
-    if ((uint16_t)archive->pendingEnd+bytes>0x80) abort();
+    if ((uint16_t)archive->pendingEnd+bytes>0x80) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (uint16_t)archive->pendingEnd+bytes>0x80");
     memset(archive->state+archive->pendingEnd,(uint8_t)value,bytes);
     archive->pendingEnd+=(uint8_t)bytes;
     return 0;
@@ -337,7 +338,7 @@ refillPacket:
     if (lzwClearPending)
     {lzwCodeWidth=LZW_INITIAL_CODE_BITS;lzwCodeWidthLimit=0x01FF;lzwClearPending=0;}
 readPacket:;
-    if (lzwCodeWidth>sizeof(lzwPacketBytes)) abort();
+    if (lzwCodeWidth>sizeof(lzwPacketBytes)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: lzwCodeWidth>sizeof(lzwPacketBytes)");
     uint16_t readBytes=BtechReadArchiveSourceBytes(lzwPacketBytes,lzwCodeWidth);
     if (!readBytes || (readBytes&0x8000)) {lzwPacketBitLimit=readBytes;return UINT16_MAX;}
     lzwPacketBitOffset=0;
@@ -347,19 +348,19 @@ extractCode:;
     lzwPacketBitOffset+=remainingBits;
     uint16_t source=bitOffset>>3;
     uint8_t shift=(uint8_t)bitOffset&7;
-    if (source>=sizeof(lzwPacketBytes)) abort();
+    if (source>=sizeof(lzwPacketBytes)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: source>=sizeof(lzwPacketBytes)");
     uint16_t code=(lzwPacketBitOffset&0xFF00)|lzwPacketBytes[source++];
     code>>=shift;
     uint16_t combined=code;
     shift=(uint8_t)(8-shift);remainingBits-=shift;
     if (remainingBits>=8)
     {
-        if (source>=sizeof(lzwPacketBytes)) abort();
+        if (source>=sizeof(lzwPacketBytes)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: source>=sizeof(lzwPacketBytes)");
         code=(uint16_t)((code&0xFF00)|lzwPacketBytes[source++]);
         combined|=(uint16_t)(code<<shift);shift+=8;remainingBits-=8;
     }
     if (!remainingBits) return combined; /* Native final mask00 reads no contributing bits. */
-    if (source>=sizeof(lzwPacketBytes)) abort();
+    if (source>=sizeof(lzwPacketBytes)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: source>=sizeof(lzwPacketBytes)");
     return (uint16_t)(combined|((lzwPacketBytes[source]&((1u<<remainingBits)-1))<<shift));
 }
 
@@ -394,11 +395,11 @@ readNextCode:
     {workspace->reversePhraseBytes[reverseCount++]=(uint8_t)lzwPhraseFirstByte;prefixCode=lzwPreviousCode;}
     while ((int16_t)prefixCode>=LZW_CLEAR_CODE)
     {
-        if (prefixCode>=LZW_DICTIONARY_LIMIT || reverseCount>=sizeof(workspace->reversePhraseBytes)) abort();
+        if (prefixCode>=LZW_DICTIONARY_LIMIT || reverseCount>=sizeof(workspace->reversePhraseBytes)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: prefixCode>=LZW_DICTIONARY_LIMIT || reverseCount>=sizeof(workspace->reversePhraseBytes)");
         workspace->reversePhraseBytes[reverseCount++]=workspace->suffixBytes[prefixCode];
         prefixCode=workspace->prefixCodes[prefixCode];
     }
-    if (prefixCode>=LZW_DICTIONARY_LIMIT || reverseCount>=sizeof(workspace->reversePhraseBytes)) abort();
+    if (prefixCode>=LZW_DICTIONARY_LIMIT || reverseCount>=sizeof(workspace->reversePhraseBytes)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: prefixCode>=LZW_DICTIONARY_LIMIT || reverseCount>=sizeof(workspace->reversePhraseBytes)");
     lzwPhraseFirstByte=workspace->suffixBytes[prefixCode];
     workspace->reversePhraseBytes[reverseCount++]=(uint8_t)lzwPhraseFirstByte;
     reverseRead=reverseCount-1;
@@ -416,7 +417,7 @@ nextReverseByte:
     if (!(reverseRead&0x8000)) goto emitReverseByte;
     if ((int16_t)lzwNextFreeCode<LZW_DICTIONARY_LIMIT)
     {
-        if (lzwNextFreeCode>=LZW_DICTIONARY_LIMIT) abort();
+        if (lzwNextFreeCode>=LZW_DICTIONARY_LIMIT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: lzwNextFreeCode>=LZW_DICTIONARY_LIMIT");
         workspace->prefixCodes[lzwNextFreeCode]=lzwPreviousCode;
         workspace->suffixBytes[lzwNextFreeCode++]=(uint8_t)lzwPhraseFirstByte;
     }

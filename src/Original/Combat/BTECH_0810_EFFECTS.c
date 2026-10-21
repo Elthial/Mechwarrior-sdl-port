@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_effects.h"
 #include "mechwarrior/combat_resources.h"
 #include "mechwarrior/combat_damage.h"
@@ -42,7 +43,7 @@ void BtechUpdateBodyDestructionEffects(void)
     {
         BtechBodyDestructionEmitter *emitter=&bodyDestructionEmitters[slot];
         if (!emitter->ticksRemaining) continue;
-        if (emitter->unitSlot>=COMBAT_MECH_SLOTS) abort();
+        if (emitter->unitSlot>=COMBAT_MECH_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: emitter->unitSlot>=COMBAT_MECH_SLOTS");
         uint16_t mode=unitControls[emitter->unitSlot].movementMode;
         if (mode!=MOVEMENT_MODE_GROUNDED && mode!=BODY_EMITTER_ACCEPTED_MODE2 && mode!=BODY_EMITTER_ACCEPTED_MODE7)
         {emitter->ticksRemaining=0;continue;}
@@ -65,7 +66,7 @@ void BtechUpdateBodyDestructionEffects(void)
             continue; /* Already-unoccupied object deliberately leaves stale handle. */
         }
         --effect->animationTicksRemaining;
-        if (effect->animationTicksRemaining>=COMBAT_BODY_EFFECT_FRAMES) abort(); /* Adjacent-owner alias unsupported. */
+        if (effect->animationTicksRemaining>=COMBAT_BODY_EFFECT_FRAMES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: effect->animationTicksRemaining>=COMBAT_BODY_EFFECT_FRAMES"); /* Adjacent-owner alias unsupported. */
         BtechWorldObjectPrefix *pose=&object->object.prefix;
         pose->resourceId=otherShapeResourceBase+bodyDamageEffectResourceDeltas[effect->animationTicksRemaining];
         uint32_t extent=BtechGetResourceScaledValue(pose->resourceId);
@@ -91,7 +92,7 @@ void BtechAdvanceEffectResourceSequences(void)
         uint16_t sequence=effect->sequenceIndex;
         /* Native unchecked reads outside the two recovered arrays remain unsupported. */
         if (sequence>COMBAT_MACHINE_GUN_EFFECT_SEQUENCE
-            || effect->frameIndex>=(sequence==COMBAT_IMPACT_EFFECT_SEQUENCE?7:3)) abort();
+            || effect->frameIndex>=(sequence==COMBAT_IMPACT_EFFECT_SEQUENCE?7:3)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: sequence>COMBAT_MACHINE_GUN_EFFECT_SEQUENCE || effect->frameIndex>=(sequence==COMBAT_IMPACT_EFFECT_SEQUENCE?7:3)");
         uint16_t resourceDelta=effectResourceSequences[sequence][effect->frameIndex];
         if (resourceDelta==COMBAT_EFFECT_SEQUENCE_END)
         {
@@ -124,7 +125,7 @@ void BtechSpawnSequencedWorldEffect(const BtechPosition3D *position,uint16_t seq
     BtechEffectSequenceState *effect=&effectSequences[slot];
     effect->worldObject=BtechAllocatePooledWorldObject(0,position);
     BtechWorldObjectPrefix *object=&effect->worldObject->object.prefix;
-    if (!unitBindings[0].positionedLeftLeg || !unitBindings[0].torso) abort();
+    if (!unitBindings[0].positionedLeftLeg || !unitBindings[0].torso) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !unitBindings[0].positionedLeftLeg || !unitBindings[0].torso");
     const BtechWorldObjectPrefix *player=&unitBindings[0].positionedLeftLeg->object.prefix;
     object->orientationA=player->orientationA;
     object->orientationB=player->orientationB;

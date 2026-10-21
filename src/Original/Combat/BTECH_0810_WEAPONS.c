@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_ballistics.h"
 #include "mechwarrior/combat_startup.h"
 #include "mechwarrior/combat_render.h"
@@ -12,15 +13,15 @@
 void BtechFirePlayerDirectWeapon(uint16_t mountIndex)
 {
     BtechMechState *player=unitBindings[0].mech;
-    if (!player || player->templateIndex>=COMBAT_MECH_TEMPLATES || mountIndex>=COMBAT_WEAPON_MOUNTS) abort();
+    if (!player || player->templateIndex>=COMBAT_MECH_TEMPLATES || mountIndex>=COMBAT_WEAPON_MOUNTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !player || player->templateIndex>=COMBAT_MECH_TEMPLATES || mountIndex>=COMBAT_WEAPON_MOUNTS");
     const BtechWeaponMount *mount=&mechTemplates[player->templateIndex].weaponMounts[mountIndex];
-    if ((uint16_t)mount->weaponKind>=COMBAT_WEAPON_KINDS) abort();
+    if ((uint16_t)mount->weaponKind>=COMBAT_WEAPON_KINDS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (uint16_t)mount->weaponKind>=COMBAT_WEAPON_KINDS");
     const BtechWeaponDefinition *weapon=&weaponDefinitions[mount->weaponKind];
     int32_t distance;
     uint8_t impactEffect=0;
     if (!selectedHitObject)
     {
-        if (!playerPoseObject || !playerMechState) abort();
+        if (!playerPoseObject || !playerMechState) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerPoseObject || !playerMechState");
         int16_t pitch=playerPoseObject->object.prefix.orientationA-playerMechState->aimPitch;
         distance=(int16_t)((uint16_t)(weapon->longRangeBoundary<<DIRECT_SHOT_RANGE_SHIFT)*DIRECT_SHOT_RANGE_MULTIPLIER);
         if (pitch<0)
@@ -28,7 +29,7 @@ void BtechFirePlayerDirectWeapon(uint16_t mountIndex)
             int16_t negativeSine=0-BtechLookupSine((uint16_t)pitch);
             if (negativeSine)
             {
-                if (!playerUnitBinding || !playerUnitBinding->positionedLeftLeg) abort();
+                if (!playerUnitBinding || !playerUnitBinding->positionedLeftLeg) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerUnitBinding || !playerUnitBinding->positionedLeftLeg");
                 uint32_t numerator=playerUnitBinding->positionedLeftLeg->object.prefix.position.positionC<<ORIENTATION_FRACTION_BITS;
                 int16_t groundDistance=(int16_t)BtechDivideSignedDword(numerator,(uint32_t)negativeSine);
                 if ((int32_t)groundDistance<distance)
@@ -38,7 +39,7 @@ void BtechFirePlayerDirectWeapon(uint16_t mountIndex)
     }
     else
     {
-        if (!playerUnitBinding || !playerUnitBinding->torso) abort();
+        if (!playerUnitBinding || !playerUnitBinding->torso) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerUnitBinding || !playerUnitBinding->torso");
         distance=(int32_t)BtechApproximatePlanarDistance(&playerUnitBinding->torso->object.prefix.position,&selectedHitObject->position);
         uint32_t scaled=BtechShiftSignedDwordRight((uint32_t)distance,DIRECT_SHOT_RANGE_SHIFT);
         int16_t range=(int16_t)BtechDivideSignedDword(scaled,DIRECT_SHOT_RANGE_MULTIPLIER);
@@ -93,7 +94,7 @@ void BtechMapSelectedRenderPartToArmorLocation(uint16_t *armorLocation,uint16_t 
             else if (binding->rightLeg && &binding->rightLeg->object.prefix==selected) armor=COMBAT_ARMOR_RIGHT_LEG;
             else if (binding->torso && &binding->torso->object.prefix==selected)
             {
-                if (!playerUnitBinding || !playerUnitBinding->positionedLeftLeg || !playerUnitBinding->torso || !binding->positionedLeftLeg) abort();
+                if (!playerUnitBinding || !playerUnitBinding->positionedLeftLeg || !playerUnitBinding->torso || !binding->positionedLeftLeg) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerUnitBinding || !playerUnitBinding->positionedLeftLeg || !playerUnitBinding->torso || !binding->positionedLeftLeg");
                 uint16_t heading=playerUnitBinding->positionedLeftLeg->object.prefix.orientationC;
                 heading-=binding->positionedLeftLeg->object.prefix.orientationC;
                 heading-=binding->torso->object.prefix.orientationC;
@@ -123,7 +124,7 @@ uint8_t BtechIsPlayerWeaponMountReady(uint16_t mountIndex)
         || playerMechState->weapons[mountIndex].reloadTicksRemaining) return 0;
     int16_t family=weaponDefinitions[kind].ammoFamily;
     if ((uint16_t)family==COMBAT_AMMO_NONE) return 1;
-    if ((uint16_t)family>=COMBAT_AMMO_FAMILIES) abort();
+    if ((uint16_t)family>=COMBAT_AMMO_FAMILIES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (uint16_t)family>=COMBAT_AMMO_FAMILIES");
     return playerMechState->ammoSalvosRemaining[family]!=0;
 }
 
@@ -185,7 +186,7 @@ void BtechRefreshUnitDistanceMatrix(void)
             uint32_t distance=UINT32_MAX;
             if (unitControls[column].sideIndex==1)
             {
-                if (!unitBindings[row].positionedLeftLeg || !unitBindings[column].positionedLeftLeg) abort();
+                if (!unitBindings[row].positionedLeftLeg || !unitBindings[column].positionedLeftLeg) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !unitBindings[row].positionedLeftLeg || !unitBindings[column].positionedLeftLeg");
                 distance=BtechApproximatePlanarDistance(&unitBindings[row].positionedLeftLeg->object.prefix.position,
                     &unitBindings[column].positionedLeftLeg->object.prefix.position);
             }

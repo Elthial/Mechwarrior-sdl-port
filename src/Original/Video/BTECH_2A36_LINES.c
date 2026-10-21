@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_video.h"
 #include <stdlib.h>
 
@@ -5,13 +6,13 @@
  * clipping, raster-state reset or Bresenham replacement. */
 void BtechEgaDrawLine(uint16_t firstX,uint16_t firstY,uint16_t secondX,uint16_t secondY,uint16_t page)
 {
-    if (!btechHostWritePortWord || !btechHostReadVideoByte || !btechHostWriteVideoByte) abort();
+    if (!btechHostWritePortWord || !btechHostReadVideoByte || !btechHostWriteVideoByte) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostWritePortWord || !btechHostReadVideoByte || !btechHostWriteVideoByte");
     // Coordinates are native BX/CX/DX/SI; page denotes AMBIENT ES,
     // not a fifth pushed argument. DS=304E; all general registers are scratch.
     drawColourPattern=palettePrimarySlots[drawFillColour/COMBAT_PALETTE_WORDS][drawFillColour%COMBAT_PALETTE_WORDS];
     egaLinePixelMask=egaPixelBitMasks[firstX&0x0007];
     uint16_t row=(uint16_t)(firstY*2)>>1;
-    if (row>=COMBAT_SCREEN_HEIGHT) abort(); /* Other row-table owners are outside this caller scope. */
+    if (row>=COMBAT_SCREEN_HEIGHT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: row>=COMBAT_SCREEN_HEIGHT"); /* Other row-table owners are outside this caller scope. */
     uint16_t cursor=graphicsRowOffsets[row];
     cursor += (firstX>>0x0003);
     uint8_t mask=egaLinePixelMask;

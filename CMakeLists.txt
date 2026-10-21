@@ -174,6 +174,7 @@ add_library(mechwarrior_original STATIC
     src/Original/Video/MW_EGA_0800.c
     src/SDL/SDLBackend_Files.c
     src/Support/NativeAddress.c
+    src/Support/PortDiagnostics.c
     src/Support/MidiAddress.c)
 target_include_directories(mechwarrior_original PUBLIC src/include)
 set_target_properties(mechwarrior_original PROPERTIES POSITION_INDEPENDENT_CODE ON)

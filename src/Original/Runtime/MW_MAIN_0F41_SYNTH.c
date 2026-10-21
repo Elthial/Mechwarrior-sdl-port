@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/campaign_music.h"
 #include <stdlib.h>
 #include <string.h>
@@ -9,10 +10,10 @@
 /* MW_MAIN0F41:0B3C..0B45. */
 uint16_t MwProbeMusicBackend(MwCampaignAudioBackend *backend)
 {
-    if (!backend) abort();
+    if (!backend) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !backend");
     if (backend->probeOffset==0x06B9) return MwProbeAdlibAndCalibrateDelays();
     if (backend->probeOffset==0x0912) return MwProbeMpuBackend();
-    if (backend->probeOffset!=0x0EE4) abort();
+    if (backend->probeOffset!=0x0EE4) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: backend->probeOffset!=0x0EE4");
     return MwProbeSpeakerBackend();
 }
 
@@ -25,10 +26,10 @@ void MwSelectAndInitializeMidiBackend(MwCampaignAudioBackend *backend)
         if (selectedAudioBackend->shutdownOffset==0x098A) MwDrainAndShutdownMpuBackend();
         else if (selectedAudioBackend->shutdownOffset==0x0F01) MwShutdownSpeakerBackend();
         else if (selectedAudioBackend->shutdownOffset==0x0736) {} /* Native RET. */
-        else abort();
+        else /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Music backend has an unsupported initialization, vector, pitch-copy or timer entry.");
     }
     selectedAudioBackend=backend;
-    if (!backend) abort();
+    if (!backend) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !backend");
     uint16_t timerRate=backend->timerRateShift;
     uint16_t timerTarget=backend->timerOffset;
     if (backend->initializeOffset==0x0946)
@@ -55,21 +56,21 @@ void MwSelectAndInitializeMidiBackend(MwCampaignAudioBackend *backend)
         else
         {
             fprintf(stderr,"Campaign MPU install residue for saved IRQ2 %04X:%04X has no typed owner\n",
-                (uint16_t)(mpuPreviousIrq>>16),previousOffset);abort();
+                (uint16_t)(mpuPreviousIrq>>16),previousOffset);/* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Music backend has an unsupported initialization, vector, pitch-copy or timer entry.");
         }
     }
     else
     {
         if (backend->initializeOffset==0x0712) MwInitializeAdlibBackend();
         else if (backend->initializeOffset==0x0EE8) MwInitializeSpeakerBackend();
-        else abort();
+        else /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Music backend has an unsupported initialization, vector, pitch-copy or timer entry.");
         backend->selectedVoiceCount=backend->voiceCapacity;
     }
     MwResetMidiParserState(MIDI_RESET_PARSER_ENTRY);
     if (timerTarget==0x09D0) MwTimerSetCallback(MUSIC_TIMER_FAST_SLOT,MwTickMpuTransmitQueue,timerRate);
     else if (timerTarget==0x0F73) MwTimerSetCallback(MUSIC_TIMER_FAST_SLOT,MwTickSpeakerVoices,timerRate);
     else if (!timerTarget) MwTimerSetCallback(MUSIC_TIMER_FAST_SLOT,NULL,timerRate);
-    else abort();
+    else /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Music backend has an unsupported initialization, vector, pitch-copy or timer entry.");
 }
 
 /* MW_MAIN0F41:0B80..0B9F. */
@@ -80,7 +81,7 @@ void MwShutdownMusicBackend(void)
         if (selectedAudioBackend->shutdownOffset==0x098A) MwDrainAndShutdownMpuBackend();
         else if (selectedAudioBackend->shutdownOffset==0x0F01) MwShutdownSpeakerBackend();
         else if (selectedAudioBackend->shutdownOffset==0x0736) {} /* Native RET. */
-        else abort();
+        else /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Music backend has an unsupported shutdown entry.");
     }
     selectedAudioBackend=NULL;
     MwTimerSetCallback(MUSIC_TIMER_FAST_SLOT,NULL,0);
@@ -91,7 +92,7 @@ uint16_t MwSendMidiByteToSelectedBackend(uint16_t midiWord)
 {
     if (selectedAudioBackend && selectedAudioBackend->rawByteOffset==0x09A4) return MwQueueMpuByte(midiWord);
     if (selectedAudioBackend && selectedAudioBackend->rawByteOffset==0x0737) return 0;
-    if (!selectedAudioBackend || selectedAudioBackend->rawByteOffset!=0x0F0A) abort();
+    if (!selectedAudioBackend || selectedAudioBackend->rawByteOffset!=0x0F0A) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !selectedAudioBackend || selectedAudioBackend->rawByteOffset!=0x0F0A");
     return MwIgnoreSpeakerRawMidiByte();
 }
 
@@ -127,10 +128,10 @@ uint16_t MwReleaseCampaignMidiVoice(uint16_t channelIndex,uint16_t note)
         voice->links.previousOffset=MIDI_LIST_HEAD_OFFSET;
         audioVoiceListHead=voiceOffset;
         MwResolveMidiVoiceLinks(next)->previousOffset=voiceOffset;
-        if (!selectedAudioBackend) abort();
+        if (!selectedAudioBackend) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !selectedAudioBackend");
         if (selectedAudioBackend->noteOffOffset==0x0841) MwStopAdlibVoice(voice);
         else if (selectedAudioBackend->noteOffOffset==0x0F2D) MwStopSpeakerVoice(voice);
-        else abort();
+        else /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Music backend has an unsupported note-off entry.");
         return 1;
     }
 }
@@ -185,10 +186,10 @@ uint16_t MwAllocateCampaignMidiVoice(uint16_t channelIndex,uint16_t note,uint16_
     MwResolveMidiVoiceLinks(next)->previousOffset=voiceOffset;
     voice->originalNote=(uint8_t)note;
     voice->translatedNote=(uint8_t)(note+channel->transposeOrDrumBase);
-    if (!selectedAudioBackend) abort();
+    if (!selectedAudioBackend) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !selectedAudioBackend");
     if (selectedAudioBackend->noteOnOffset==0x073A) MwStartAdlibVoice(voice,channel,velocity);
     else if (selectedAudioBackend->noteOnOffset==0x0F0D) MwStartSpeakerVoice(voice);
-    else abort();
+    else /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Music backend has an unsupported note-on entry.");
     return 1;
 }
 
@@ -203,10 +204,10 @@ void MwSilenceCampaignMidiVoices(void)
         MwMidiVoice *voice=MwResolveMidiVoice(voiceOffset);
         if (!voice->activePriority) continue;
         voice->activePriority=0;
-        if (!selectedAudioBackend) abort();
+        if (!selectedAudioBackend) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !selectedAudioBackend");
         if (selectedAudioBackend->noteOffOffset==0x0841) MwStopAdlibVoice(voice);
         else if (selectedAudioBackend->noteOffOffset==0x0F2D) MwStopSpeakerVoice(voice);
-        else abort();
+        else /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Music backend has an unsupported note-off entry.");
     }
 }
 
@@ -246,7 +247,7 @@ void MwDispatchMidiByte(uint16_t midiWord)
     }
     uint16_t displacement=midiByteHandlerDisplacement;
     /* Unrepresented out-of-table code fetches are not a native bounds check. */
-    if (displacement%2 || displacement/2>=14) abort();
+    if (displacement%2 || displacement/2>=14) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: displacement%2 || displacement/2>=14");
     switch (midiByteHandlers[displacement/2])
     {
     case 0x05C4:
@@ -274,7 +275,7 @@ void MwDispatchMidiByte(uint16_t midiWord)
     case 0x0673: /* Native0D3F channel-pressure is one RETF. */
     case 0x0682: /* Native0D40 pitch-bend is one RETF, result unused. */
     case 0x0621: return;
-    default: abort();
+    default: /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("MIDI byte dispatch selected an unsupported command handler.");
     }
 }
 
@@ -288,7 +289,7 @@ void MwDispatchMidiByteAndSysexState(uint16_t midiWord)
     switch (midiSysex.parserOffset)
     {
     case 0x0D58:
-        if (!selectedAudioBackend) abort();
+        if (!selectedAudioBackend) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !selectedAudioBackend");
         midiSysex.parserOffset=midiByte==selectedAudioBackend->sysexManufacturer?0x0D66:0x0DB0;
         return;
     case 0x0D66:
@@ -300,23 +301,23 @@ void MwDispatchMidiByteAndSysexState(uint16_t midiWord)
     {
         uint16_t writeOffset=midiSysex.writeOffset;
         uint16_t relative=writeOffset-MIDI_SYSEX_BUFFER_OFFSET;
-        if (relative>=sizeof(midiSysex)) abort();
+        if (relative>=sizeof(midiSysex)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: relative>=sizeof(midiSysex)");
         ((uint8_t *)&midiSysex)[relative]=midiByte;
         midiSysex.writeOffset=writeOffset+1;
         if (--midiSysex.bytesRemaining) return;
         uint16_t displacement=midiSysex.handlerDisplacement;
-        if (displacement%2 || displacement/2>=3) abort();
+        if (displacement%2 || displacement/2>=3) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: displacement%2 || displacement/2>=3");
         switch (midiSysex.recordHandlers[displacement/2])
         {
         case 0x0DB2: MwApplySysexChannelConfiguration((const MwMidiChannelConfiguration *)midiSysex.recordBuffer);break;
         case 0x0E57: MwApplySysexInstrument(midiSysex.recordBuffer);break;
         case 0x0E73: MwApplySysexVoiceCount(midiSysex.recordBuffer);break;
-        default: abort();
+        default: /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("MIDI SysEx record selected an unsupported handler.");
         }
         break;
     }
     case 0x0DB0: return;
-    default: abort();
+    default: /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("MIDI SysEx parser has an unsupported continuation.");
     }
     midiSysex.bytesRemaining=midiSysex.recordLength;
     midiSysex.writeOffset=MIDI_SYSEX_BUFFER_OFFSET;
@@ -403,16 +404,16 @@ void MwApplySysexInstrument(const uint8_t *source)
     if (selectedAudioBackend && selectedAudioBackend->decodeInstrumentOffset==0x0890)
     {
         uint8_t index=*source++;
-        if (index>=MIDI_INSTRUMENT_COUNT) abort();
+        if (index>=MIDI_INSTRUMENT_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: index>=MIDI_INSTRUMENT_COUNT");
         MwDecodeAdlibInstrument(source,&adlibInstruments[index]);return;
     }
-    if (!selectedAudioBackend || selectedAudioBackend->decodeInstrumentOffset!=0x0F72) abort();
+    if (!selectedAudioBackend || selectedAudioBackend->decodeInstrumentOffset!=0x0F72) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !selectedAudioBackend || selectedAudioBackend->decodeInstrumentOffset!=0x0F72");
     MwIgnoreSpeakerInstrument();
 }
 /* MW_MAIN0F41:0E73..0E81. No capacity clamp before the shared rebuild. */
 void MwApplySysexVoiceCount(const uint8_t *source)
 {
-    if (!selectedAudioBackend) abort();
+    if (!selectedAudioBackend) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !selectedAudioBackend");
     selectedAudioBackend->selectedVoiceCount=*source;
     MwRebuildCampaignVoicePool();
 }
@@ -425,11 +426,11 @@ void MwResetMidiParserState(uint16_t entryOffset)
         midiSysex.parserOffset=0x0DB0;
         memset(audioChannels,0,sizeof(audioChannels));
     }
-    else if (entryOffset!=MIDI_REBUILD_POOL_ENTRY) abort();
+    else if (entryOffset!=MIDI_REBUILD_POOL_ENTRY) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: entryOffset!=MIDI_REBUILD_POOL_ENTRY");
     uint16_t previousHead=MIDI_LIST_TAIL_OFFSET;
     audioVoiceListHead=previousHead;
     audioVoiceListTailPrevious=MIDI_LIST_HEAD_OFFSET;
-    if (!selectedAudioBackend) abort();
+    if (!selectedAudioBackend) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !selectedAudioBackend");
     uint16_t remaining=selectedAudioBackend->selectedVoiceCount;
     audioVoiceCount=(uint8_t)remaining;
     uint16_t voiceOffset=MIDI_VOICES_OFFSET;
@@ -446,12 +447,12 @@ void MwResetMidiParserState(uint16_t entryOffset)
         voiceOffset+=sizeof(MwMidiVoice);
         --remaining;
     }
-    if (!selectedAudioBackend) abort();
+    if (!selectedAudioBackend) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !selectedAudioBackend");
     selectedAudioBackend->voicePoolOffset=MIDI_VOICES_OFFSET;
     if (selectedAudioBackend->initializeVoicesOffset==0x09CB) (void)MwQueueMpuByte(0xFF);
     else if (selectedAudioBackend->initializeVoicesOffset==0x0F4F) MwInitializeSpeakerVoiceRouting();
     else if (selectedAudioBackend->initializeVoicesOffset==0x0869) MwInitializeAdlibVoiceRouting();
-    else abort();
+    else /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Music backend has an unsupported voice-initialization entry.");
 }
 
 /* MW_MAIN0F41:0EE4..0EE7. Native unconditional success, no hardware probe. */
@@ -459,7 +460,7 @@ uint16_t MwProbeSpeakerBackend(void) {return 1;}
 /* MW_MAIN0F41:0EE8..0F00. */
 void MwInitializeSpeakerBackend(void)
 {
-    if (!mwMusicHardware.setInterruptsEnabled || !mwMusicHardware.writePort || !mwMusicHardware.readPort) abort();
+    if (!mwMusicHardware.setInterruptsEnabled || !mwMusicHardware.writePort || !mwMusicHardware.readPort) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwMusicHardware.setInterruptsEnabled || !mwMusicHardware.writePort || !mwMusicHardware.readPort");
     mwMusicHardware.setInterruptsEnabled(false);
     mwMusicHardware.writePort(PIT_CONTROL_PORT,PIT_CHANNEL2_SQUARE_WAVE);
     midiSysex.currentPeriod=SPEAKER_SILENT_PERIOD;
@@ -472,7 +473,7 @@ void MwInitializeSpeakerBackend(void)
 /* MW_MAIN0F41:0F01..0F09. */
 void MwShutdownSpeakerBackend(void)
 {
-    if (!mwMusicHardware.setInterruptsEnabled || !mwMusicHardware.writePort || !mwMusicHardware.readPort) abort();
+    if (!mwMusicHardware.setInterruptsEnabled || !mwMusicHardware.writePort || !mwMusicHardware.readPort) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwMusicHardware.setInterruptsEnabled || !mwMusicHardware.writePort || !mwMusicHardware.readPort");
     mwMusicHardware.setInterruptsEnabled(false);
     uint8_t control=mwMusicHardware.readPort(SPEAKER_CONTROL_PORT);
     mwMusicHardware.writePort(SPEAKER_CONTROL_PORT,control&~SPEAKER_GATE_BITS);
@@ -499,7 +500,7 @@ uint16_t MwStopSpeakerVoice(MwMidiVoice *voice)
 /* MW_MAIN0F41:0F3B..0F4E. Native MOV AL,BH preserves AH on return. */
 uint16_t MwWriteSpeakerPeriod(uint16_t period)
 {
-    if (!mwMusicHardware.setInterruptsEnabled || !mwMusicHardware.writePort) abort();
+    if (!mwMusicHardware.setInterruptsEnabled || !mwMusicHardware.writePort) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwMusicHardware.setInterruptsEnabled || !mwMusicHardware.writePort");
     mwMusicHardware.setInterruptsEnabled(false);
     midiSysex.currentPeriod=period;
     mwMusicHardware.writePort(PIT_CONTROL_PORT,PIT_CHANNEL2_SQUARE_WAVE);
@@ -536,7 +537,7 @@ void MwTickSpeakerVoices(void)
     if (period!=midiSysex.currentPeriod)
     {
         midiSysex.currentPeriod=period;
-        if (!mwMusicHardware.writePort) abort();
+        if (!mwMusicHardware.writePort) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwMusicHardware.writePort");
         mwMusicHardware.writePort(PIT_CONTROL_PORT,PIT_CHANNEL2_SQUARE_WAVE);
         mwMusicHardware.writePort(PIT_CHANNEL2_PORT,(uint8_t)period);
         mwMusicHardware.writePort(PIT_CHANNEL2_PORT,(uint8_t)(period>>8));

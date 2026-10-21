@@ -76,6 +76,7 @@
     <ClInclude Include="src\include\mechwarrior\input_hardware.h"><Filter>Headers\mechwarrior</Filter></ClInclude>
     <ClInclude Include="src\include\mechwarrior\launcher.h"><Filter>Headers\mechwarrior</Filter></ClInclude>
     <ClInclude Include="src\include\mechwarrior\native_address.h"><Filter>Headers\mechwarrior</Filter></ClInclude>
+    <ClInclude Include="src\include\mechwarrior\port_diagnostics.h"><Filter>Headers\mechwarrior</Filter></ClInclude>
     <ClInclude Include="src\include\mechwarrior\original_data.h"><Filter>Headers\mechwarrior</Filter></ClInclude>
     <ClInclude Include="src\include\mechwarrior\sdl_host.h"><Filter>Headers\mechwarrior</Filter></ClInclude>
     <ClInclude Include="src\include\mechwarrior\support_pilot.h"><Filter>Headers\mechwarrior</Filter></ClInclude>
@@ -259,6 +260,7 @@
     <ClCompile Include="src\Support\CombatPlatform.c"><Filter>Support</Filter></ClCompile>
     <ClCompile Include="src\Support\MidiAddress.c"><Filter>Support</Filter></ClCompile>
     <ClCompile Include="src\Support\NativeAddress.c"><Filter>Support</Filter></ClCompile>
+    <ClCompile Include="src\Support\PortDiagnostics.c"><Filter>Support</Filter></ClCompile>
     <ClCompile Include="src\Support\SupportPilot.c"><Filter>Support</Filter></ClCompile>
     <ClCompile Include="src\Support\SupportPilotObservation.c"><Filter>Support</Filter></ClCompile>
     <None Include="docs\BUILDING.md"><Filter>Documentation</Filter></None>

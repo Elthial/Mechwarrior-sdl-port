@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_cockpit.h"
 #include "mechwarrior/combat_startup.h"
 #include "mechwarrior/combat_import.h"
@@ -8,21 +9,21 @@
 /*0810:65E2. Signed sensor damage chooses radar or an empty coloured panel. */
 void BtechUpdateRadarPanel(void)
 {
-    if (!playerMechState) abort();
+    if (!playerMechState) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerMechState");
     if ((int16_t)playerMechState->sensorHits<2)
     {
         if (headingRadarSelected) BtechDrawHeadingRadar();
         else BtechDrawTerrainRadar();
         return;
     }
-    if (activeCockpitLayoutIndex>=COMBAT_COCKPIT_LAYOUTS) abort();
+    if (activeCockpitLayoutIndex>=COMBAT_COCKPIT_LAYOUTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: activeCockpitLayoutIndex>=COMBAT_COCKPIT_LAYOUTS");
     const BtechScreenRectangle *panel=&cockpitLayouts[activeCockpitLayoutIndex].radarPanel;
     drawPolygonFilled=true;
     if (headingRadarSelected)
         drawLineColour=hudColourSchemeIndex?RADAR_ALTERNATE_HEADING_BACKGROUND:RADAR_HEADING_BACKGROUND;
     else
     {
-        if (hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES) abort();
+        if (hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES");
         drawLineColour=(uint8_t)hudColourSchemes[hudColourSchemeIndex].radarBackground;
     }
     drawFillColour=drawLineColour;
@@ -34,7 +35,7 @@ void BtechUpdateRadarPanel(void)
 void BtechDrawHeadingRadar(void)
 {
     drawPageSelector=backPageSelector;
-    if (activeCockpitLayoutIndex>=COMBAT_COCKPIT_LAYOUTS) abort();
+    if (activeCockpitLayoutIndex>=COMBAT_COCKPIT_LAYOUTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: activeCockpitLayoutIndex>=COMBAT_COCKPIT_LAYOUTS");
     const BtechScreenRectangle *panel=&cockpitLayouts[activeCockpitLayoutIndex].radarPanel;
     int16_t halfWidth=(panel->width-(panel->width<0))/2;
     int16_t halfHeight=(panel->height-(panel->height<0))/2;
@@ -47,7 +48,7 @@ void BtechDrawHeadingRadar(void)
     drawFillColour=hudColourSchemeIndex?Combat_Pal_EGA_White:Combat_Pal_EGA_Green;
     BtechDrawClippedLine(panel->x,panel->y,(int16_t)centreX,(int16_t)centreY);
     BtechDrawClippedLine((int16_t)(panel->x+panel->width-1),panel->y,(int16_t)centreX,(int16_t)centreY);
-    if (!playerUnitBinding || !playerUnitBinding->torso || !playerUnitBinding->positionedLeftLeg) abort();
+    if (!playerUnitBinding || !playerUnitBinding->torso || !playerUnitBinding->positionedLeftLeg) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerUnitBinding || !playerUnitBinding->torso || !playerUnitBinding->positionedLeftLeg");
     BtechWorldObjectPrefix *player=&playerUnitBinding->positionedLeftLeg->object.prefix;
     uint16_t heading=player->orientationC+playerUnitBinding->torso->object.prefix.orientationC;
     for (uint16_t slot=1;slot<COMBAT_MECH_SLOTS;++slot)
@@ -61,7 +62,7 @@ void BtechDrawHeadingRadar(void)
             paletteIndex=hudColourSchemeIndex?Combat_Pal_EGA_Green:Combat_Pal_EGA_LightRed;
         }
         /* Do not repair671B by silently skipping absent eligible contacts. */
-        if (!unitBindings[slot].torso) abort();
+        if (!unitBindings[slot].torso) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !unitBindings[slot].torso");
         const BtechPosition3D *contact=&unitBindings[slot].torso->object.prefix.position;
         int16_t relativeX=(int16_t)BtechShiftSignedDwordRight(contact->positionA-player->position.positionA,(uint8_t)radarRangeShift);
         int16_t relativeY=(int16_t)BtechShiftSignedDwordRight(contact->positionB-player->position.positionB,(uint8_t)radarRangeShift);
@@ -72,7 +73,7 @@ void BtechDrawHeadingRadar(void)
             BtechWriteClippedPixel((int16_t)(centreX+relativeX),(int16_t)(centreY-relativeY-1),paletteIndex);
     }
     textForegroundColour=hudColourSchemeIndex?Combat_Pal_EGA_White:Combat_Pal_EGA_Green;textTransparentBackground=true;
-    if (radarRangeShift<RADAR_MINIMUM_RANGE_SHIFT || radarRangeShift>RADAR_MAXIMUM_RANGE_SHIFT) abort(); /* ASCII aliases below2406. */
+    if (radarRangeShift<RADAR_MINIMUM_RANGE_SHIFT || radarRangeShift>RADAR_MAXIMUM_RANGE_SHIFT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: radarRangeShift<RADAR_MINIMUM_RANGE_SHIFT || radarRangeShift>RADAR_MAXIMUM_RANGE_SHIFT"); /* ASCII aliases below2406. */
     BtechDrawNearText(radarRangeLabels[radarRangeShift-RADAR_MINIMUM_RANGE_SHIFT],
         (int16_t)(panel->x+panel->width/2-0x12),(int16_t)(panel->y+panel->height-8));
     textTransparentBackground=false;

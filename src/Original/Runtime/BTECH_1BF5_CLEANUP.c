@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_startup.h"
 #include "mechwarrior/input_hardware.h"
 #include "mechwarrior/combat_platform.h"
@@ -22,7 +23,7 @@ void BtechRestoreTextVideoMode(void)
 /*1BF5:0287. Native BIOS equipment BYTE has two ordered read/modify/writes. */
 void BtechSetBiosTextModeAndAdapterBits(uint16_t displayBits)
 {
-    if (!btechHostReadBiosByte || !btechHostWriteBiosByte || !btechHostSetVideoMode) abort();
+    if (!btechHostReadBiosByte || !btechHostWriteBiosByte || !btechHostSetVideoMode) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostReadBiosByte || !btechHostWriteBiosByte || !btechHostSetVideoMode");
     btechHostWriteBiosByte(BIOS_VIDEO_EQUIPMENT,btechHostReadBiosByte(BIOS_VIDEO_EQUIPMENT)&BIOS_EQUIPMENT_CLEAR_DISPLAY_BITS);
     btechHostWriteBiosByte(BIOS_VIDEO_EQUIPMENT,btechHostReadBiosByte(BIOS_VIDEO_EQUIPMENT)|(uint8_t)(displayBits<<BIOS_EQUIPMENT_DISPLAY_SHIFT));
     btechHostSetVideoMode(BIOS_TEXT_MODE_80_COLUMN);
@@ -33,7 +34,7 @@ void BtechRestoreKeyboardAndTickVectors(void)
 {
     if (!keyboardHandlersInstalled) return;
     keyboardHandlersInstalled=0;
-    if (!btechHostReadBiosWord || !btechHostWriteBiosWord || !btechHostSetInterruptVector) abort();
+    if (!btechHostReadBiosWord || !btechHostWriteBiosWord || !btechHostSetInterruptVector) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostReadBiosWord || !btechHostWriteBiosWord || !btechHostSetInterruptVector");
     btechHostWriteBiosWord(BIOS_KEYBOARD_HEAD,btechHostReadBiosWord(BIOS_KEYBOARD_TAIL));
     btechHostSetInterruptVector(KEYBOARD_INTERRUPT,savedKeyboardVector);
     btechHostSetInterruptVector(BIOS_TICK_INTERRUPT,savedBiosTickVector);
@@ -44,7 +45,7 @@ void BtechShutdownMouseDriver(void)
 {
     if (!mouseDriverInstalled) return;
     mouseDriverInstalled=0;
-    if (!btechHostResetMouse) abort();
+    if (!btechHostResetMouse) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostResetMouse");
     btechHostResetMouse();
 }
 
@@ -52,7 +53,7 @@ void BtechShutdownMouseDriver(void)
 void BtechRestoreTimerScheduler(void)
 {
     if (!runtimeDelayActive) return;
-    if (!btechHostSetInterrupts || !btechHostWritePort || !btechHostSetInterruptVector) abort();
+    if (!btechHostSetInterrupts || !btechHostWritePort || !btechHostSetInterruptVector) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostSetInterrupts || !btechHostWritePort || !btechHostSetInterruptVector");
     btechHostSetInterrupts(0);
     btechHostWritePort(PIT_CONTROL_PORT,PIT_MODE_3_LOW_HIGH);
     btechHostWritePort(PIT_CHANNEL_ZERO_PORT,0);btechHostWritePort(PIT_CHANNEL_ZERO_PORT,0);
@@ -68,7 +69,7 @@ void BtechDeactivateDivideErrorHook(void)
 {
     if (!divideErrorHookMarkedActive) return;
     divideErrorHookMarkedActive=0;
-    if (!btechHostSetInterrupts || !btechHostGetInterruptVector) abort();
+    if (!btechHostSetInterrupts || !btechHostGetInterruptVector) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostSetInterrupts || !btechHostGetInterruptVector");
     btechHostSetInterrupts(0);
     (void)savedDivideErrorVector;
     (void)btechHostGetInterruptVector(DIVIDE_ERROR_INTERRUPT);

@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_mpu.h"
 #include "mechwarrior/combat_startup.h"
 #include <stdlib.h>
@@ -30,7 +31,7 @@ uint16_t BtechInstallMpuInterruptHandler(uint16_t unusedBasePort,uint8_t irq)
 /* 2176:0089. All exits restore entry IF. Non-ACK bytes use the real handler. */
 uint16_t BtechSendMpuCommandAndWaitAck(uint8_t command)
 {
-    if (!btechHostReadInterrupts) abort();
+    if (!btechHostReadInterrupts) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostReadInterrupts");
     uint8_t interrupts=btechHostReadInterrupts();
     uint16_t accepted=0;
     for (uint16_t polls=UINT16_MAX;polls;--polls)
@@ -155,7 +156,7 @@ uint16_t BtechInitializeRolandMpuBackend(void)
  * chaining depends on interrupted DS and is not redirected to a fake handler. */
 void BtechMpuInterrupt(void)
 {
-    if (btechHostReadPort(combatMpuStatusPort)&BTECH_MPU_INPUT_EMPTY) abort();
+    if (btechHostReadPort(combatMpuStatusPort)&BTECH_MPU_INPUT_EMPTY) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: btechHostReadPort(combatMpuStatusPort)&BTECH_MPU_INPUT_EMPTY");
     MpuHandleReceivedByte(btechHostReadPort(combatMpuDataPort));
     btechHostWritePort(PIC_COMMAND_PORT,PIC_END_OF_INTERRUPT);
 }

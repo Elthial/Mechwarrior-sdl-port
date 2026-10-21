@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/campaign_continuations.h"
 #include "mechwarrior/campaign_handoff.h"
 #include "mechwarrior/campaign_startup.h"
@@ -15,7 +16,7 @@ void MwWaitForRequiredResourceFile(void)
     uint16_t fileHandle;
     while (MwDosOpenResourceReadWrite(combatExecutableFilename,&fileHandle))
     {
-        if (!mwCampaignInput.currentDefaultDrive) abort();
+        if (!mwCampaignInput.currentDefaultDrive) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwCampaignInput.currentDefaultDrive");
         combatDiskPrompt.driveLetter=mwCampaignInput.currentDefaultDrive()+'A';
         MwNativeByteView text={(const uint8_t *)&combatDiskPrompt,COMBAT_DISK_TEXT_OFFSET,sizeof(combatDiskPrompt)};
         (void)MwShowMonospaceTextPanel(COMBAT_DISK_PROMPT_INSET,COMBAT_DISK_PROMPT_INSET,

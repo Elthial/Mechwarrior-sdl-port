@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_startup.h"
 #include "mechwarrior/combat_input.h"
 #include "mechwarrior/combat_runtime.h"
@@ -48,7 +49,7 @@ void BtechProgramMain(uint16_t argumentCount,const char *const *arguments)
         else
         {
             BtechApplyBodyHeadingToMechParts();
-            if (!playerUnitBinding || !playerUnitBinding->torso) abort();
+            if (!playerUnitBinding || !playerUnitBinding->torso) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerUnitBinding || !playerUnitBinding->torso");
             BtechUpdatePlayerMechPose(&playerUnitBinding->torso->object.prefix);
             BtechRemoveBodyHeadingFromMechParts();
             if (combatDispatchState==PLAYER_SCREEN_ORDERS) BtechRefreshLanceOrderScreen();
@@ -76,7 +77,7 @@ void BtechProgramMain(uint16_t argumentCount,const char *const *arguments)
             }
             else
             {
-                if (!playerMechState) abort();
+                if (!playerMechState) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerMechState");
                 if (playerMechState->lifeSupportHits==2 || playerMechState->cockpitDisabled)
                 {BtechFlashPlayerMechLoss();result=1;}
             }
@@ -113,7 +114,7 @@ void BtechFlashPlayerMechLoss(void)
         if (combatDispatchState==COMBAT_SCREEN_COCKPIT)
         {
             drawFillColour=(uint8_t)colour;drawLineColour=(uint8_t)colour;
-            if (!playerPoseCameraContext) abort();
+            if (!playerPoseCameraContext) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerPoseCameraContext");
             BtechCameraContext *camera=playerPoseCameraContext;
             BtechDrawStyledRectangle((uint16_t)camera->clipMinimumA,(uint16_t)camera->clipMinimumB,
                 (uint16_t)(camera->clipMaximumA-camera->clipMinimumA),(uint16_t)(camera->clipMaximumB-camera->clipMinimumB));

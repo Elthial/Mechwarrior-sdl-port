@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_cockpit.h"
 #include <stdlib.h>
 
@@ -5,7 +6,7 @@
  * NEG8000 stays8000 and its signed IDIV emits odd negative-remainder digits. */
 const char *BtechFormatSignedDecimalField(int16_t value,uint16_t fieldWidth,uint16_t padding)
 {
-    if (fieldWidth>=COMBAT_DECIMAL_FIELD_BYTES || (!fieldWidth && !value)) abort(); /* Native adjacent-owner write. */
+    if (fieldWidth>=COMBAT_DECIMAL_FIELD_BYTES || (!fieldWidth && !value)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: fieldWidth>=COMBAT_DECIMAL_FIELD_BYTES || (!fieldWidth && !value)"); /* Native adjacent-owner write. */
     decimalFieldText[fieldWidth]=0;
     int16_t digit=fieldWidth-1;
     bool negative=value<0;

@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/campaign_continuations.h"
 #include "mechwarrior/campaign_options.h"
 #include "mechwarrior/campaign_input.h"
@@ -18,13 +19,13 @@ enum { SAVE_NAME_TEXT_OFFSET=0xA031, SAVE_DISK_TEXT_OFFSET=0xA114,
 /* MW_MAIN081B:104C..1055. Attributes CX=0 at the DOS boundary. */
 bool MwDosCreateSaveFile(const char *filename,uint16_t *handleOrError)
 {
-    if (!mwDosFiles.create) abort();
+    if (!mwDosFiles.create) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwDosFiles.create");
     return mwDosFiles.create(filename,handleOrError);
 }
 /* MW_MAIN081B:1066..106C. True means native CF set; no retries. */
 bool MwDosWriteFile(const uint8_t *buffer,uint16_t byteCount,uint16_t fileHandle,uint16_t *bytesWrittenOrError)
 {
-    if (!mwDosFiles.write) abort();
+    if (!mwDosFiles.write) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwDosFiles.write");
     return mwDosFiles.write(buffer,byteCount,fileHandle,bytesWrittenOrError);
 }
 
@@ -52,7 +53,7 @@ readName:
         ++nameLength;
     }
     memcpy(campaignTextInputBuffer+nameLength,".GAM",sizeof(".GAM"));
-    if (!mwCampaignInput.currentDefaultDrive) abort();
+    if (!mwCampaignInput.currentDefaultDrive) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwCampaignInput.currentDefaultDrive");
     uint8_t drive=mwCampaignInput.currentDefaultDrive();
     if (drive<=DOS_LAST_FLOPPY_DRIVE)
     {
@@ -108,7 +109,7 @@ uint16_t MwShowLoadCampaignCallback(void)
  * FindNext. Keep its reference, not copies of selector/offset artifacts. */
 bool MwEnumerateCampaignSaves(void)
 {
-    if (!mwDosFiles.getDtaFilename || !mwDosFiles.findFirst || !mwDosFiles.findNext) abort();
+    if (!mwDosFiles.getDtaFilename || !mwDosFiles.findFirst || !mwDosFiles.findNext) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwDosFiles.getDtaFilename || !mwDosFiles.findFirst || !mwDosFiles.findNext");
     saveSearchFilename=mwDosFiles.getDtaFilename();
     saveFileCount=0;
     if (mwDosFiles.findFirst(saveFindPattern,0)) return true;
@@ -130,7 +131,7 @@ bool MwEnumerateCampaignSaves(void)
 uint16_t MwLoadSelectedCampaignCallback(void)
 {
     uint16_t row=(uint8_t)selectedUiRecordIndex; /* Native MUL BL uses AL only. */
-    if (row>=CAMPAIGN_SAVE_ROWS) abort(); /* Out-of-row native storage is unrepresented. */
+    if (row>=CAMPAIGN_SAVE_ROWS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: row>=CAMPAIGN_SAVE_ROWS"); /* Out-of-row native storage is unrepresented. */
     const char *stem=saveListRows[row].caption.columns.filename;
     if (*stem==' ') return 0;
     uint16_t character=0;

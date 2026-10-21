@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_runtime.h"
 #include "mechwarrior/combat_video.h"
 #include "mechwarrior/combat_heap.h"
@@ -16,14 +17,14 @@ BtechBitmapList *BtechLoadBitmapList(const char *filename,BtechRuntimeStream *st
     uint16_t loaded=0,openedHere=0,auxiliaryBytes;
     int16_t archiveCodeOrError=0;
     int16_t slot=BtechFindFreeBitmapRegistrySlot();
-    if (slot<0) abort(); // Native cleanup reads an uninitialized opened-here WORD and dereferences list zero.
+    if (slot<0) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: slot<0"); // Native cleanup reads an uninitialized opened-here WORD and dereferences list zero.
     if (!stream || !BtechIsRegisteredTaggedStream(stream))
     {stream=BtechOpenTaggedResourceStream(filename);openedHere=1;}
     if (BtechFindResourceTagPosition(stream,"BMP:INF:",0)==UINT32_MAX) goto cleanup;
     uint8_t countBytes[2];
     if (BtechReadStreamElements(countBytes,2,1,stream->file)!=1) goto cleanup;
     int16_t count=countBytes[0]|((uint16_t)countBytes[1]<<8);
-    if (count<=0 || (uint32_t)(uint16_t)count*0x0A>UINT16_MAX) abort(); // Native wrapped/zero near allocations are not host arrays.
+    if (count<=0 || (uint32_t)(uint16_t)count*0x0A>UINT16_MAX) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: count<=0 || (uint32_t)(uint16_t)count*0x0A>UINT16_MAX"); // Native wrapped/zero near allocations are not host arrays.
     list=BtechAllocateNearBytes((uint16_t)(((uint16_t)count+1)*BTECH_NEAR_POINTER_BYTES),sizeof(*list),BTECH_NEAR_BITMAP_LIST);
     if (!list) goto cleanup;
     list->imageCount=(uint16_t)count;list->pixels=(BtechResourceAllocation){0};
@@ -41,11 +42,11 @@ BtechBitmapList *BtechLoadBitmapList(const char *filename,BtechRuntimeStream *st
         if (BtechReadStreamElements(height,2,1,stream->file)!=1) goto cleanup;
         list->images[image].heightPixels=height[0]|((uint16_t)height[1]<<8);
     }
-    if (!graphicsBitmapStorageSize) abort();
+    if (!graphicsBitmapStorageSize) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !graphicsBitmapStorageSize");
     primary.byteCount=graphicsBitmapStorageSize(list,&auxiliaryBytes);
     primary.bytes=BtechAllocateDosMemoryBlock(primary.byteCount).bytes;
     if (!primary.bytes) goto cleanup;
-    if (auxiliaryBytes) abort(); // EGA1EB0 writes zero; other backend allocation/preparation is not converted.
+    if (auxiliaryBytes) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: auxiliaryBytes"); // EGA1EB0 writes zero; other backend allocation/preparation is not converted.
     scratch=BtechAllocateNearBytes(COMBAT_BITMAP_WORKSPACE_BYTES,COMBAT_BITMAP_WORKSPACE_BYTES,BTECH_NEAR_BYTES);
     if (scratch)
     {
@@ -62,7 +63,7 @@ BtechBitmapList *BtechLoadBitmapList(const char *filename,BtechRuntimeStream *st
     uint8_t decodedChunk[COMBAT_BITMAP_READ_BYTES]; // Private IO transport, as in native resource DC86's C17 projection.
     do
     {
-        if (cursor>primary.byteCount) abort();
+        if (cursor>primary.byteCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: cursor>primary.byteCount");
         uint32_t remaining=primary.byteCount-cursor;
         uint16_t preserved=remaining<COMBAT_BITMAP_READ_BYTES?remaining:COMBAT_BITMAP_READ_BYTES;
         /* RLE literals account their requested size even after short IO.
@@ -70,17 +71,17 @@ BtechBitmapList *BtechLoadBitmapList(const char *filename,BtechRuntimeStream *st
          * bytes remain allocation residue, not unrelated host stack residue. */
         memcpy(decodedChunk,primary.bytes+cursor,preserved);
         uint16_t read=BtechReadArchiveIntoFarBuffer((uint16_t)archiveCodeOrError,decodedChunk,COMBAT_BITMAP_READ_BYTES);
-        if (cursor>primary.byteCount || read>primary.byteCount-cursor) abort();
+        if (cursor>primary.byteCount || read>primary.byteCount-cursor) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: cursor>primary.byteCount || read>primary.byteCount-cursor");
         memcpy(primary.bytes+cursor,decodedChunk,read);
         if (read!=COMBAT_BITMAP_READ_BYTES) break;
         cursor+=COMBAT_BITMAP_READ_BYTES;
     } while (1);
     uint32_t decodedBytes=BtechGetArchiveDecodedLength((uint16_t)archiveCodeOrError);
-    if (!graphicsPrepareBitmapList) abort();
+    if (!graphicsPrepareBitmapList) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !graphicsPrepareBitmapList");
     graphicsPrepareBitmapList(list,primary,decodedBytes);
     BtechFlushAndCloseCompressedArchive((uint16_t)archiveCodeOrError);
     loaded=1;
-    if (graphicsColourMode) abort(); // Native optional VGA path includes real leak/double-free quirks, not a stub.
+    if (graphicsColourMode) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: graphicsColourMode"); // Native optional VGA path includes real leak/double-free quirks, not a stub.
     BtechRegisterBitmapList(list,(uint16_t)count,(uint16_t)slot);
 cleanup:
     if (scratch)
@@ -102,7 +103,7 @@ cleanup:
 /*1BF5:1336. Native dereferences list[0] before its null check. */
 void BtechReleaseBitmapListNearBlocks(BtechBitmapList *list)
 {
-    if (!list) abort(); // Null native near-address alias is not a nullable host list.
+    if (!list) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !list"); // Null native near-address alias is not a nullable host list.
     if (list->images) BtechReleaseNearBlockAndProbeAllocation(list->images);
     BtechReleaseNearBlockAndProbeAllocation(list);
 }
@@ -139,7 +140,7 @@ void BtechUnregisterBitmapList(BtechBitmapList *list)
 void BtechRegisterBitmapList(BtechBitmapList *list,uint16_t count,uint16_t slot)
 {
     if (!list) return;
-    if (slot>=COMBAT_BITMAP_LISTS) abort(); // Native wrapped adjacent-owner writes are outside typed registry scope.
+    if (slot>=COMBAT_BITMAP_LISTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: slot>=COMBAT_BITMAP_LISTS"); // Native wrapped adjacent-owner writes are outside typed registry scope.
     bitmapRegistryCounts[slot]=count;
     bitmapRegistryLists[slot]=list;
 }

@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_sound.h"
 #include "mechwarrior/combat_runtime.h"
 #include "mechwarrior/combat_heap.h"
@@ -17,7 +18,7 @@ BtechRuntimeStream *BtechRuntimeStreamFindFreeSlot(void)
         }
         if (COMBAT_STREAM_TABLE+slot*COMBAT_STREAM_STRIDE==lastStreamOffset) return NULL;
     }
-    abort(); /* Unsupported native table overrun, not a silently extended table. */
+    /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Unsupported native table overrun, not a silently extended table."); /* Unsupported native table overrun, not a silently extended table. */
 }
 
 /*0810:E2C0. Binary-read resource branch. F7E2's other modes and runtime buffer
@@ -26,11 +27,11 @@ BtechRuntimeStream *BtechRuntimeStreamOpen(const char *filename,const char *mode
 {
     BtechRuntimeStream *stream=BtechRuntimeStreamFindFreeSlot();
     if (!stream) return NULL;
-    if ((mode[0]!='r' && mode[0]!='w') || mode[1]!='b' || mode[2]) abort();
+    if ((mode[0]!='r' && mode[0]!='w') || mode[1]!='b' || mode[2]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (mode[0]!='r' && mode[0]!='w') || mode[1]!='b' || mode[2]");
     uint16_t handle=0;
     while (handle<runtimeHandleLimit && (runtimeHandleFlags[handle]&1)) ++handle;
     if (handle>=runtimeHandleLimit) return NULL;
-    if (!btechHostOpenStream) abort();
+    if (!btechHostOpenStream) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostOpenStream");
     stream->file=btechHostOpenStream(filename,mode);
     if (!stream->file) return NULL;
     runtimeHandleFlags[handle]=1;
@@ -49,20 +50,20 @@ int16_t BtechRuntimeStreamClose(BtechRuntimeStream *stream)
     if ((stream->flags&COMBAT_STREAM_ACTIVE_MASK) && !(stream->flags&COMBAT_STREAM_PROTECTED))
     {
         size_t slot=(size_t)(stream-runtimeStreams);
-        if (slot>=COMBAT_STREAM_SLOTS || runtimeTemporaryFileIds[slot]) abort();
+        if (slot>=COMBAT_STREAM_SLOTS || runtimeTemporaryFileIds[slot]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: slot>=COMBAT_STREAM_SLOTS || runtimeTemporaryFileIds[slot]");
         closeStatus=BtechRuntimeStreamFlush(stream);
         BtechRuntimeStreamReleaseBuffer(stream);
         int16_t closed;
         if (stream->file) {closed=fclose(stream->file)?-1:0;stream->file=NULL;}
         else
         {
-            if (!btechHostCloseHandle) abort();
+            if (!btechHostCloseHandle) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostCloseHandle");
             closed=btechHostCloseHandle((int8_t)stream->dosHandle);
         }
         if (closed<0) closeStatus=-1;
         else
         {
-            if (stream->dosHandle>=COMBAT_DOS_HANDLES) abort();
+            if (stream->dosHandle>=COMBAT_DOS_HANDLES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: stream->dosHandle>=COMBAT_DOS_HANDLES");
             runtimeHandleFlags[stream->dosHandle]=0;
         }
     }
@@ -117,10 +118,10 @@ int BtechCloseStreamFile(FILE *file)
 int16_t BtechRuntimeStreamFlush(BtechRuntimeStream *stream)
 {
     size_t slot=(size_t)(stream-runtimeStreams);
-    if (slot>=COMBAT_STREAM_SLOTS) abort();
+    if (slot>=COMBAT_STREAM_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: slot>=COMBAT_STREAM_SLOTS");
     if ((stream->flags&(COMBAT_STREAM_READ|COMBAT_STREAM_WRITE))==COMBAT_STREAM_WRITE &&
         ((stream->flags&COMBAT_STREAM_OWNS_BUFFER) ||
-        (runtimeStreamAuxiliaryFlags[slot]&COMBAT_STREAM_AUX_EXTERNAL_BUFFER))) abort();
+        (runtimeStreamAuxiliaryFlags[slot]&COMBAT_STREAM_AUX_EXTERNAL_BUFFER))) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (stream->flags&(COMBAT_STREAM_READ|COMBAT_STREAM_WRITE))==COMBAT_STREAM_WRITE && ((stream->flags&COMBAT_STREAM_OWNS_BUFFER) || (runtimeStreamAuxiliaryFlags[slot]&COMBAT_STREAM_AUX_EXTERNAL_BUFFER))");
     return 0;
 }
 
@@ -131,7 +132,7 @@ uint16_t BtechFlushAllRuntimeStreams(void)
     uint16_t flushed=0;
     for (uint16_t slot=0;COMBAT_STREAM_TABLE+slot*COMBAT_STREAM_STRIDE<=lastStreamOffset;++slot)
     {
-        if (slot>=COMBAT_STREAM_SLOTS) abort(); /* Unrepresented native table overrun. */
+        if (slot>=COMBAT_STREAM_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: slot>=COMBAT_STREAM_SLOTS"); /* Unrepresented native table overrun. */
         if ((runtimeStreams[slot].flags&COMBAT_STREAM_ACTIVE_MASK) &&
             BtechRuntimeStreamFlush(&runtimeStreams[slot])!=-1) ++flushed;
     }

@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_cockpit.h"
 #include "mechwarrior/combat_input.h"
 #include "mechwarrior/combat_orders.h"
@@ -20,9 +21,9 @@ enum { INSPECTION_DIVIDER_X=0x9D,INSPECTION_NAME_X=0x2E,INSPECTION_NAME_Y=4,
  * inspection frame BEFORE restoring cockpit resources and viewport. */
 void BtechUpdateMechInspectionScreen(uint16_t unitSlot)
 {
-    if (unitSlot>=COMBAT_MECH_SLOTS || !unitBindings[unitSlot].mech) abort();
+    if (unitSlot>=COMBAT_MECH_SLOTS || !unitBindings[unitSlot].mech) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: unitSlot>=COMBAT_MECH_SLOTS || !unitBindings[unitSlot].mech");
     inspectionMechState=unitBindings[unitSlot].mech;
-    if (inspectionMechState->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
+    if (inspectionMechState->templateIndex>=COMBAT_MECH_TEMPLATES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: inspectionMechState->templateIndex>=COMBAT_MECH_TEMPLATES");
     inspectionMechTemplate=&mechTemplates[inspectionMechState->templateIndex];
     if (inspectionReloadPending)
     {
@@ -78,7 +79,7 @@ void BtechClearInspectionBackground(void)
 void BtechDrawMechInspectionStatus(void)
 {
     const BtechMechState *mech=inspectionMechState;
-    if (!mech || mech->templateIndex>=COMBAT_MECH_TEMPLATES || hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES) abort();
+    if (!mech || mech->templateIndex>=COMBAT_MECH_TEMPLATES || hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mech || mech->templateIndex>=COMBAT_MECH_TEMPLATES || hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES");
     const BtechMechTemplate *chassis=&mechTemplates[mech->templateIndex];
     const BtechHudColourScheme *colours=&hudColourSchemes[hudColourSchemeIndex];
     screenPolygonNeedsClip=false;drawFillColour=(uint8_t)colours->inspectionBackground;drawLineColour=Combat_Pal_EGA_Black;
@@ -89,13 +90,13 @@ void BtechDrawMechInspectionStatus(void)
     textForegroundColour=(uint8_t)colours->inspectionSubsystemText;
     for (uint16_t system=0;system<5;++system)
         BtechDrawNearText(inspectionSubsystemLabels[system],INSPECTION_LABEL_X,INSPECTION_FIRST_SYSTEM_Y+system*INSPECTION_ROW_STEP);
-    if (mech->engineHits>COMBAT_ENGINE_HIT_LIMIT) abort();
+    if (mech->engineHits>COMBAT_ENGINE_HIT_LIMIT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mech->engineHits>COMBAT_ENGINE_HIT_LIMIT");
     BtechDrawNearText(inspectionConditionLabels[engineConditionLabelIndices[mech->engineHits]],INSPECTION_STATUS_X,INSPECTION_FIRST_SYSTEM_Y);
-    if (mech->gyroHits>COMBAT_GYRO_DESTROYED_HITS) abort();
+    if (mech->gyroHits>COMBAT_GYRO_DESTROYED_HITS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mech->gyroHits>COMBAT_GYRO_DESTROYED_HITS");
     BtechDrawNearText(inspectionConditionLabels[twoHitSystemConditionLabelIndices[mech->gyroHits]],INSPECTION_STATUS_X,INSPECTION_FIRST_SYSTEM_Y+INSPECTION_ROW_STEP);
-    if (mech->sensorHits>COMBAT_SENSORS_DESTROYED_HITS) abort();
+    if (mech->sensorHits>COMBAT_SENSORS_DESTROYED_HITS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mech->sensorHits>COMBAT_SENSORS_DESTROYED_HITS");
     BtechDrawNearText(inspectionConditionLabels[twoHitSystemConditionLabelIndices[mech->sensorHits]],INSPECTION_STATUS_X,INSPECTION_FIRST_SYSTEM_Y+2*INSPECTION_ROW_STEP);
-    if (mech->lifeSupportHits>COMBAT_LIFE_SUPPORT_HIT_LIMIT) abort();
+    if (mech->lifeSupportHits>COMBAT_LIFE_SUPPORT_HIT_LIMIT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mech->lifeSupportHits>COMBAT_LIFE_SUPPORT_HIT_LIMIT");
     BtechDrawNearText(inspectionConditionLabels[twoHitSystemConditionLabelIndices[mech->lifeSupportHits]],INSPECTION_STATUS_X,INSPECTION_FIRST_SYSTEM_Y+3*INSPECTION_ROW_STEP);
     BtechDrawNearText(BtechFormatSignedDecimalField((int16_t)(chassis->heatSinkCount-mech->destroyedHeatSinks),2,' '),INSPECTION_STATUS_X,INSPECTION_HEAT_ROW_Y);
     BtechDrawNearText(BtechFormatSignedDecimalField((int16_t)chassis->heatSinkCount,2,' '),INSPECTION_HEAT_MAXIMUM_X,INSPECTION_HEAT_ROW_Y);
@@ -105,7 +106,7 @@ void BtechDrawMechInspectionStatus(void)
     {
         BtechDrawNearText(actuatorLabels[actuator],INSPECTION_LABEL_X,rowY);
         uint16_t damageCount=COMBAT_ACTUATOR_CONDITION_FULL-mech->actuatorCondition[actuator];
-        if (damageCount>COMBAT_ACTUATOR_CONDITION_FULL) abort();
+        if (damageCount>COMBAT_ACTUATOR_CONDITION_FULL) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: damageCount>COMBAT_ACTUATOR_CONDITION_FULL");
         BtechDrawNearText(inspectionConditionLabels[actuatorConditionLabelIndices[damageCount]],INSPECTION_STATUS_X,rowY);
     }
     if (chassis->jumpJetGroupCount)
@@ -125,7 +126,7 @@ void BtechDrawMechInspectionStatus(void)
         if ((int16_t)chassis->weaponMountCount>mountIndex)
         {
             const BtechWeaponMount *mount=&chassis->weaponMounts[mountIndex];
-            if ((uint16_t)mount->weaponKind>=COMBAT_WEAPON_KINDS || (uint16_t)mount->bodyLocation>=COMBAT_BODY_LOCATIONS) abort();
+            if ((uint16_t)mount->weaponKind>=COMBAT_WEAPON_KINDS || (uint16_t)mount->bodyLocation>=COMBAT_BODY_LOCATIONS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (uint16_t)mount->weaponKind>=COMBAT_WEAPON_KINDS || (uint16_t)mount->bodyLocation>=COMBAT_BODY_LOCATIONS");
             BtechDrawNearText(weaponLabels[mount->weaponKind],INSPECTION_LABEL_X,rowY);
             BtechDrawNearText(bodyLocationLabels[mount->bodyLocation],INSPECTION_WEAPON_LOCATION_X,rowY);
             BtechDrawNearText(inspectionConditionLabels[mech->weapons[mountIndex].operational?INSPECTION_FUNCTIONAL_LABEL:INSPECTION_DESTROYED_LABEL],INSPECTION_WEAPON_CONDITION_X,rowY);
@@ -145,34 +146,34 @@ void BtechDrawMechInspectionDiagramAndLegend(void)
  * equality wins before zero (including0/0); rear centre torso has no box. */
 void BtechDrawMechDamageDiagram(void)
 {
-    if (!inspectionMechState || !inspectionMechTemplate) abort();
+    if (!inspectionMechState || !inspectionMechTemplate) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !inspectionMechState || !inspectionMechTemplate");
     drawLineColour=INSPECTION_UNDAMAGED_COLOUR;drawFillColour=INSPECTION_UNDAMAGED_COLOUR;
     BtechDrawStyledRectangle(INSPECTION_DIAGRAM_X,INSPECTION_DIAGRAM_Y,INSPECTION_DIAGRAM_WIDTH,INSPECTION_DIAGRAM_HEIGHT);
     for (uint16_t armor=0;armor<COMBAT_ARMOR_LOCATIONS;++armor)
     {
         if (armor==COMBAT_ARMOR_REAR_CENTER_TORSO) continue;
         uint16_t body=armorToBodyLocations[armor];
-        if (body>=COMBAT_BODY_LOCATIONS) abort();
+        if (body>=COMBAT_BODY_LOCATIONS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: body>=COMBAT_BODY_LOCATIONS");
         int16_t maximum=inspectionMechTemplate->maximumArmor[armor]+inspectionMechTemplate->maximumInternalStructure[body];
         int16_t remaining=inspectionMechState->currentArmor[armor]+inspectionMechState->currentInternalStructure[body];
         int16_t halfMaximum=(maximum-(maximum<0))/2; /* Native SAR, including negative odd sums. */
         uint8_t colour=remaining==maximum?INSPECTION_UNDAMAGED_COLOUR:remaining>halfMaximum?INSPECTION_ABOVE_HALF_COLOUR:remaining?INSPECTION_DAMAGED_COLOUR:INSPECTION_DESTROYED_COLOUR;
         uint16_t chassis=inspectionMechState->templateIndex;
-        if (chassis>=COMBAT_MECH_TEMPLATES) abort();
+        if (chassis>=COMBAT_MECH_TEMPLATES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: chassis>=COMBAT_MECH_TEMPLATES");
         const BtechScreenRectangle *region=&inspectionDiagramRegions[chassis][armor];
         const BtechHudGaugeAnchor *origin=&inspectionDiagramOrigins[chassis];
         drawFillColour=colour;drawLineColour=colour;
         BtechDrawStyledRectangle((uint16_t)(region->x-origin->x+INSPECTION_DIAGRAM_X),
             (uint16_t)(region->y-origin->y+INSPECTION_DIAGRAM_Y),(uint16_t)region->width,(uint16_t)region->height);
     }
-    if (!inspectionDamagePictures || !inspectionDamagePictures->images || !inspectionDamagePictures->imageCount) abort();
+    if (!inspectionDamagePictures || !inspectionDamagePictures->images || !inspectionDamagePictures->imageCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !inspectionDamagePictures || !inspectionDamagePictures->images || !inspectionDamagePictures->imageCount");
     BtechDrawBitmap(&inspectionDamagePictures->images[0],INSPECTION_DIAGRAM_X,INSPECTION_DIAGRAM_Y);
 }
 
 /*0810:19F1. Does not set background/transparency or select a font. */
 void BtechDrawMechInspectionLegend(void)
 {
-    if (hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES) abort();
+    if (hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES");
     textForegroundColour=(uint8_t)hudColourSchemes[hudColourSchemeIndex].inspectionFooter;
     BtechDrawNearText(inspectionLegendText[0],INSPECTION_LABEL_X,INSPECTION_LEGEND_FIRST_Y);
     BtechDrawNearText(inspectionLegendText[1],INSPECTION_LABEL_X,INSPECTION_LEGEND_SECOND_Y);

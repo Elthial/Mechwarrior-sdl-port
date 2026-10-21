@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/campaign.h"
 #include "mechwarrior/dos_files.h"
 #include "mechwarrior/ega_campaign.h"
@@ -41,7 +42,7 @@ uint16_t MwLoadIndexedPicture(uint16_t pictureIndex)
         uint16_t offsetEntry = indexedPictureCachedIndex * PICTURE_OFFSET_ENTRY_BYTES;
         /* Outside this proved directory object is unresolved live DS storage,
          * not a safe out-of-bounds C access or a silently clamped index. */
-        if (offsetEntry + PICTURE_OFFSET_ENTRY_BYTES > INDEXED_PICTURE_DIRECTORY_BYTES) abort();
+        if (offsetEntry + PICTURE_OFFSET_ENTRY_BYTES > INDEXED_PICTURE_DIRECTORY_BYTES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: offsetEntry + PICTURE_OFFSET_ENTRY_BYTES > INDEXED_PICTURE_DIRECTORY_BYTES");
         uint32_t fileOffset = ((uint32_t)MwReadNativeWord(indexedPictureDirectory, offsetEntry) << NATIVE_WORD_BITS)
             | MwReadNativeWord(indexedPictureDirectory, (uint16_t)(offsetEntry + PICTURE_BANK_LOW_OFFSET_WORD));
         if (!MwDosSeekAbsolute(fileOffset, indexedPictureFileHandle)) break;
@@ -50,7 +51,7 @@ uint16_t MwLoadIndexedPicture(uint16_t pictureIndex)
     for (;;)
     {
         uint16_t sizeEntry = INDEXED_PICTURE_SIZE_TABLE + (uint16_t)(indexedPictureCachedIndex * 2);
-        if (sizeEntry + PICTURE_BANK_LOW_OFFSET_WORD > INDEXED_PICTURE_DIRECTORY_BYTES) abort();
+        if (sizeEntry + PICTURE_BANK_LOW_OFFSET_WORD > INDEXED_PICTURE_DIRECTORY_BYTES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: sizeEntry + PICTURE_BANK_LOW_OFFSET_WORD > INDEXED_PICTURE_DIRECTORY_BYTES");
         indexedPictureStoredBytes = MwReadNativeWord(indexedPictureDirectory, sizeEntry);
         if (!MwDosReadFile(MwResolveNativeSegment(compressedPictureBufferSelector),
             indexedPictureStoredBytes, indexedPictureFileHandle, &bytesReadOrError)) break;

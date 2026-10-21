@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_cockpit.h"
 #include "mechwarrior/combat_input.h"
 #include <stdlib.h>
@@ -42,7 +43,7 @@ uint16_t BtechShowCapturedTwoLineDialog(const BtechDialogMessagePair *message)
         BtechCaptureScreenRectangle(capture,DIALOG_LEFT,DIALOG_TOP,DIALOG_WIDTH,DIALOG_HEIGHT);
         screenPolygonNeedsClip=false;drawPolygonFilled=true;textTransparentBackground=true;
         textForegroundColour=hudColourSchemeIndex?DIALOG_MONOCHROME_TEXT_COLOUR:DIALOG_TEXT_COLOUR;
-        if (!promptBitmaps || !promptBitmaps->images || !promptBitmaps->imageCount) abort();
+        if (!promptBitmaps || !promptBitmaps->images || !promptBitmaps->imageCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !promptBitmaps || !promptBitmaps->images || !promptBitmaps->imageCount");
         BtechDrawBitmap(&promptBitmaps->images[0],DIALOG_LEFT,DIALOG_TOP);
         uint16_t textHalfWidth=strlen(message->firstText)*DIALOG_HALF_CHARACTER_WIDTH;
         BtechDrawNearText(message->firstText,(int16_t)(DIALOG_CENTRE_X-textHalfWidth),DIALOG_FIRST_TEXT_Y);

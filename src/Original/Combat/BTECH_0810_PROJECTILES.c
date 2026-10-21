@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_projectiles.h"
 #include "mechwarrior/combat_effects.h"
 #include "mechwarrior/combat_ballistics.h"
@@ -52,7 +53,7 @@ uint8_t BtechSteerProjectileAndTestOvershoot(BtechProjectileState *projectile)
 {
     if (projectile->targetUnitSlot==COMBAT_PROJECTILE_NO_TARGET) return 0;
     BtechPooledWorldObject *object=projectile->worldObject;
-    if (!object) abort();
+    if (!object) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !object");
     const BtechPosition3D *target=BtechGetUnitBodyReferencePosition(projectile->targetUnitSlot,(int16_t)projectile->targetArmorLocation);
     BtechWorldObjectPrefix *pose=&object->object.prefix;
     uint32_t deltaA=target->positionA-pose->position.positionA,deltaB=target->positionB-pose->position.positionB;
@@ -76,7 +77,7 @@ uint8_t BtechSteerProjectileAndTestOvershoot(BtechProjectileState *projectile)
 uint8_t BtechTestProjectileAgainstSpecialObject(BtechProjectileState *projectile)
 {
     if (!specialTargetDamageRemaining) return 0;
-    if (!projectile->worldObject) abort();
+    if (!projectile->worldObject) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !projectile->worldObject");
     if (!BtechTestPositionInsideSpecialTarget(&projectile->worldObject->object.prefix.position,1)) return 0;
     int16_t damage=BtechCalculateProjectileImpactDamage(projectile);
     BtechApplySpecialTargetDamage(damage);return 1;
@@ -86,12 +87,12 @@ uint8_t BtechTestProjectileAgainstSpecialObject(BtechProjectileState *projectile
  * Only SRM hits double into damage. No extra to-hit roll is made here. */
 int16_t BtechCalculateProjectileImpactDamage(const BtechProjectileState *projectile)
 {
-    if (projectile->profileIndex>=COMBAT_PROJECTILE_PROFILES) abort();
+    if (projectile->profileIndex>=COMBAT_PROJECTILE_PROFILES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: projectile->profileIndex>=COMBAT_PROJECTILE_PROFILES");
     uint16_t kind=projectileProfiles[projectile->profileIndex].weaponKind;
-    if (kind>=COMBAT_WEAPON_KINDS) abort();
+    if (kind>=COMBAT_WEAPON_KINDS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: kind>=COMBAT_WEAPON_KINDS");
     if (kind==COMBAT_WEAPON_AC5) return (int16_t)weaponDefinitions[kind].damageOrMissileCount;
     int16_t row=missileClusterRowByWeapon[kind];
-    if ((uint16_t)row>=COMBAT_MISSILE_CLUSTER_ROWS) abort();
+    if ((uint16_t)row>=COMBAT_MISSILE_CLUSTER_ROWS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (uint16_t)row>=COMBAT_MISSILE_CLUSTER_ROWS");
     uint16_t firstDie=BtechRandomBelowBound(DICE_1D6);
     uint16_t secondDie=BtechRandomBelowBound(DICE_1D6);
     uint16_t damage=missileClusterRows[row][firstDie+secondDie];
@@ -110,14 +111,14 @@ BtechProjectileState *BtechAllocateProjectileFromWeaponProfile(int16_t weaponKin
     {
         BtechProjectileState *projectile=&projectiles[slot];
         if (projectile->worldObject) continue;
-        if ((uint16_t)weaponKind>=COMBAT_WEAPON_KINDS) abort();
+        if ((uint16_t)weaponKind>=COMBAT_WEAPON_KINDS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (uint16_t)weaponKind>=COMBAT_WEAPON_KINDS");
         projectile->profileIndex=projectileProfileIndicesByWeapon[weaponKind];
-        if (projectile->profileIndex>=COMBAT_PROJECTILE_PROFILES) abort();
+        if (projectile->profileIndex>=COMBAT_PROJECTILE_PROFILES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: projectile->profileIndex>=COMBAT_PROJECTILE_PROFILES");
         const BtechProjectileProfile *profile=&projectileProfiles[projectile->profileIndex];
         projectile->lifetimeRemaining=profile->lifetimeTicks;
         uint16_t resource=profile->resourceIdDelta+otherShapeResourceBase;
         projectile->worldObject=BtechAllocatePooledWorldObject(resource,placement);
-        if (!projectile->worldObject || projectile->profileIndex>=COMBAT_PROJECTILE_PROFILES) abort();
+        if (!projectile->worldObject || projectile->profileIndex>=COMBAT_PROJECTILE_PROFILES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !projectile->worldObject || projectile->profileIndex>=COMBAT_PROJECTILE_PROFILES");
         /* Original reload AFTER allocation, before speed write. */
         projectile->worldObject->forwardStepScale=(int16_t)projectileProfiles[projectile->profileIndex].speedScale;
         projectile->worldObject->object.prefix.renderFlags=0;
@@ -129,7 +130,7 @@ BtechProjectileState *BtechAllocateProjectileFromWeaponProfile(int16_t weaponKin
 /*0810:58D9. Save part references before allocation; aim follows live Mech. */
 BtechProjectileState *BtechSpawnUnitWeaponProjectile(uint16_t unitSlot,int16_t weaponKind,const BtechPosition3D *placement)
 {
-    if (unitSlot>=COMBAT_MECH_SLOTS) abort();
+    if (unitSlot>=COMBAT_MECH_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: unitSlot>=COMBAT_MECH_SLOTS");
     BtechPooledWorldObject *torso=unitBindings[unitSlot].torso,*root=unitBindings[unitSlot].positionedLeftLeg;
     BtechProjectileState *projectile=BtechAllocateProjectileFromWeaponProfile(weaponKind,placement);
     if (projectile)
@@ -137,7 +138,7 @@ BtechProjectileState *BtechSpawnUnitWeaponProjectile(uint16_t unitSlot,int16_t w
         projectile->firingUnitSlot=unitSlot;
         BtechWorldObjectPrefix *pose=&projectile->worldObject->object.prefix;
         BtechMechState *mech=unitBindings[unitSlot].mech;
-        if (!root || !torso || !mech) abort();
+        if (!root || !torso || !mech) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !root || !torso || !mech");
         pose->orientationA=root->object.prefix.orientationA-mech->aimPitch;
         if (unitControls[unitSlot].movementMode==MOVEMENT_MODE_FALLEN_POSE) pose->orientationA+=COMBAT_PROJECTILE_FALLEN_PITCH_BIAS;
         pose->orientationB=root->object.prefix.orientationB;
@@ -159,9 +160,9 @@ void BtechResetProjectileHandles(void)
 /*0810:5A55. Body reference supplies origin; selected render part supplies target. */
 void BtechFirePlayerWeaponProjectile(uint16_t mountIndex)
 {
-    if (!playerMechTemplate || mountIndex>=COMBAT_WEAPON_MOUNTS) abort();
+    if (!playerMechTemplate || mountIndex>=COMBAT_WEAPON_MOUNTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerMechTemplate || mountIndex>=COMBAT_WEAPON_MOUNTS");
     const BtechWeaponMount *mount=&playerMechTemplate->weaponMounts[mountIndex];
-    if (mount->bodyLocation>=COMBAT_BODY_LOCATIONS) abort();
+    if (mount->bodyLocation>=COMBAT_BODY_LOCATIONS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mount->bodyLocation>=COMBAT_BODY_LOCATIONS");
     BtechPosition3D *position=BtechGetUnitBodyReferencePosition(0,(int16_t)bodyLocationReferenceIndices[mount->bodyLocation]);
     BtechProjectileState *projectile=BtechSpawnUnitWeaponProjectile(0,mount->weaponKind,position);
     if (!projectile) return; /* No projectile means no guidance target or fabricated hit. */
@@ -175,7 +176,7 @@ void BtechFirePlayerWeaponProjectile(uint16_t mountIndex)
 /*0810:5EF1. Spawn from the live position before release; only handle clears. */
 void BtechDestroyProjectileAndSpawnEffect(BtechProjectileState *projectile)
 {
-    if (!projectile->worldObject) abort();
+    if (!projectile->worldObject) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !projectile->worldObject");
     BtechSpawnSequencedWorldEffect(&projectile->worldObject->object.prefix.position,COMBAT_IMPACT_EFFECT_SEQUENCE);
     BtechReleasePooledWorldObject(projectile->worldObject);
     projectile->worldObject=NULL;

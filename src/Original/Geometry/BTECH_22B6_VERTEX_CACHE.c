@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_render.h"
 #include <stdlib.h>
 
@@ -52,7 +53,7 @@ void BtechTransformWordVectorToDword(const uint16_t source[3],const BtechOrienta
  * ADD fraction,0 clears carry: translation is a wrapped DWORD integer add. */
 void BtechCacheTransformedGeometryVector(uint8_t vectorIndex)
 {
-    if (vectorIndex>=GEOMETRY_CACHE_VERTICES) abort(); /* FF aliases X-cache bytes in the native code owner. */
+    if (vectorIndex>=GEOMETRY_CACHE_VERTICES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: vectorIndex>=GEOMETRY_CACHE_VERTICES"); /* FF aliases X-cache bytes in the native code owner. */
     if (vertexNearPlaneState[vectorIndex]) return;
     vertexNearPlaneState[vectorIndex]=1;
     for (uint16_t axis=0;axis<3;++axis) viewVectorCoefficients[axis]=renderGeometry[vectorIndex][axis];
@@ -66,7 +67,7 @@ void BtechCacheTransformedGeometryVector(uint8_t vectorIndex)
  * halves are intentionally stale and share storage with transformed vertices. */
 void BtechCacheRotatedGeometryVector(uint8_t vectorIndex)
 {
-    if (vectorIndex>=GEOMETRY_CACHE_VERTICES) abort();
+    if (vectorIndex>=GEOMETRY_CACHE_VERTICES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: vectorIndex>=GEOMETRY_CACHE_VERTICES");
     if (vertexNearPlaneState[vectorIndex]) return;
     vertexNearPlaneState[vectorIndex]=1;
     for (uint16_t axis=0;axis<3;++axis) viewVectorCoefficients[axis]=renderGeometry[vectorIndex][axis];
@@ -82,7 +83,7 @@ uint64_t BtechGetWidePolygonFacingDotHighWord(uint8_t normalIndex,uint8_t firstV
 {
     if (useViewBasisDirectly)
     {
-        if (normalIndex>=GEOMETRY_CACHE_VERTICES || firstVertexIndex>=GEOMETRY_CACHE_VERTICES) abort(); /* FF geometry overread is outside the recovered array. */
+        if (normalIndex>=GEOMETRY_CACHE_VERTICES || firstVertexIndex>=GEOMETRY_CACHE_VERTICES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: normalIndex>=GEOMETRY_CACHE_VERTICES || firstVertexIndex>=GEOMETRY_CACHE_VERTICES"); /* FF geometry overread is outside the recovered array. */
         uint32_t *position[]={&projectionVectorScratch.positionA,&projectionVectorScratch.positionB,&projectionVectorScratch.positionC};
         const uint32_t *relative[]={&cameraRelativePosition.positionA,&cameraRelativePosition.positionB,&cameraRelativePosition.positionC};
         for (uint16_t axis=0;axis<3;++axis)
@@ -111,7 +112,7 @@ uint64_t BtechGetWidePolygonFacingDotHighWord(uint8_t normalIndex,uint8_t firstV
  * strides on the wide path. Neither path clears the other half of a slot. */
 void BtechCachePolygonShadeNormal(uint8_t normalIndex)
 {
-    if (normalIndex>=GEOMETRY_CACHE_VERTICES) abort();
+    if (normalIndex>=GEOMETRY_CACHE_VERTICES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: normalIndex>=GEOMETRY_CACHE_VERTICES");
     uint16_t wordIndex=normalIndex*(widePolygonCoordinates?2:1);
     if (vertexNearPlaneState[normalIndex])
     {

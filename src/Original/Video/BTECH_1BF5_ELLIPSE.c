@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_video.h"
 #include <stdlib.h>
 
@@ -8,7 +9,7 @@ void BtechDrawStyledEllipse(int16_t radius, uint16_t centerX, uint16_t centerY)
     // DS=SS=304E; BP becomes the row-table byte index, not a stack object.
     // See SHARED_ELLIPSE_RECOVERY.md for BYTE clipping and callback contracts.
     uint16_t page=drawPageSelector;
-    if (combatRendererKind!=COMBAT_VIDEO_EGA) abort(); /* Tandy window resolver remains outside EGA scope. */
+    if (combatRendererKind!=COMBAT_VIDEO_EGA) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: combatRendererKind!=COMBAT_VIDEO_EGA"); /* Tandy window resolver remains outside EGA scope. */
     ellipsePageSelector=page; // Before even radius rejection.
     if (radius<=0x0001)
     {
@@ -106,10 +107,10 @@ void BtechDrawStyledEllipse(int16_t radius, uint16_t centerX, uint16_t centerY)
         uint16_t scanlineOffset;
         if ((scanlineByteIndex>>1)<COMBAT_SCREEN_HEIGHT) scanlineOffset=graphicsRowOffsets[scanlineByteIndex>>1];
             else if ((scanlineByteIndex>>1)-COMBAT_SCREEN_HEIGHT<0x15C) scanlineOffset=herculesDisplayRowOffsets[(scanlineByteIndex>>1)-COMBAT_SCREEN_HEIGHT];
-            else abort(); /* Unmapped adjacent row-table owner. */
+            else /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Unmapped adjacent row-table owner."); /* Unmapped adjacent row-table owner. */
         do
         {
-            if (tableRow>=COMBAT_ELLIPSE_ROWS) abort(); /* Unmapped adjacent arc owner. */
+            if (tableRow>=COMBAT_ELLIPSE_ROWS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: tableRow>=COMBAT_ELLIPSE_ROWS"); /* Unmapped adjacent arc owner. */
             // Signed BYTE side tests, unsigned right caps.
             uint8_t edge=ellipseLeftInsets[tableRow];
             uint8_t width=ellipseBorderWidths[tableRow];
@@ -129,7 +130,7 @@ void BtechDrawStyledEllipse(int16_t radius, uint16_t centerX, uint16_t centerY)
             {
                 uint16_t startX=leftX+(uint16_t)edge;
                 edge += width; // Saved AX contains next edge, not pattern.
-                if (!graphicsFillSolidSpan) abort();
+                if (!graphicsFillSolidSpan) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !graphicsFillSolidSpan");
                 graphicsFillSolidSpan(drawColourPattern,startX,(int16_t)width,scanlineOffset,page);
             }
 upperInterior:
@@ -158,7 +159,7 @@ upperInterior:
                     shapeSpanCallback.alternating(spanSecondaryPattern,startX,(int16_t)width,spanPrimaryPattern,scanlineOffset,page);
                 else
                 {
-                    if (!shapeSpanCallback.solid) abort();
+                    if (!shapeSpanCallback.solid) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !shapeSpanCallback.solid");
                     shapeSpanCallback.solid(spanSecondaryPattern,startX,(int16_t)width,scanlineOffset,page);
                 }
             }
@@ -176,7 +177,7 @@ upperRightBorder:
             width += edge;
             if (width>clipRight)width=clipRight;
             width -= edge;
-            if (!graphicsFillSolidSpan) abort();
+            if (!graphicsFillSolidSpan) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !graphicsFillSolidSpan");
             graphicsFillSolidSpan(drawColourPattern,(uint16_t)(leftX+(uint16_t)edge),(int16_t)width,scanlineOffset,page);
 upperRowDone:
             scanlineByteIndex+=2;
@@ -184,7 +185,7 @@ upperRowDone:
             // Native extra lookup after final row; default SS=304E, not a frame.
             if ((scanlineByteIndex>>1)<COMBAT_SCREEN_HEIGHT) scanlineOffset=graphicsRowOffsets[scanlineByteIndex>>1];
             else if ((scanlineByteIndex>>1)-COMBAT_SCREEN_HEIGHT<0x15C) scanlineOffset=herculesDisplayRowOffsets[(scanlineByteIndex>>1)-COMBAT_SCREEN_HEIGHT];
-            else abort(); /* Unmapped adjacent row-table owner. */
+            else /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Unmapped adjacent row-table owner."); /* Unmapped adjacent row-table owner. */
             ++tableRow;
             --rows;
         } while (rows!=0x0000);
@@ -217,10 +218,10 @@ lowerHalf:
         uint16_t scanlineOffset;
         if ((scanlineByteIndex>>1)<COMBAT_SCREEN_HEIGHT) scanlineOffset=graphicsRowOffsets[scanlineByteIndex>>1];
             else if ((scanlineByteIndex>>1)-COMBAT_SCREEN_HEIGHT<0x15C) scanlineOffset=herculesDisplayRowOffsets[(scanlineByteIndex>>1)-COMBAT_SCREEN_HEIGHT];
-            else abort(); /* Unmapped adjacent row-table owner. */
+            else /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Unmapped adjacent row-table owner."); /* Unmapped adjacent row-table owner. */
         do
         {
-            if (tableRow>=COMBAT_ELLIPSE_ROWS) abort(); /* Unmapped adjacent arc owner. */
+            if (tableRow>=COMBAT_ELLIPSE_ROWS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: tableRow>=COMBAT_ELLIPSE_ROWS"); /* Unmapped adjacent arc owner. */
             // Signed BYTE side tests, unsigned right caps.
             uint8_t edge=ellipseLeftInsets[tableRow];
             uint8_t width=ellipseBorderWidths[tableRow];
@@ -240,7 +241,7 @@ lowerHalf:
             {
                 uint16_t startX=leftX+(uint16_t)edge;
                 edge += width; // Saved AX contains next edge, not pattern.
-                if (!graphicsFillSolidSpan) abort();
+                if (!graphicsFillSolidSpan) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !graphicsFillSolidSpan");
                 graphicsFillSolidSpan(drawColourPattern,startX,(int16_t)width,scanlineOffset,page);
             }
 lowerInterior:
@@ -269,7 +270,7 @@ lowerInterior:
                     shapeSpanCallback.alternating(spanSecondaryPattern,startX,(int16_t)width,spanPrimaryPattern,scanlineOffset,page);
                 else
                 {
-                    if (!shapeSpanCallback.solid) abort();
+                    if (!shapeSpanCallback.solid) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !shapeSpanCallback.solid");
                     shapeSpanCallback.solid(spanSecondaryPattern,startX,(int16_t)width,scanlineOffset,page);
                 }
             }
@@ -287,14 +288,14 @@ lowerRightBorder:
             width += edge;
             if (width>clipRight)width=clipRight;
             width -= edge;
-            if (!graphicsFillSolidSpan) abort();
+            if (!graphicsFillSolidSpan) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !graphicsFillSolidSpan");
             graphicsFillSolidSpan(drawColourPattern,(uint16_t)(leftX+(uint16_t)edge),(int16_t)width,scanlineOffset,page);
 lowerRowDone:
             scanlineByteIndex+=2;
             // Native extra lookup after final row; default SS=304E, not a frame.
             if ((scanlineByteIndex>>1)<COMBAT_SCREEN_HEIGHT) scanlineOffset=graphicsRowOffsets[scanlineByteIndex>>1];
             else if ((scanlineByteIndex>>1)-COMBAT_SCREEN_HEIGHT<0x15C) scanlineOffset=herculesDisplayRowOffsets[(scanlineByteIndex>>1)-COMBAT_SCREEN_HEIGHT];
-            else abort(); /* Unmapped adjacent row-table owner. */
+            else /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Unmapped adjacent row-table owner."); /* Unmapped adjacent row-table owner. */
             --tableRow;
             --rows;
         } while (rows!=0x0000);

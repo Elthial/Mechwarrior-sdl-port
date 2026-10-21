@@ -3,7 +3,13 @@
 #include "mechwarrior/ega_campaign.h"
 #include "mechwarrior/campaign_service.h"
 
-enum { PILOT_CARD_COUNT=4, PILOT_CARD_COLUMN_WIDTH=0x44,
+enum { COMMANDER_ROSTER_SLOT=0, FIRST_HIRED_PILOT_SLOT=1,
+    FOUR_PILOT_MEMORY_TIER=3, LAST_PILOT_CARD_SLOT=3, THREE_PILOT_ROSTER_CAPACITY=3,
+    CREW_FIRST_PILOT_MENU_RECORD=1, CREW_NO_NEIGHBOUR=0xFF,
+    COMMANDER_REPUTATION_COUNT=4, PILOT_ASSIGNMENT_CAPTION_COUNT=12, PILOT_ASSIGNMENT_CAPTION_BYTES=0x0C,
+    ASSIGNMENT_DISMISS_CAPTION=0, ASSIGNMENT_NONE_CAPTION=1,
+    ASSIGNMENT_MECH_CAPTION_BASE=2,
+    PILOT_CARD_COUNT=4, PILOT_CARD_COLUMN_WIDTH=0x44,
     PILOT_CARD_FIRST_X=0x2C, PILOT_CARD_TEXT_INSET=4,
     PILOT_CARD_NAME_Y=0x47, PILOT_CARD_GUNNERY_Y=0x4F,
     PILOT_CARD_PILOTING_Y=0x57, PILOT_CARD_WAGE_Y=0x65,
@@ -19,22 +25,23 @@ extern MwUiMenu companyMenu,crewMenu,barMenu,recruitInterviewMenu;
 extern MwServiceCaption companyMenuLabels[4],commanderProfileLabels[11];
 extern MwServiceCaption crewLabels[7],barMenuLabels[4],recruitInterviewLabels[3];
 extern char commanderProfileName[0x0A];
-extern char commanderReputationLabels[4][0x10];
+extern char commanderReputationLabels[COMMANDER_REPUTATION_COUNT][0x10];
 extern char houseAttitudeLabels[5][0x0A];
 extern const char *houseAttitudeText[9];
 extern char pilotSkillLabels[4][0x0A];
 /* Two preceding native table entries are DISMISS and NONE. In C they have
  * proper array indices, not negative subscripts into an unrelated allocation. */
-extern char pilotAssignmentCaptions[12][0x0C];
-extern uint8_t pilotAssignmentCaptionColours[12];
+extern char pilotAssignmentCaptions[PILOT_ASSIGNMENT_CAPTION_COUNT][PILOT_ASSIGNMENT_CAPTION_BYTES];
+extern uint8_t pilotAssignmentCaptionColours[PILOT_ASSIGNMENT_CAPTION_COUNT];
 extern uint16_t crewScreenRightEdge,pilotCardRosterSlot,pilotCardTextX;
 extern uint16_t displayedPilotId,pilotCardGunneryTier,pilotCardPilotingTier;
-extern uint16_t pilotCardPortraitId,pilotCardWageTier,pilotCardOwnedUnitSlot;
-extern uint16_t pilotCardColumnOrigins[4];
+extern uint16_t pilotCardPortraitId,pilotCardQuotedWageTier,pilotCardOwnedUnitSlot;
+extern uint16_t pilotCardColumnOrigins[PILOT_CARD_COUNT];
 extern uint16_t assignmentSelectedPilotSlot,assignmentCandidateOwnedSlot;
 extern uint8_t assignmentConflictHighlighted;
 extern uint16_t assignmentConflictingPilotSlot,assignmentConflictingOwnedSlot;
-extern uint16_t recruitCandidateByteOffset,selectedRecruitPilotId;
+/* Logical offer index; only snapshot fixtures encode native byte displacement. */
+extern uint16_t recruitOfferSlot,selectedRecruitPilotId;
 extern char recruitStatLabels[0x17],noAvailableRecruitsText[0x21];
 extern char fullFourPilotRosterText[0x33],fullThreePilotRosterText[0x35];
 extern const MwPilotDefinitionPrefix *pilotDefinitions[CAMPAIGN_PILOT_ID_COUNT];
@@ -46,7 +53,11 @@ enum { BAR_BACKGROUND_PICTURE=6, BAR_LANDSCAPE_PICTURE_BASE=8,
  * source arguments/results.69B8 resumes the suspended6236 CALL. */
 uint16_t MwEnterBarContinuation(uint16_t entryOffset);
 uint16_t MwOrderDrinkContinuation(uint16_t entryOffset);
-enum { RECRUIT_STATS_X=0xD2,RECRUIT_NAME_Y=0x8F,RECRUIT_GUNNERY_Y=0x97,
+enum { RECRUIT_LABELS_X=0xA0,NO_RECRUITS_PANEL_X=0x10,NO_RECRUITS_PANEL_Y=0x10,
+    NO_RECRUITS_PANEL_WIDTH=0x23,NO_RECRUITS_PANEL_HEIGHT=5,
+    FULL_ROSTER_PANEL_X=0x10,FULL_ROSTER_PANEL_Y=8,
+    FULL_ROSTER_PANEL_WIDTH=0x13,FULL_ROSTER_PANEL_HEIGHT=6,
+    RECRUIT_STATS_X=0xD2,RECRUIT_NAME_Y=0x8F,RECRUIT_GUNNERY_Y=0x97,
     RECRUIT_PILOTING_Y=0x9F,RECRUIT_WAGE_Y=0xA7,RECRUIT_PORTRAIT_Y=0x3A,
     RECRUIT_DIALOGUE_X=0x1A,RECRUIT_DIALOGUE_Y=0x32,RECRUIT_DIALOGUE_COLOUR=Campaign_Pal_EGA_LightRed,
     RECRUIT_STAT_PANEL_X=0x90,RECRUIT_STAT_PANEL_Y=0x87,
@@ -72,7 +83,7 @@ uint16_t MwEnterCrewMenuContinuation(void);
 void MwDrawPilotRosterCard(uint16_t pilotRosterSlot);
 void MwDrawPilotCardSeparators(void);
 void MwDrawPilotCardText(const char *text,uint16_t y);
-const char *MwSetPilotAssignmentCaption(uint16_t unitKind);
+const char *MwSetPilotAssignmentCaption(uint16_t assignedMechKind);
 enum { ASSIGNMENT_TEXT_WIDTH=0x3C,ASSIGNMENT_TEXT_HEIGHT=8,
     ASSIGNMENT_SELECTED_COLOUR=Campaign_Pal_EGA_LightGreen,ASSIGNMENT_CONFLICT_COLOUR=Campaign_Pal_EGA_Red,
     ASSIGNMENT_CONFIRMED_COLOUR=Campaign_Pal_EGA_Yellow,ASSIGNMENT_MECH_WIDTH=0x42,
@@ -87,5 +98,5 @@ void MwDrawSelectedPilotAssignment(uint8_t foreground);
 void MwDrawAssignmentMechPreview(uint16_t ownedUnitSlot);
 uint16_t MwConfirmPilotMechAssignmentContinuation(void);
 void MwTransferPreviousMechToConflictingPilot(void);
-uint16_t MwDismissSelectedPilotContinuation(uint16_t selectedPilotByteOffset);
+uint16_t MwDismissSelectedPilotContinuation(uint16_t rosterSlot);
 #endif

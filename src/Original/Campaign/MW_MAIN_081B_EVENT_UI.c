@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/campaign_continuations.h"
 #include "mechwarrior/campaign_events.h"
 #include "mechwarrior/campaign_mechanics.h"
@@ -16,7 +17,7 @@ enum { EVENT_PAGE_PANEL_X=0x001D, EVENT_PAGE_PANEL_Y=0x0017,
 MwTextPanelReturn MwShowCampaignEventText(uint16_t textId)
 {
     if (textId==8) textPanelYOverride=0x0082;
-    if (textId>=EVENT_TEXT_DIRECTORY_COUNT || !eventTextRecords[textId]) abort(); /* Unrepresented zero-directory alias, not a native empty-text test. */
+    if (textId>=EVENT_TEXT_DIRECTORY_COUNT || !eventTextRecords[textId]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: textId>=EVENT_TEXT_DIRECTORY_COUNT || !eventTextRecords[textId]"); /* Unrepresented zero-directory alias, not a native empty-text test. */
     const uint8_t *page=eventTextRecords[textId];
     MwNativeByteView text={eventTextStorage,EVENT_TEXT_STORAGE_START,sizeof(eventTextStorage)};
     for (;;)
@@ -33,7 +34,7 @@ MwTextPanelReturn MwShowCampaignEventText(uint16_t textId)
             eventTextRowCount+3,&text,(uint16_t)(page-eventTextStorage+EVENT_TEXT_STORAGE_START));
         if (result.discardReturnWord) return result; /*100C RET bypasses6210..621E. */
         page=&eventTextStorage[result.textOffset-EVENT_TEXT_STORAGE_START+1];
-        if (page>=eventTextStorage+sizeof(eventTextStorage)) abort();
+        if (page>=eventTextStorage+sizeof(eventTextStorage)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: page>=eventTextStorage+sizeof(eventTextStorage)");
         if (!*page)
         {
             result.textOffset=(uint16_t)(page-eventTextStorage+EVENT_TEXT_STORAGE_START);
@@ -47,7 +48,7 @@ MwTextPanelReturn MwShowCampaignEventText(uint16_t textId)
  * this range and there are no intervening calls. Memory tier0B5D is retained. */
 uint16_t MwRestartCampaignContinuation(void)
 {
-    if (!campaignStopMusic) abort();
+    if (!campaignStopMusic) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !campaignStopMusic");
     campaignStopMusic();
     campaignEventReturnContinuation=campaignEventDispatchReturnContinuation=0; /*6865/66 discard suspended native frames. */
     campaignRestartPending=0;
@@ -174,7 +175,7 @@ MwTextPanelReturn MwShowClassThreeEventPages(uint16_t textId)
 {
     EgaSelectFont(0);
     EgaFillDisplayPageRectangle(EVENT_PAGE_PANEL_X,EVENT_PAGE_PANEL_Y,EVENT_PAGE_PANEL_WIDTH,EVENT_PAGE_PANEL_HEIGHT,Campaign_Pal_EGA_Black);
-    if (textId>=EVENT_TEXT_DIRECTORY_COUNT || !eventTextRecords[textId]) abort();
+    if (textId>=EVENT_TEXT_DIRECTORY_COUNT || !eventTextRecords[textId]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: textId>=EVENT_TEXT_DIRECTORY_COUNT || !eventTextRecords[textId]");
     const uint8_t *page=eventTextRecords[textId];
     MwNativeByteView text={eventTextStorage,EVENT_TEXT_STORAGE_START,sizeof(eventTextStorage)};
     for (;;)
@@ -182,7 +183,7 @@ MwTextPanelReturn MwShowClassThreeEventPages(uint16_t textId)
         page+=sizeof(MwEventTextPageHeader);
         uint16_t cursor=EgaDrawTextWithLineSpacing(EVENT_PAGE_TEXT_X,EVENT_PAGE_TEXT_Y,Campaign_Pal_EGA_Green,&text,(uint16_t)(page-eventTextStorage+EVENT_TEXT_STORAGE_START));
         page=&eventTextStorage[cursor-EVENT_TEXT_STORAGE_START+1];
-        if (page>=eventTextStorage+sizeof(eventTextStorage)) abort();
+        if (page>=eventTextStorage+sizeof(eventTextStorage)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: page>=eventTextStorage+sizeof(eventTextStorage)");
         if (!*page)
         {
             MwTextPanelReturn result={(uint16_t)(page-eventTextStorage+EVENT_TEXT_STORAGE_START),0x1AA5,0,false};
@@ -201,29 +202,29 @@ void MwEventSubstitutePlanetName(const MwEventCommand *command)
     {
         uint16_t reference=(uint16_t)command->operand.planetSelector^UINT16_MAX;
         if (reference>=6 || currentEventId>=EVENT_TEXT_DIRECTORY_COUNT
-            || !eventTextRecords[currentEventId]) abort();
+            || !eventTextRecords[currentEventId]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: reference>=6 || currentEventId>=EVENT_TEXT_DIRECTORY_COUNT || !eventTextRecords[currentEventId]");
         uint16_t planetIndex=campaignEventPlanetSelectors[reference]-1;
-        if (planetIndex>=CAMPAIGN_PLANET_COUNT) abort();
+        if (planetIndex>=CAMPAIGN_PLANET_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: planetIndex>=CAMPAIGN_PLANET_COUNT");
         uint16_t planetOffset=planetRecordOffsets[planetIndex];
-        if (planetOffset<PLANET_RECORDS_START || planetOffset+PLANET_NAME_HEADER_BYTES>=PLANET_RECORDS_END) abort();
+        if (planetOffset<PLANET_RECORDS_START || planetOffset+PLANET_NAME_HEADER_BYTES>=PLANET_RECORDS_END) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: planetOffset<PLANET_RECORDS_START || planetOffset+PLANET_NAME_HEADER_BYTES>=PLANET_RECORDS_END");
         const uint8_t *planetName=&planetRecordStorage[planetOffset-PLANET_RECORDS_START+PLANET_NAME_HEADER_BYTES];
         uint8_t *write=eventTextRecords[currentEventId]+2;
         while (*write!=EVENT_TEXT_PLACEHOLDER)
         {
-            if (++write==eventTextStorage+sizeof(eventTextStorage)) abort();
+            if (++write==eventTextStorage+sizeof(eventTextStorage)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: ++write==eventTextStorage+sizeof(eventTextStorage)");
         }
         ++write;
         uint16_t padding=EVENT_PLANET_NAME_FIELD_BYTES;
         while (*planetName)
         {
             if (write==eventTextStorage+sizeof(eventTextStorage)
-                || planetName==planetRecordStorage+sizeof(planetRecordStorage)) abort();
+                || planetName==planetRecordStorage+sizeof(planetRecordStorage)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: write==eventTextStorage+sizeof(eventTextStorage) || planetName==planetRecordStorage+sizeof(planetRecordStorage)");
             *write++=*planetName++;
             --padding;
         }
         do /* Native LOOP executes even with CX0. No bounded-copy rewrite. */
         {
-            if (write==eventTextStorage+sizeof(eventTextStorage)) abort(); /* Unrepresented wrap into the encoded directory, not a native length clamp. */
+            if (write==eventTextStorage+sizeof(eventTextStorage)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: write==eventTextStorage+sizeof(eventTextStorage)"); /* Unrepresented wrap into the encoded directory, not a native length clamp. */
             *write++=EVENT_TEXT_PLACEHOLDER;
         } while (--padding!=0);
     }
@@ -242,17 +243,17 @@ uint16_t MwEventOpenChoiceContinuation(const MwEventCommand *command)
     for (uint16_t i=0;i<choices;++i)
     {
         MwEventCaption *caption=command->operand.choices.captions[i];
-        if (!caption) abort();
+        if (!caption) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !caption");
         records[i].text=caption->text;
         records[i].textColour=&caption->colour;
     }
     for (uint16_t i=0;i<choices;++i) eventChoiceBranches[i]=command->operand.choices.branches[i];
     if (currentEventId!=EVENT_DARK_WING_BASE_ATTACK)
     {
-        if (currentEventId>=CAMPAIGN_EVENT_SEEN_FLAGS) abort();
+        if (currentEventId>=CAMPAIGN_EVENT_SEEN_FLAGS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: currentEventId>=CAMPAIGN_EVENT_SEEN_FLAGS");
         eventSeenFlags[currentEventId]=1;
     }
-    if (campaignEventClass>=7 || !eventClassHandlers[campaignEventClass]) abort();
+    if (campaignEventClass>=7 || !eventClassHandlers[campaignEventClass]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: campaignEventClass>=7 || !eventClassHandlers[campaignEventClass]");
     MwTextPanelReturn display=eventClassHandlers[campaignEventClass](currentEventId);
     /* Place choices relative to the text panel on either return path. */
     uint16_t x=display.textOriginX+0x000C;
@@ -277,9 +278,9 @@ uint16_t MwEventFirstChoiceCallback(void)
     const MwCampaignEvent *branch=eventChoiceBranches[0];
     if (campaignRestartPending==1) return CAMPAIGN_CONTINUE_RESTART;
     if (currentEventId==EVENT_DARK_WING_BASE_ATTACK) return CAMPAIGN_CONTINUE_EVENT_COMBAT;
-    if (!campaignEventReturnContinuation) abort(); /* Unrepresented caller frame, not an ordinary UI RET. */
+    if (!campaignEventReturnContinuation) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !campaignEventReturnContinuation"); /* Unrepresented caller frame, not an ordinary UI RET. */
     if (currentEventId==EVENT_CONTINUE_OR_QUIT) return campaignEventReturnContinuation;
-    if (!branch) abort(); /* Encoded DS0000 branch is unrepresented, not success. */
+    if (!branch) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !branch"); /* Encoded DS0000 branch is unrepresented, not success. */
     currentEventId=branch->eventId;
     bool carry;
     uint16_t transfer=MwInterpretCampaignEvent(branch,&carry);
@@ -298,9 +299,9 @@ uint16_t MwEventSecondChoiceCallback(void)
     const MwCampaignEvent *branch=eventChoiceBranches[1];
     if (campaignRestartPending==1) return CAMPAIGN_CONTINUE_RESTART;
     if (currentEventId==EVENT_DARK_WING_BASE_ATTACK) return CAMPAIGN_CONTINUE_EVENT_COMBAT;
-    if (!campaignEventReturnContinuation) abort();
+    if (!campaignEventReturnContinuation) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !campaignEventReturnContinuation");
     if (currentEventId==EVENT_CONTINUE_OR_QUIT) return campaignEventReturnContinuation;
-    if (!branch) abort();
+    if (!branch) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !branch");
     currentEventId=branch->eventId;
     bool carry;
     uint16_t transfer=MwInterpretCampaignEvent(branch,&carry);
@@ -316,9 +317,9 @@ uint16_t MwEventThirdChoiceCallback(void)
     const MwCampaignEvent *branch=eventChoiceBranches[2];
     if (campaignRestartPending==1) return CAMPAIGN_CONTINUE_RESTART;
     if (currentEventId==EVENT_DARK_WING_BASE_ATTACK) return CAMPAIGN_CONTINUE_EVENT_COMBAT;
-    if (!campaignEventReturnContinuation) abort();
+    if (!campaignEventReturnContinuation) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !campaignEventReturnContinuation");
     if (currentEventId==EVENT_CONTINUE_OR_QUIT) return campaignEventReturnContinuation;
-    if (!branch) abort();
+    if (!branch) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !branch");
     currentEventId=branch->eventId;
     bool carry;
     uint16_t transfer=MwInterpretCampaignEvent(branch,&carry);
@@ -328,7 +329,7 @@ uint16_t MwEventThirdChoiceCallback(void)
 /* MW_MAIN081B:683D..6854; shared015F cleanup follows the explicit music stop. */
 uint16_t MwQuitFromEventContinuation(void)
 {
-    if (!campaignStopMusic) abort();
+    if (!campaignStopMusic) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !campaignStopMusic");
     campaignStopMusic();
     launcherExitCode=CAMPAIGN_EXIT_QUIT;
     return CAMPAIGN_CONTINUE_CLEANUP;

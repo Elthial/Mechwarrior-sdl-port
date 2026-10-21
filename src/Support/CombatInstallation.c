@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_installation.h"
 #include "mechwarrior/combat_startup.h"
 #include "mechwarrior/combat_import.h"
@@ -27,8 +28,8 @@ void BtechHostRetainDetachedShapeRegistry(void)
 {
     if (!shapeResourceBanks || shapeResourceBanks==&initialShapeResourceBank) return;
     for (uint16_t bank=0;bank<shapeResourceBankCount;++bank)
-        if (shapeResourceBanks[bank].resources || shapeResourceBanks[bank].decodedResources) abort();
-    RetiredShapeRegistry *retired=malloc(sizeof(*retired));if (!retired) abort();
+        if (shapeResourceBanks[bank].resources || shapeResourceBanks[bank].decodedResources) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: shapeResourceBanks[bank].resources || shapeResourceBanks[bank].decodedResources");
+    RetiredShapeRegistry *retired=malloc(sizeof(*retired));if (!retired) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !retired");
     *retired=(RetiredShapeRegistry){shapeResourceBanks,retiredShapeRegistries};retiredShapeRegistries=retired;
 }
 
@@ -144,7 +145,7 @@ void BtechHostDiscardChildData(void)
     shapeResourceBanks=NULL;shapeResourceBankCount=0;
     for (uint16_t slot=1;slot<COMBAT_FONT_SLOTS;++slot) paragraphs|=fonts[slot].bytes!=NULL;
     paragraphs|=soundAllocationOverride.bytes!=NULL;
-    if (paragraphs && !btechHostReleaseChildDosAllocations) abort();
+    if (paragraphs && !btechHostReleaseChildDosAllocations) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: paragraphs && !btechHostReleaseChildDosAllocations");
     if (btechHostReleaseChildDosAllocations) btechHostReleaseChildDosAllocations();
     for (uint16_t slot=0;slot<COMBAT_FONT_SLOTS;++slot) fonts[slot]=(BtechFont){0};
     egaFontBuffer=NULL; // Borrowed staging reference, not a second allocation owner.

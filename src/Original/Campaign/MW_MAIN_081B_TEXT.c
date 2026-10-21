@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/campaign.h"
 #include "mechwarrior/ega_campaign.h"
 #include "mechwarrior/campaign_handoff.h"
@@ -16,15 +17,15 @@ void MwDrawCampaignTextColourOne(uint16_t x,uint16_t y,const char *text)
  * WORD subtraction centers long names by wrapping, not a new layout clamp. */
 void MwDrawPlanetNameCentered(uint16_t panelX, uint16_t y, uint16_t color, uint16_t planetIndex)
 {
-    if (planetIndex >= CAMPAIGN_PLANET_COUNT) abort(); /* Unmapped adjacent DS, not a game validation. */
+    if (planetIndex >= CAMPAIGN_PLANET_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: planetIndex >= CAMPAIGN_PLANET_COUNT"); /* Unmapped adjacent DS, not a game validation. */
     uint16_t recordOffset = planetRecordOffsets[planetIndex];
-    if (recordOffset < PLANET_RECORDS_START || recordOffset >= PLANET_RECORDS_END) abort();
+    if (recordOffset < PLANET_RECORDS_START || recordOffset >= PLANET_RECORDS_END) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: recordOffset < PLANET_RECORDS_START || recordOffset >= PLANET_RECORDS_END");
     uint16_t nameOffset = recordOffset - PLANET_RECORDS_START + PLANET_NAME_HEADER_BYTES;
     uint16_t nameCursor = nameOffset, nameLength = 0;
     while (planetRecordStorage[nameCursor] != 0)
     {
         nameCursor++; nameLength++;
-        if (nameCursor >= sizeof(planetRecordStorage)) abort();
+        if (nameCursor >= sizeof(planetRecordStorage)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: nameCursor >= sizeof(planetRecordStorage)");
     }
     uint16_t nameWidth = (uint8_t)nameLength * CAMPAIGN_GLYPH_ADVANCE;
     uint16_t textX = panelX + ((uint16_t)(PLANET_NAME_PANEL_WIDTH - nameWidth) >> 1);
@@ -38,11 +39,11 @@ void MwDrawCampaignCalendar(uint16_t panelX, uint8_t yearDigits, uint8_t backgro
 {
     calendarTextX = panelX; calendarTextY = y;
     calendarBackground = background; calendarForeground = foreground;
-    if (calendarMonthIndex >= CAMPAIGN_MONTH_COUNT) abort();
+    if (calendarMonthIndex >= CAMPAIGN_MONTH_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: calendarMonthIndex >= CAMPAIGN_MONTH_COUNT");
     uint16_t monthWidth = calendarMonthNameWidths[calendarMonthIndex];
     calendarTextX += (uint16_t)(PLANET_NAME_PANEL_WIDTH - (uint16_t)(monthWidth + CALENDAR_YEAR_FIELD_WIDTH)) >> 1;
     const uint8_t *monthName = calendarMonthNames[calendarMonthIndex];
-    if (monthName == NULL) abort();
+    if (monthName == NULL) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: monthName == NULL");
     MwNativeByteView text = { monthName, 0, NATIVE_SEGMENT_BYTE_COUNT };
     EgaDrawTransparentText(calendarTextX, calendarTextY, calendarForeground, &text, 0);
     MwDrawSignedDecimalField(calendarYear,
@@ -90,7 +91,7 @@ void MwBuildDecimalDigitBuffer(uint32_t magnitude)
 uint16_t MwDivideDecimalWordPlace(uint16_t value, uint16_t place, uint16_t *remainder)
 {
     uint32_t dividend = (value & NATIVE_WORD_HIGH_BIT) ? UINT32_C(0xFFFF0000) | value : value;
-    if (place == 0 || dividend / place > UINT16_MAX) abort(); /* Unbound native INT0 boundary. */
+    if (place == 0 || dividend / place > UINT16_MAX) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: place == 0 || dividend / place > UINT16_MAX"); /* Unbound native INT0 boundary. */
     *remainder = (uint16_t)(dividend % place);
     return (uint16_t)(dividend / place);
 }
@@ -118,7 +119,7 @@ void MwDrawFormattedNumericGlyphs(uint16_t digitIndex)
     numericLeadingDigitSeen = 0;
     do
     {
-        if (digitIndex >= DECIMAL_DIGIT_COUNT) abort(); /* Unmapped adjacent DS, not clamp. */
+        if (digitIndex >= DECIMAL_DIGIT_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: digitIndex >= DECIMAL_DIGIT_COUNT"); /* Unmapped adjacent DS, not clamp. */
         uint8_t character = numericDecimalDigits[digitIndex];
         if (numericLeadingDigitSeen == 0)
         {

@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/campaign_music.h"
 #include <stdlib.h>
 
@@ -6,7 +7,7 @@
 MwMidiVoice *MwResolveMidiVoice(uint16_t nativeOffset)
 {
     uint16_t relative=nativeOffset-MIDI_VOICES_OFFSET;
-    if (relative%sizeof(MwMidiVoice) || relative/sizeof(MwMidiVoice)>=MIDI_VOICE_CAPACITY) abort();
+    if (relative%sizeof(MwMidiVoice) || relative/sizeof(MwMidiVoice)>=MIDI_VOICE_CAPACITY) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: relative%sizeof(MwMidiVoice) || relative/sizeof(MwMidiVoice)>=MIDI_VOICE_CAPACITY");
     return &audioVoices[relative/sizeof(MwMidiVoice)];
 }
 MwMidiVoiceLinks *MwResolveMidiVoiceLinks(uint16_t nativeOffset)

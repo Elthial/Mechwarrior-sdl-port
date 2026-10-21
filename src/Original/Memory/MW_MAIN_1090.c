@@ -580,16 +580,16 @@ static bool ImportTravelUiData(const uint8_t *data)
  * remain parallel arrays; these objects do not invent a packed pilot record. */
 MwPanelDescriptor companyMenuPanel,commanderProfilePanel,crewLabelsPanel,barMenuPanel,recruitInterviewPanel;
 MwServiceCaption companyMenuLabels[4],commanderProfileLabels[11],crewLabels[7],barMenuLabels[4],recruitInterviewLabels[3];
-char commanderProfileName[0x0A],commanderReputationLabels[4][0x10];
+char commanderProfileName[0x0A],commanderReputationLabels[COMMANDER_REPUTATION_COUNT][0x10];
 char houseAttitudeLabels[5][0x0A],pilotSkillLabels[4][0x0A];
 const char *houseAttitudeText[9];
-char pilotAssignmentCaptions[12][0x0C];
-uint8_t pilotAssignmentCaptionColours[12];
+char pilotAssignmentCaptions[PILOT_ASSIGNMENT_CAPTION_COUNT][PILOT_ASSIGNMENT_CAPTION_BYTES];
+uint8_t pilotAssignmentCaptionColours[PILOT_ASSIGNMENT_CAPTION_COUNT];
 uint16_t crewScreenRightEdge,pilotCardRosterSlot,pilotCardTextX,displayedPilotId;
-uint16_t pilotCardGunneryTier,pilotCardPilotingTier,pilotCardPortraitId,pilotCardWageTier,pilotCardOwnedUnitSlot,pilotCardColumnOrigins[4];
+uint16_t pilotCardGunneryTier,pilotCardPilotingTier,pilotCardPortraitId,pilotCardQuotedWageTier,pilotCardOwnedUnitSlot,pilotCardColumnOrigins[PILOT_CARD_COUNT];
 uint16_t assignmentSelectedPilotSlot,assignmentCandidateOwnedSlot,assignmentConflictingPilotSlot,assignmentConflictingOwnedSlot;
 uint8_t assignmentConflictHighlighted;
-uint16_t recruitCandidateByteOffset,selectedRecruitPilotId;
+uint16_t recruitOfferSlot,selectedRecruitPilotId;
 char recruitStatLabels[0x17],noAvailableRecruitsText[0x21],fullFourPilotRosterText[0x33],fullThreePilotRosterText[0x35];
 const MwPilotDefinitionPrefix *pilotDefinitions[CAMPAIGN_PILOT_ID_COUNT];
 const char *pilotDialogue[CAMPAIGN_PILOT_ID_COUNT];
@@ -2123,13 +2123,13 @@ static bool ImportPilotUiData(const uint8_t *data)
     pilotCardGunneryTier=MwReadNativeWord(data,0x2440);
     pilotCardPilotingTier=MwReadNativeWord(data,0x2442);
     pilotCardPortraitId=MwReadNativeWord(data,0x2444);
-    pilotCardWageTier=MwReadNativeWord(data,0x2446);
+    pilotCardQuotedWageTier=MwReadNativeWord(data,0x2446);
     pilotCardOwnedUnitSlot=MwReadNativeWord(data,0x2448);
     assignmentSelectedPilotSlot=MwReadNativeWord(data,0x2581);
     assignmentCandidateOwnedSlot=MwReadNativeWord(data,0x2583);
     assignmentConflictingPilotSlot=MwReadNativeWord(data,0x2586);
     assignmentConflictingOwnedSlot=MwReadNativeWord(data,0x2588);
-    recruitCandidateByteOffset=MwReadNativeWord(data,0x911D);
+    recruitOfferSlot=MwReadNativeWord(data,0x911D)/sizeof(uint16_t);
     selectedRecruitPilotId=MwReadNativeWord(data,0x911F);
     assignmentConflictHighlighted=data[0x2585];
     ImportInitialWords(data,0x244A,pilotCardColumnOrigins,4);
@@ -2148,7 +2148,7 @@ static bool ImportPilotUiData(const uint8_t *data)
         if (label==5) return false;
         houseAttitudeText[i]=houseAttitudeLabels[label];
     }
-    for (uint16_t i=0;i<12;++i)
+    for (uint16_t i=0;i<PILOT_ASSIGNMENT_CAPTION_COUNT;++i)
     {
         uint16_t offset=MwReadNativeWord(data,0x247E+i*2);
         pilotAssignmentCaptionColours[i]=data[offset];

@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_import.h"
 #include "mechwarrior/combat_scene.h"
 #include "mechwarrior/combat_world.h"
@@ -24,7 +25,7 @@ void BtechPrepareCampaignCombatStage(uint16_t inheritedSoundStreamIdentity)
         uint8_t command=' ';
         if (!(savedArgumentCount&0x8000) && savedArgumentCount>2)
         {
-            if (!savedArguments || !savedArguments[2]) abort();
+            if (!savedArguments || !savedArguments[2]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !savedArguments || !savedArguments[2]");
             command=BtechLowercaseCharacterByClassTable((int8_t)savedArguments[2][0]);
         }
         recordCombatInputRequested=command=='r';playbackCombatInputRequested=command=='p';
@@ -48,7 +49,7 @@ void BtechPrepareCampaignCombatStage(uint16_t inheritedSoundStreamIdentity)
     {
         if (recordCombatInputRequested || playbackCombatInputRequested)
         {
-            if (!savedArguments || !savedArguments[3]) abort();
+            if (!savedArguments || !savedArguments[3]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !savedArguments || !savedArguments[3]");
             BtechConfigureCombatInputReplay(recordCombatInputRequested?COMBAT_INPUT_RECORD:COMBAT_INPUT_PLAYBACK,savedArguments[3]);
         }
     }
@@ -59,14 +60,14 @@ void BtechPrepareCampaignCombatStage(uint16_t inheritedSoundStreamIdentity)
     {
         ++combatContinuationStage;
         if (!combatContinuationStage && !specialAssaultMode) combatContinuationProfileIndex=BtechRandomBelowBound(8);
-        if (combatContinuationProfileIndex>=COMBAT_STAGE_PROFILES || combatContinuationStage>=COMBAT_STAGES_PER_PROFILE) abort();
+        if (combatContinuationProfileIndex>=COMBAT_STAGE_PROFILES || combatContinuationStage>=COMBAT_STAGES_PER_PROFILE) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: combatContinuationProfileIndex>=COMBAT_STAGE_PROFILES || combatContinuationStage>=COMBAT_STAGES_PER_PROFILE");
         combatMissionDefinitionIndex=combatContinuationProfiles[combatContinuationProfileIndex].missionCodes[combatContinuationStage]-1;
     }
     specialTargetInteractionBlocked=(!(combatMissionDefinitionIndex&0x8000)
         && ((combatMissionDefinitionIndex>=0x000A && combatMissionDefinitionIndex<=0x000D) || combatMissionDefinitionIndex>0x0022));
-    if (combatMissionDefinitionIndex>=COMBAT_MISSION_COUNT) abort();
+    if (combatMissionDefinitionIndex>=COMBAT_MISSION_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: combatMissionDefinitionIndex>=COMBAT_MISSION_COUNT");
     sideObjectiveRules[0]=combatMissionSideZeroRules[combatMissionDefinitionIndex];
-    if (sideObjectiveRules[0]>=5) abort();
+    if (sideObjectiveRules[0]>=5) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: sideObjectiveRules[0]>=5");
     sideObjectiveRules[1]=opposingObjectiveRules[sideObjectiveRules[0]];
     combatLandscapeIndex=company.landscapeIndex;
     if (combatLandscapeIndex>2) combatLandscapeIndex=2;
@@ -83,42 +84,42 @@ void BtechPrepareCampaignCombatStage(uint16_t inheritedSoundStreamIdentity)
     {
         uint16_t ownedUnitSlot=company.ownedMechSlots[rosterSlot];
         if (ownedUnitSlot==COMBAT_NO_ASSIGNMENT) continue;
-        if (ownedUnitSlot>=12) abort();
+        if (ownedUnitSlot>=12) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: ownedUnitSlot>=12");
         combatToPilotRosterSlots[deployedFriendlyCount]=rosterSlot;
         combatToOwnedMechSlots[deployedFriendlyCount]=ownedUnitSlot;
         uint16_t unitKind=company.ownedUnitKinds[ownedUnitSlot];
-        if (unitKind>=10) abort();
+        if (unitKind>=10) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: unitKind>=10");
         uint16_t templateIndex=combatTemplateByCampaignUnitKind[unitKind];
-        if (templateIndex>=COMBAT_MECH_TEMPLATES) abort();
+        if (templateIndex>=COMBAT_MECH_TEMPLATES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: templateIndex>=COMBAT_MECH_TEMPLATES");
         BtechMechState *mech=BtechClaimFreeMechStateSlot(1);
-        if (!mech) abort(); /* Native would write unrelated304E:0000; not a successful claim. */
+        if (!mech) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mech"); /* Native would write unrelated304E:0000; not a successful claim. */
         const BtechMechTemplate *chassis=&mechTemplates[templateIndex];
         const CampaignUnitDamage *damage=&company.ownedDamage[ownedUnitSlot];
         gunneryTargetNumbers[deployedFriendlyCount]=CAMPAIGN_SKILL_TO_COMBAT_BASE-(uint8_t)company.gunneryTiers[rosterSlot];
         pilotingRecoveryBounds[deployedFriendlyCount]=CAMPAIGN_SKILL_TO_COMBAT_BASE-(uint8_t)company.pilotingTiers[rosterSlot];
         if (rosterSlot) deployedPilotIds[deployedFriendlyCount]=(uint8_t)company.pilotIds[rosterSlot];
         mech->templateIndex=templateIndex;mech->engineHits=damage->engineHits;
-        if (damage->sensorDamageTier>=4 || damage->gyroDamageTier>=4 || damage->lifeSupportDamageTier>=4) abort();
+        if (damage->sensorDamageTier>=4 || damage->gyroDamageTier>=4 || damage->lifeSupportDamageTier>=4) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: damage->sensorDamageTier>=4 || damage->gyroDamageTier>=4 || damage->lifeSupportDamageTier>=4");
         mech->sensorHits=systemHitsByDamageTier[damage->sensorDamageTier];
         mech->gyroHits=systemHitsByDamageTier[damage->gyroDamageTier];
         mech->lifeSupportHits=systemHitsByDamageTier[damage->lifeSupportDamageTier];
         mech->destroyedHeatSinks=damage->destroyedHeatSinks;
         for (uint16_t actuator=0;actuator<COMBAT_ACTUATORS;++actuator)
         {
-            uint8_t tier=damage->actuatorDamageTiers[actuator];if (tier>=4) abort();
+            uint8_t tier=damage->actuatorDamageTiers[actuator];if (tier>=4) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: tier>=4");
             mech->actuatorCondition[actuator]=COMBAT_ACTUATOR_CONDITION_FULL-actuatorLossByDamageTier[tier];
         }
         mech->destroyedJumpJetGroups=damage->destroyedJumpJetGroups;
         if (chassis->jumpJetGroupCount) mech->jumpCharge=COMBAT_JUMP_CHARGE_CAPACITY;
         for (uint16_t mount=0;chassis->weaponMountCount<0x8000 && mount<chassis->weaponMountCount;++mount)
         {
-            if (mount>=COMBAT_WEAPON_MOUNTS || damage->weaponDamageTiers[mount]>=4) abort();
+            if (mount>=COMBAT_WEAPON_MOUNTS || damage->weaponDamageTiers[mount]>=4) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mount>=COMBAT_WEAPON_MOUNTS || damage->weaponDamageTiers[mount]>=4");
             mech->weapons[mount].operational=(uint8_t)(1-(uint8_t)weaponDisabledByDamageTier[damage->weaponDamageTiers[mount]]);
         }
         for (uint16_t armor=0;armor<COMBAT_ARMOR_LOCATIONS;++armor)
         {
             uint16_t body=armorToBodyLocations[armor],tier=campaignBodyTierByArmorLocation[armor];
-            if (body>=COMBAT_BODY_LOCATIONS || tier>=9) abort();
+            if (body>=COMBAT_BODY_LOCATIONS || tier>=9) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: body>=COMBAT_BODY_LOCATIONS || tier>=9");
             uint16_t integrity=CAMPAIGN_FULL_BODY_INTEGRITY-damage->bodyDamageTiers[tier];
             uint16_t maximumStructure=chassis->maximumInternalStructure[body];
             uint16_t maximumSum=chassis->maximumArmor[armor]+maximumStructure;
@@ -138,12 +139,12 @@ void BtechPrepareCampaignCombatStage(uint16_t inheritedSoundStreamIdentity)
         for (uint16_t family=0;family<COMBAT_AMMO_FAMILIES;++family)
             if (chassis->ammoBodyLocations[family]!=-1)
             {
-                if (packedGroup>=6) abort();
+                if (packedGroup>=6) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: packedGroup>=6");
                 mech->ammoSalvosRemaining[family]=(uint8_t)company.ammoQuantities[packedGroup++][ownedUnitSlot];
             }
         uint16_t operationalGroups=chassis->jumpJetGroupCount-mech->destroyedJumpJetGroups;
         for (uint16_t group=0;operationalGroups<0x8000 && group<operationalGroups;++group)
-        {if (group>=COMBAT_JET_GROUPS) abort();mech->jumpJetGroupOperational[group]=1;}
+        {if (group>=COMBAT_JET_GROUPS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: group>=COMBAT_JET_GROUPS");mech->jumpJetGroupOperational[group]=1;}
     }
     deployedPilotIds[0]=0;reservedMechTemplateCount=0;enemyMechPreparationCount=0;
     uint32_t availableBytes=BtechAllocateDosMemoryBlock(UINT32_MAX).availableBytes;
@@ -213,16 +214,16 @@ uint16_t BtechTryReserveMechTemplate(uint16_t templateIndex)
     uint16_t index=0;
     if (reservedMechTemplateCount && !(reservedMechTemplateCount&0x8000))
         while (reservedMechTemplateIds[index]!=templateIndex)
-        {if (++index>=reservedMechTemplateCount) break;if (index>=10) abort();}
+        {if (++index>=reservedMechTemplateCount) break;if (index>=10) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: index>=10");}
     if (index!=reservedMechTemplateCount) return 1;
-    if (templateIndex>=8) abort();
+    if (templateIndex>=8) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: templateIndex>=8");
     uint32_t cost=mechTemplateBudgetCostsBytes[templateIndex];
     uint32_t budget=(uint32_t)mechTemplateBudgetBytesLow|((uint32_t)mechTemplateBudgetBytesHigh<<16);
     int32_t costHigh=cost>>16,budgetHigh=budget>>16;
     if (costHigh>=0x8000) costHigh-=0x10000;if (budgetHigh>=0x8000) budgetHigh-=0x10000;
     if (!(costHigh<budgetHigh || (costHigh==budgetHigh && (uint16_t)cost<(uint16_t)budget))) return 0;
     index=reservedMechTemplateCount++;
-    if (index>=10) abort(); /* Corrupt spill beyond the represented native neighbours. */
+    if (index>=10) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: index>=10"); /* Corrupt spill beyond the represented native neighbours. */
     reservedMechTemplateIds[index]=templateIndex;
     budget=(uint32_t)mechTemplateBudgetBytesLow|((uint32_t)mechTemplateBudgetBytesHigh<<16);
     budget-=cost; /* Native reload AFTER append: append itself may alias budget. */
@@ -238,7 +239,7 @@ uint16_t BtechPrepareEnemyMech(uint16_t preferredTemplate)
     ++enemyMechPreparationCount;
     if (!BtechTryReserveMechTemplate(preferredTemplate))
     {
-        if (preferredTemplate>=8) abort();
+        if (preferredTemplate>=8) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: preferredTemplate>=8");
         int16_t step=mechFallbackTemplateSteps[preferredTemplate];
         preferredTemplate=mechFallbackStartTemplates[preferredTemplate];
         while (!BtechTryReserveMechTemplate(preferredTemplate)) preferredTemplate=(uint16_t)(preferredTemplate+step)&7;

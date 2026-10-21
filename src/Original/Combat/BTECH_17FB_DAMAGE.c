@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_damage.h"
 #include "mechwarrior/combat_import.h"
 #include "mechwarrior/combat_startup.h"
@@ -7,12 +8,12 @@
  * destruction increments again; this is not an idempotent bookkeeping pass. */
 uint8_t BtechApplyDestroyedBodyLocationEffects(BtechMechState *mech,int16_t bodyLocation)
 {
-    if (mech->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
+    if (mech->templateIndex>=COMBAT_MECH_TEMPLATES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mech->templateIndex>=COMBAT_MECH_TEMPLATES");
     BtechMechTemplate *chassis=&mechTemplates[mech->templateIndex];
     uint8_t terminal=0;
     for (int16_t mount=0;mount<(int16_t)chassis->weaponMountCount;++mount)
     {
-        if (mount>=COMBAT_WEAPON_MOUNTS) abort();
+        if (mount>=COMBAT_WEAPON_MOUNTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mount>=COMBAT_WEAPON_MOUNTS");
         if (chassis->weaponMounts[mount].bodyLocation==(uint16_t)bodyLocation) mech->weapons[mount].operational=0;
     }
     for (uint16_t family=0;family<COMBAT_AMMO_FAMILIES;++family)
@@ -25,7 +26,7 @@ uint8_t BtechApplyDestroyedBodyLocationEffects(BtechMechState *mech,int16_t body
     if (bodyLocation>=COMBAT_BODY_LEFT_ARM && bodyLocation<=COMBAT_BODY_RIGHT_LEG)
     {
         uint16_t actuator=actuatorIndicesByBodyLocation[bodyLocation];
-        if (actuator>=COMBAT_ACTUATORS) abort();
+        if (actuator>=COMBAT_ACTUATORS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: actuator>=COMBAT_ACTUATORS");
         mech->actuatorCondition[actuator]=0;
     }
     else if (bodyLocation==COMBAT_BODY_HEAD)

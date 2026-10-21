@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_sound.h"
 #include "mechwarrior/combat_runtime.h"
 #include "mechwarrior/combat_startup.h"
@@ -41,14 +42,14 @@ uint16_t BtechAudioMusicNoOp(uint16_t statusDisplacement,uint16_t channel,uint16
  * signed and admits track==count; an available directory entry still runs. */
 BtechSoundEvent BtechAdvanceMusicSequence(void)
 {
-    if (activeMusicBankIndex>=COMBAT_MUSIC_SEQUENCE_ROWS || musicSequenceIndex>=COMBAT_MUSIC_SEQUENCE_WORDS) abort();
+    if (activeMusicBankIndex>=COMBAT_MUSIC_SEQUENCE_ROWS || musicSequenceIndex>=COMBAT_MUSIC_SEQUENCE_WORDS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: activeMusicBankIndex>=COMBAT_MUSIC_SEQUENCE_ROWS || musicSequenceIndex>=COMBAT_MUSIC_SEQUENCE_WORDS");
     int16_t next=musicSequences[activeMusicBankIndex][musicSequenceIndex];
     if (next==-1) return (BtechSoundEvent){0};
     BtechSoundBank *bank=&soundBanks[COMBAT_MUSIC_FIRST_ROOT+activeMusicBankIndex];
     if (next>(int16_t)bank->eventCount) return (BtechSoundEvent){0};
     next=musicSequences[activeMusicBankIndex][musicSequenceIndex];
     musicSequenceIndex=(uint16_t)next;
-    if (next<0 || !bank->events || (uint16_t)next>=bank->eventReferenceCapacity) abort();
+    if (next<0 || !bank->events || (uint16_t)next>=bank->eventReferenceCapacity) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: next<0 || !bank->events || (uint16_t)next>=bank->eventReferenceCapacity");
     BtechSoundEvent block=bank->events[next];block.offset+=COMBAT_TONE_HEADER_BYTES;
     return block;
 }
@@ -56,7 +57,7 @@ BtechSoundEvent BtechAdvanceMusicSequence(void)
 /*1ADF:10D2. Count actual OPL status reads, not a wall-clock delay. */
 void BtechWriteAdlibProbeRegister(uint8_t registerIndex,uint8_t value)
 {
-    if (!btechHostReadPort || !btechHostWritePort) abort();
+    if (!btechHostReadPort || !btechHostWritePort) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostReadPort || !btechHostWritePort");
     btechHostWritePort(ADLIB_INDEX_PORT,registerIndex);
     for (uint16_t delay=7;delay;--delay) btechHostReadPort(ADLIB_INDEX_PORT);
     btechHostWritePort(ADLIB_DATA_PORT,value);
@@ -85,10 +86,10 @@ uint16_t BtechProbeAdlibTimerStatus(void)
  * is C021, not C000. BIOS Carry alone selects the two platform masks. */
 uint16_t BtechProbePlatformAudioMask(void)
 {
-    if (!btechHostReadRomByte) abort();
+    if (!btechHostReadRomByte) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostReadRomByte");
     if (btechHostReadRomByte(0xFFFF,0x000E)!=0xFF) return COMBAT_SOUND_SPEAKER;
     if (btechHostReadRomByte(0xFC00,0)!=0x21) return COMBAT_SOUND_SPEAKER;
-    if (!btechHostQuerySystemConfiguration) abort();
+    if (!btechHostQuerySystemConfiguration) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostQuerySystemConfiguration");
     return btechHostQuerySystemConfiguration(0xC021)?0x03:0x07;
 }
 
@@ -100,7 +101,7 @@ uint16_t BtechStopSoundEventAndTimer(uint16_t soundEventIndex)
     if (soundEventIndex==timerSoundEventIndex)
     {
         BtechRestoreSoundTimerInterrupt();
-        if (!samplePriorityOwner) abort();
+        if (!samplePriorityOwner) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !samplePriorityOwner");
         *samplePriorityOwner=0;
     }
     return 0;
@@ -112,7 +113,7 @@ void BtechRestoreSoundTimerInterrupt(void)
 {
     if (!soundTimerInstalled) return;
     pitChannel0DivisorShadow=savedSoundTimerDivisor;
-    if (!btechHostWritePort || !btechHostSetInterruptVector) abort();
+    if (!btechHostWritePort || !btechHostSetInterruptVector) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostWritePort || !btechHostSetInterruptVector");
     btechHostWritePort(PIT_CHANNEL_ZERO_PORT,(uint8_t)savedSoundTimerDivisor);
     btechHostWritePort(PIT_CHANNEL_ZERO_PORT,(uint8_t)(savedSoundTimerDivisor>>8));
     soundTimerInstalled=0;
@@ -123,7 +124,7 @@ void BtechRestoreSoundTimerInterrupt(void)
  * no STI or previous-handler chain, and a faulting callback never sends EOI. */
 void BtechMusicTimerInterrupt(void)
 {
-    if (!musicTimerCallback || !btechHostWritePort) abort();
+    if (!musicTimerCallback || !btechHostWritePort) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !musicTimerCallback || !btechHostWritePort");
     musicTimerCallback();
     btechHostWritePort(PIC_COMMAND_PORT,PIC_END_OF_INTERRUPT);
 }
@@ -133,7 +134,7 @@ void BtechMusicTimerInterrupt(void)
 void BtechInstallMusicTimerCallback(BtechAudioTick callback,uint16_t divisor)
 {
     if (!btechHostGetInterruptVector || !btechHostSetInterruptVector
-        || !btechHostSetInterrupts || !btechHostWritePort) abort();
+        || !btechHostSetInterrupts || !btechHostWritePort) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostGetInterruptVector || !btechHostSetInterruptVector || !btechHostSetInterrupts || !btechHostWritePort");
     if (!musicTimerInstalled)
     {
         musicTimerInstalled=1;
@@ -152,7 +153,7 @@ void BtechInstallMusicTimerCallback(BtechAudioTick callback,uint16_t divisor)
 void BtechRestoreMusicTimerInterrupt(void)
 {
     if (!musicTimerInstalled) return;
-    if (!btechHostWritePort || !btechHostSetInterruptVector) abort();
+    if (!btechHostWritePort || !btechHostSetInterruptVector) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostWritePort || !btechHostSetInterruptVector");
     btechHostWritePort(PIT_CHANNEL_ZERO_PORT,(uint8_t)savedMusicTimerDivisor);
     btechHostWritePort(PIT_CHANNEL_ZERO_PORT,(uint8_t)(savedMusicTimerDivisor>>8));
     musicTimerInstalled=0;
@@ -164,7 +165,7 @@ void BtechRestoreMusicTimerInterrupt(void)
 uint16_t BtechStopAllAudioChannels(void)
 {
     BtechRestoreSoundTimerInterrupt();
-    if (!samplePriorityOwner) abort();
+    if (!samplePriorityOwner) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !samplePriorityOwner");
     *samplePriorityOwner=0;
     BtechStopMatchingToneChannels(0,3);
     BtechSelectTandyOrFallbackAudioCallback()();
@@ -228,19 +229,19 @@ uint16_t BtechMergeSoundBackendDirectory(BtechSoundBank *bank,BtechRuntimeStream
     if (!bank->events)
     {
         bank->events=calloc(bank->eventCount,sizeof(*bank->events));
-        if (!bank->events) abort(); /* Host representation, not a new native error branch. */
+        if (!bank->events) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !bank->events"); /* Host representation, not a new native error branch. */
         bank->eventReferenceCapacity=bank->eventCount;
     }
-    if (bank->eventCount>bank->eventReferenceCapacity) abort(); /* Unrecovered old-directory aliases after a count-changing slot10 reuse. */
+    if (bank->eventCount>bank->eventReferenceCapacity) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: bank->eventCount>bank->eventReferenceCapacity"); /* Unrecovered old-directory aliases after a count-changing slot10 reuse. */
     for (int16_t event=0;event<(int16_t)bank->eventCount;++event)
     {
         uint32_t entry=(uint16_t)((uint16_t)event<<2);
-        if (entry+4>node->allocation.byteCount) abort();
+        if (entry+4>node->allocation.byteCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: entry+4>node->allocation.byteCount");
         uint16_t offset=MwReadNativeWord(node->allocation.bytes,(uint16_t)entry);
         uint16_t paragraph=MwReadNativeWord(node->allocation.bytes,(uint16_t)(entry+2));
         if (!(offset|paragraph)) continue;
         uint32_t eventOffset=(uint32_t)paragraph*0x10+offset;
-        if (eventOffset>=node->allocation.byteCount) abort();
+        if (eventOffset>=node->allocation.byteCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: eventOffset>=node->allocation.byteCount");
         uint32_t paragraphBase=(uint32_t)paragraph*0x10;
         bank->events[event]=(BtechSoundEvent){{node->allocation.bytes+paragraphBase,0,node->allocation.byteCount-paragraphBase},
             offset,(uint16_t)(node->allocationSelector+paragraph)};
@@ -256,7 +257,7 @@ BtechSoundAllocationNode *BtechLoadTaggedSoundAllocation(BtechSoundBank *bank,Bt
     if (BtechFindResourceTagPosition(stream,tag,0)&0x80000000) return NULL;
     BtechReadStreamByte(stream->file);
     uint8_t lengthBytes[4];
-    if (BtechReadStreamElements(lengthBytes,4,1,stream->file)!=1) abort();
+    if (BtechReadStreamElements(lengthBytes,4,1,stream->file)!=1) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: BtechReadStreamElements(lengthBytes,4,1,stream->file)!=1");
     uint32_t remaining=(uint32_t)MwReadNativeWord(lengthBytes,0)|((uint32_t)MwReadNativeWord(lengthBytes,2)<<16);
     fseek(stream->file,-5,SEEK_CUR);
     BtechResourceAllocation allocation=soundAllocationOverride;
@@ -265,7 +266,7 @@ BtechSoundAllocationNode *BtechLoadTaggedSoundAllocation(BtechSoundBank *bank,Bt
         /*1EB6 deliberately wraps its paragraph request. A corrupt sound length
          * must not let a smaller native allocation masquerade as a host buffer
          * of the full declared size. Foreign-owner overwrite is not supported. */
-        if (remaining>DOS_MAX_PARAGRAPH_ALLOCATION_BYTES) abort();
+        if (remaining>DOS_MAX_PARAGRAPH_ALLOCATION_BYTES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: remaining>DOS_MAX_PARAGRAPH_ALLOCATION_BYTES");
         allocation.bytes=BtechAllocateDosMemoryBlock(remaining).bytes;
         allocation.byteCount=remaining;
         if (!allocation.bytes) soundAllocationError=1;
@@ -276,7 +277,7 @@ BtechSoundAllocationNode *BtechLoadTaggedSoundAllocation(BtechSoundBank *bank,Bt
     while (!failed && remaining)
     {
         uint16_t chunk=remaining>COMBAT_SOUND_CHUNK_BYTES?COMBAT_SOUND_CHUNK_BYTES:remaining;
-        if (!allocation.bytes || cursor+chunk>allocation.byteCount) abort(); /* Native NULL/foreign writes are not host memory. */
+        if (!allocation.bytes || cursor+chunk>allocation.byteCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !allocation.bytes || cursor+chunk>allocation.byteCount"); /* Native NULL/foreign writes are not host memory. */
         failed=BtechReadArchiveIntoFarBuffer((uint16_t)archive,allocation.bytes+cursor,chunk)!=chunk;
         remaining-=chunk;cursor+=chunk;
     }
@@ -298,16 +299,16 @@ BtechSoundAllocationNode *BtechLoadTaggedSoundAllocation(BtechSoundBank *bank,Bt
             else {soundAllocationError=2;failed=2;}
         }
         node->allocation=allocation;
-        if (!btechHostDosAllocationSelector) abort();
+        if (!btechHostDosAllocationSelector) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostDosAllocationSelector");
         node->allocationSelector=btechHostDosAllocationSelector(allocation.bytes);
         node->allocationOffset=0;
-        if (strlen(tag)>=sizeof(node->chunkTag)) abort();
+        if (strlen(tag)>=sizeof(node->chunkTag)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: strlen(tag)>=sizeof(node->chunkTag)");
         strcpy(node->chunkTag,tag);
     }
     if (!failed) return node;
     if (allocation.bytes)
     {
-        if (!btechHostFreeDosAllocation) abort();
+        if (!btechHostFreeDosAllocation) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostFreeDosAllocation");
         btechHostFreeDosAllocation(allocation.bytes);
     }
     return NULL;
@@ -340,16 +341,16 @@ uint16_t BtechLoadMusicBank(const char *filename,BtechRuntimeStream *stream)
     }
     /* Missing/partial INF leaves stack WORDs unwritten in the executable.
      * Do not fabricate zeros or reinterpret that residue as a valid bank. */
-    if (BtechFindResourceTagPosition(stream,"MUS:INF:",0)&0x80000000) abort();
+    if (BtechFindResourceTagPosition(stream,"MUS:INF:",0)&0x80000000) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: BtechFindResourceTagPosition(stream,\"MUS:INF:\",0)&0x80000000");
     uint8_t header[2];
-    if (BtechReadStreamElements(header,1,2,stream->file)!=2) abort();
-    if (MwReadNativeWord(header,0)!=MUSIC_INFORMATION_MAGIC) abort(); /* Count is still stack residue. */
-    if (BtechReadStreamElements(header,1,2,stream->file)!=2) abort();
+    if (BtechReadStreamElements(header,1,2,stream->file)!=2) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: BtechReadStreamElements(header,1,2,stream->file)!=2");
+    if (MwReadNativeWord(header,0)!=MUSIC_INFORMATION_MAGIC) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: MwReadNativeWord(header,0)!=MUSIC_INFORMATION_MAGIC"); /* Count is still stack residue. */
+    if (BtechReadStreamElements(header,1,2,stream->file)!=2) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: BtechReadStreamElements(header,1,2,stream->file)!=2");
     uint16_t trackCount=MwReadNativeWord(header,0);
     for (int16_t track=0;track<(int16_t)trackCount;++track)
     {
         uint16_t sequenceWord=bankIndex*COMBAT_MUSIC_SEQUENCE_WORDS+track;
-        if (sequenceWord>=COMBAT_MUSIC_SEQUENCE_ROWS*COMBAT_MUSIC_SEQUENCE_WORDS) abort();
+        if (sequenceWord>=COMBAT_MUSIC_SEQUENCE_ROWS*COMBAT_MUSIC_SEQUENCE_WORDS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: sequenceWord>=COMBAT_MUSIC_SEQUENCE_ROWS*COMBAT_MUSIC_SEQUENCE_WORDS");
         /* Native unchecked counts can spill into the next represented row. */
         int16_t *next=&musicSequences[sequenceWord/COMBAT_MUSIC_SEQUENCE_WORDS][sequenceWord%COMBAT_MUSIC_SEQUENCE_WORDS];
         header[0]=(uint8_t)*next;header[1]=(uint8_t)((uint16_t)*next>>8);
@@ -381,7 +382,7 @@ uint16_t BtechSelectActiveMusicBank(uint16_t bankHandle)
     if ((int16_t)bankHandle>COMBAT_MUSIC_BANKS-1) bankHandle=UINT16_MAX;
     else
     {
-        if (bankHandle>=COMBAT_MUSIC_LOAD_ROOTS) abort();
+        if (bankHandle>=COMBAT_MUSIC_LOAD_ROOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: bankHandle>=COMBAT_MUSIC_LOAD_ROOTS");
         if (!soundBanks[COMBAT_MUSIC_FIRST_ROOT+bankHandle].root.allocation.bytes) bankHandle=UINT16_MAX;
     }
     activeMusicBankIndex=bankHandle;
@@ -404,12 +405,12 @@ void BtechStopMusicStreams(void)
 uint16_t BtechStartSelectedMusicBankTrack(uint16_t trackIndex,uint16_t priority)
 {
     if ((int16_t)activeMusicBankIndex<0) return 0;
-    if (activeMusicBankIndex>=COMBAT_MUSIC_LOAD_ROOTS) abort();
+    if (activeMusicBankIndex>=COMBAT_MUSIC_LOAD_ROOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: activeMusicBankIndex>=COMBAT_MUSIC_LOAD_ROOTS");
     if ((uint16_t)(soundBanks[COMBAT_MUSIC_FIRST_ROOT+activeMusicBankIndex].eventCount-1)<trackIndex) return 0;
     BtechStopMusicStreams();
-    if (activeMusicBankIndex>=COMBAT_MUSIC_LOAD_ROOTS) abort();
+    if (activeMusicBankIndex>=COMBAT_MUSIC_LOAD_ROOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: activeMusicBankIndex>=COMBAT_MUSIC_LOAD_ROOTS");
     BtechSoundBank *bank=&soundBanks[COMBAT_MUSIC_FIRST_ROOT+activeMusicBankIndex];
-    if (!bank->root.allocation.bytes || !bank->events || trackIndex>=bank->eventReferenceCapacity) abort();
+    if (!bank->root.allocation.bytes || !bank->events || trackIndex>=bank->eventReferenceCapacity) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !bank->root.allocation.bytes || !bank->events || trackIndex>=bank->eventReferenceCapacity");
     BtechSoundEvent track=bank->events[trackIndex];
     BtechStartSoftwareMusicTrack(track.data,track.offset,track.selector!=0);
     if (selectedAudioBackendMask&COMBAT_SOUND_MPU) BtechStartMpuMusicTrack(track.data,track.offset);
@@ -428,7 +429,7 @@ uint16_t BtechFreeSoundAllocationChain(BtechSoundBank *bank)
     if (!node->allocation.bytes) return 0;
     if (!soundAllocationOverride.bytes)
     {
-        if (!btechHostFreeDosSelector) abort();
+        if (!btechHostFreeDosSelector) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostFreeDosSelector");
         btechHostFreeDosSelector(node->allocationSelector);
     }
     node->allocationSelector=0;node->allocationOffset=0;node->allocation=(BtechResourceAllocation){0};
@@ -437,7 +438,7 @@ uint16_t BtechFreeSoundAllocationChain(BtechSoundBank *bank)
         node=BtechHostResolveReleasedSoundNode(node);
         if (!soundAllocationOverride.bytes && (node->allocationOffset|node->allocationSelector))
         {
-            if (!btechHostFreeDosSelector) abort();
+            if (!btechHostFreeDosSelector) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostFreeDosSelector");
             btechHostFreeDosSelector(node->allocationSelector);
         }
         BtechReleaseNearBlockAndProbeAllocation(node);
@@ -453,7 +454,7 @@ uint16_t BtechUnloadMusicBank(uint16_t bankHandle)
     --bankHandle;
     if (activeMusicBankIndex==bankHandle) BtechStopMusicStreams();
     if ((int16_t)bankHandle<0 || (int16_t)bankHandle>COMBAT_MUSIC_BANKS-1) return 0;
-    if (bankHandle>=COMBAT_MUSIC_LOAD_ROOTS) abort();
+    if (bankHandle>=COMBAT_MUSIC_LOAD_ROOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: bankHandle>=COMBAT_MUSIC_LOAD_ROOTS");
     return BtechFreeSoundAllocationChain(&soundBanks[COMBAT_MUSIC_FIRST_ROOT+bankHandle]);
 }
 
@@ -497,7 +498,7 @@ uint16_t BtechAllocateToneEventChannels(BtechSoundEvent event,uint16_t priority,
             {minimumPriority=soundPriorities[channel];selected=channel;}
     }
     if (soundPriorities[selected]>priority) return 0;
-    if (activeSoundBankIndex>=COMBAT_SOUND_BANKS) abort();
+    if (activeSoundBankIndex>=COMBAT_SOUND_BANKS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: activeSoundBankIndex>=COMBAT_SOUND_BANKS");
     BtechSoundAllocationNode *fallback=soundBanks[activeSoundBankIndex].fallback;
     /* A missing ITM still starts native effects. Preserve its ambient WORD
      * offset; physical selector0/unknown fallback memory is gated ONLY if read. */
@@ -525,10 +526,10 @@ uint16_t BtechAllocateToneEventChannels(BtechSoundEvent event,uint16_t priority,
 uint16_t BtechDispatchSoundBankEvent(int16_t soundEventIndex,uint16_t priority)
 {
     if ((int16_t)activeSoundBankIndex<0) return 0;
-    if (activeSoundBankIndex>=COMBAT_SOUND_BANKS) abort();
+    if (activeSoundBankIndex>=COMBAT_SOUND_BANKS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: activeSoundBankIndex>=COMBAT_SOUND_BANKS");
     BtechSoundBank *bank=&soundBanks[activeSoundBankIndex];
     if ((int16_t)(bank->eventCount-1)<soundEventIndex) return 0;
-    if (soundEventIndex<0 || (uint16_t)soundEventIndex>=bank->eventReferenceCapacity || !bank->events) abort();
+    if (soundEventIndex<0 || (uint16_t)soundEventIndex>=bank->eventReferenceCapacity || !bank->events) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: soundEventIndex<0 || (uint16_t)soundEventIndex>=bank->eventReferenceCapacity || !bank->events");
     BtechSoundEvent event=bank->events[soundEventIndex];
     uint16_t type=MwReadNativeViewWord(&event.data,event.offset);
     switch (type)
@@ -536,11 +537,11 @@ uint16_t BtechDispatchSoundBankEvent(int16_t soundEventIndex,uint16_t priority)
     case 0:case 1:return BtechAllocateToneEventChannels(event,priority,(uint16_t)soundEventIndex);
     case 2:
         if (!(soundEffectsEnableMask&1) || !(selectedAudioBackendMask&COMBAT_SOUND_SPEAKER)) return 0;
-        abort(); /* Native uninitialized priority-channel WORD and sample IRQ not converted. */
+        /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Native uninitialized priority-channel WORD and sample IRQ not converted."); /* Native uninitialized priority-channel WORD and sample IRQ not converted. */
     case 3:return 1;
     case 4:
         if (!(soundEffectsEnableMask&1) || !(selectedAudioBackendMask&0x08)) return 0;
-        abort(); /* Tandy SL/TL DAC path. */
+        /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Tandy SL/TL DAC path."); /* Tandy SL/TL DAC path. */
     case 0x0B:
         if (!(selectedAudioBackendMask&COMBAT_SOUND_MPU)) return 1;
         if (!BtechSendMpuCommandStack(0xDF)) return 1;
@@ -553,7 +554,7 @@ uint16_t BtechDispatchSoundBankEvent(int16_t soundEventIndex,uint16_t priority)
             /* Only the first addition carries into the selector. The later
              * payload/index addition wraps its offset without another carry. */
             uint32_t terminal=(payload&0x10000)+(uint16_t)((uint16_t)payload+index);
-            if (!event.data.bytes || event.data.nativeBase || terminal>=event.data.byteCount) abort();
+            if (!event.data.bytes || event.data.nativeBase || terminal>=event.data.byteCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !event.data.bytes || event.data.nativeBase || terminal>=event.data.byteCount");
             MpuWriteDataByte(event.data.bytes[terminal]);return 1;
         }
     default:return 0;

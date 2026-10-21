@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_render.h"
 #include <stdlib.h>
 
@@ -12,7 +13,7 @@ uint64_t BtechMultiplySignedDwordsWide(uint32_t first,uint32_t second)
 void BtechCopyRendererWorkingCoordinateArrays(void)
 {
     uint16_t count=(uint16_t)(polygonVertexCount*2)>>1; /* Native WORD count wraps before REP. */
-    if (count>WIDE_POLYGON_VERTICES) abort();
+    if (count>WIDE_POLYGON_VERTICES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: count>WIDE_POLYGON_VERTICES");
     for (uint16_t vertex=0;vertex<count;++vertex) wideScreenX[vertex]=widePolygonWorkX[vertex];
     for (uint16_t vertex=0;vertex<count;++vertex) wideScreenY[vertex]=widePolygonWorkY[vertex];
 }
@@ -24,9 +25,9 @@ void BtechOffsetWidePolygonVerticesToScreen(void)
     uint16_t destination=0;
     do
     {
-        if (destination>=WIDE_POLYGON_VERTICES) abort();
+        if (destination>=WIDE_POLYGON_VERTICES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: destination>=WIDE_POLYGON_VERTICES");
         uint8_t vertex=polygonVertexIndices[destination];
-        if (vertex>=GEOMETRY_CACHE_VERTICES) abort();
+        if (vertex>=GEOMETRY_CACHE_VERTICES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: vertex>=GEOMETRY_CACHE_VERTICES");
         wideScreenX[destination]=centreX+geometryProjectedX.wide[vertex];
         wideScreenY[destination]=centreY-geometryProjectedY.wide[vertex];
         ++destination;
@@ -88,7 +89,7 @@ divideCoordinate:
                     }
                 }
             }
-            if (polygonVertexCount>=POLYGON_VERTEX_INDEX_BYTES) abort();
+            if (polygonVertexCount>=POLYGON_VERTEX_INDEX_BYTES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: polygonVertexCount>=POLYGON_VERTEX_INDEX_BYTES");
             polygonVertexIndices[polygonVertexCount++]=vertex;
         }
         if (polygonHasNearClippedVertex)
@@ -108,7 +109,7 @@ divideCoordinate:
         }
         for (uint16_t vertex=0;vertex<polygonVertexCount;++vertex)
         {
-            if (vertex>=COMBAT_POLYGON_VERTEX_WORDS || vertex>=WIDE_POLYGON_VERTICES) abort();
+            if (vertex>=COMBAT_POLYGON_VERTEX_WORDS || vertex>=WIDE_POLYGON_VERTICES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: vertex>=COMBAT_POLYGON_VERTEX_WORDS || vertex>=WIDE_POLYGON_VERTICES");
             screenPolygonX[vertex]=(int16_t)wideScreenX[vertex];
             screenPolygonY[vertex]=(int16_t)wideScreenY[vertex];
         }

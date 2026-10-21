@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_polygons.h"
 #include <stdlib.h>
 
@@ -11,7 +12,7 @@ BtechPolygonSpan *BtechDrawScreenPolygon(int16_t count,const int16_t *x,const in
     if (count>=0)
     {
         polygonVertexCount=(uint16_t)count;
-        if (count>COMBAT_POLYGON_VERTEX_WORDS) abort();
+        if (count>COMBAT_POLYGON_VERTEX_WORDS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: count>COMBAT_POLYGON_VERTEX_WORDS");
         for (uint16_t axis=0;axis<2;++axis)
         {
             const int16_t *source=axis?y:x;int16_t *destination=axis?screenPolygonY:screenPolygonX;
@@ -23,7 +24,7 @@ BtechPolygonSpan *BtechDrawScreenPolygon(int16_t count,const int16_t *x,const in
     if (!drawPolygonFilled)
     {
         uint16_t vertices=polygonVertexCount;
-        if (vertices>=COMBAT_POLYGON_VERTEX_WORDS) abort();
+        if (vertices>=COMBAT_POLYGON_VERTEX_WORDS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: vertices>=COMBAT_POLYGON_VERTEX_WORDS");
         screenPolygonX[vertices]=screenPolygonX[0];screenPolygonY[vertices]=screenPolygonY[0];
         BtechDrawScreenPolyline(vertices,screenPolygonX,screenPolygonY);
         goto returnPolygon;
@@ -31,7 +32,7 @@ BtechPolygonSpan *BtechDrawScreenPolygon(int16_t count,const int16_t *x,const in
     if (drawFillColour!=drawLineColour)
     {
         polygonOutlineVertexCount=polygonVertexCount;
-        if (polygonOutlineVertexCount>=COMBAT_POLYGON_VERTEX_WORDS) abort();
+        if (polygonOutlineVertexCount>=COMBAT_POLYGON_VERTEX_WORDS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: polygonOutlineVertexCount>=COMBAT_POLYGON_VERTEX_WORDS");
         for (uint16_t axis=0;axis<2;++axis)
         {
             int16_t *source=axis?screenPolygonY:screenPolygonX;
@@ -117,7 +118,7 @@ BtechPolygonSpan *BtechDrawScreenPolygon(int16_t count,const int16_t *x,const in
         {minimumY=(uint16_t)screenPolygonY[polygonMinimumYVertexByteOffset/2];source=polygonMaximumYVertexByteOffset/2;}
         for (;;)
         {
-            if (chainDestination>=COMBAT_POLYGON_VERTEX_WORDS) abort();
+            if (chainDestination>=COMBAT_POLYGON_VERTEX_WORDS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: chainDestination>=COMBAT_POLYGON_VERTEX_WORDS");
             polygonWorkX[chainDestination]=screenPolygonX[source];
             uint16_t vertexY=screenPolygonY[source];polygonWorkY[chainDestination++]=(int16_t)vertexY;
             if (chain?(int16_t)vertexY<=(int16_t)minimumY:(int16_t)vertexY>=(int16_t)maximumY) break;
@@ -138,7 +139,7 @@ BtechPolygonSpan *BtechDrawScreenPolygon(int16_t count,const int16_t *x,const in
         }
         polygonChainEdgesRemaining=chainVertices;
         uint16_t chainOffset=polygonChainVertexByteOffset/2;polygonChainVertexByteOffset+=2;
-        if (chainOffset+1>=COMBAT_POLYGON_VERTEX_WORDS) abort();
+        if (chainOffset+1>=COMBAT_POLYGON_VERTEX_WORDS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: chainOffset+1>=COMBAT_POLYGON_VERTEX_WORDS");
         int16_t firstX=polygonWorkX[chainOffset],secondX=polygonWorkX[chainOffset+1];
         int16_t firstY=polygonWorkY[chainOffset],secondY=polygonWorkY[chainOffset+1];
         int16_t deltaX=(int16_t)(firstX-secondX),deltaY=(int16_t)(firstY-secondY);
@@ -148,7 +149,7 @@ BtechPolygonSpan *BtechDrawScreenPolygon(int16_t count,const int16_t *x,const in
         else if (!magnitudeY)
         {
             if (firstX>=secondX) {int16_t saved=firstX;firstX=secondX;secondX=saved;}
-            if ((uint16_t)firstY>=COMBAT_SCREEN_HEIGHT) abort();
+            if ((uint16_t)firstY>=COMBAT_SCREEN_HEIGHT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (uint16_t)firstY>=COMBAT_SCREEN_HEIGHT");
             if (polygonSpanBoundaryByteOffset) polygonScanlineSpans[(uint16_t)firstY].endpoints.right=(uint16_t)secondX;
             else polygonScanlineSpans[(uint16_t)firstY].endpoints.left=(uint16_t)firstX;
         }
@@ -159,12 +160,12 @@ BtechPolygonSpan *BtechDrawScreenPolygon(int16_t count,const int16_t *x,const in
         chainVertices=polygonChainEdgesRemaining;
     }
     minimumY=(uint16_t)screenPolygonY[polygonMinimumYVertexByteOffset/2];
-    if (minimumY>=COMBAT_SCREEN_HEIGHT) abort();
+    if (minimumY>=COMBAT_SCREEN_HEIGHT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: minimumY>=COMBAT_SCREEN_HEIGHT");
     polygonScanlineHeader=&polygonSpanStorage[minimumY];
     polygonScanlineHeader->header.firstRow=minimumY;
     maximumY=(uint16_t)screenPolygonY[polygonMaximumYVertexByteOffset/2];
     polygonScanlineHeader->header.rowCount=(uint16_t)(maximumY-minimumY+1);
-    if (!graphicsFillPolygonSpans) abort();
+    if (!graphicsFillPolygonSpans) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !graphicsFillPolygonSpans");
     graphicsFillPolygonSpans(polygonScanlineHeader);
     if (drawFillColour!=drawLineColour) BtechDrawScreenPolyline(polygonOutlineVertexCount,polygonOutlineX,polygonOutlineY);
     goto returnPolygon;

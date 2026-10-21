@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_render.h"
 #include <stdlib.h>
 
@@ -46,7 +47,7 @@ dividePitch: ;
     int16_t projectedPitch;
     for (;;)
     {
-        if (!trigonometry[1]) abort(); /* Native zero-divisor retry cannot progress. */
+        if (!trigonometry[1]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !trigonometry[1]"); /* Native zero-divisor retry cannot progress. */
         int64_t quotient=(int64_t)(int32_t)numerator/trigonometry[1];
         if (quotient>=INT16_MIN && quotient<=INT16_MAX) {projectedPitch=(int16_t)quotient;break;}
         numerator=BtechDivideErrorInterrupt(numerator);
@@ -65,7 +66,7 @@ dividePitch: ;
         int16_t divisor=right-left;
         for (;;)
         {
-            if (!divisor) abort();
+            if (!divisor) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !divisor");
             int64_t quotient=(int64_t)(int32_t)numerator/divisor;
             if (quotient>=INT16_MIN && quotient<=INT16_MAX) {leftY=(int16_t)(leftY+quotient);break;}
             numerator=BtechDivideErrorInterrupt(numerator);
@@ -79,7 +80,7 @@ dividePitch: ;
         int16_t divisor=left-right;
         for (;;)
         {
-            if (!divisor) abort();
+            if (!divisor) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !divisor");
             int64_t quotient=(int64_t)(int32_t)numerator/divisor;
             if (quotient>=INT16_MIN && quotient<=INT16_MAX) {rightY=(int16_t)(rightY+quotient);break;}
             numerator=BtechDivideErrorInterrupt(numerator);
@@ -93,7 +94,7 @@ dividePitch: ;
         int16_t divisor=leftY-rightY;
         for (;;)
         {
-            if (!divisor) abort();
+            if (!divisor) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !divisor");
             int64_t quotient=(int64_t)(int32_t)numerator/divisor;
             if (quotient>=INT16_MIN && quotient<=INT16_MAX) {right=(int16_t)(right+quotient);break;}
             numerator=BtechDivideErrorInterrupt(numerator);
@@ -107,7 +108,7 @@ dividePitch: ;
         int16_t divisor=rightY-leftY;
         for (;;)
         {
-            if (!divisor) abort();
+            if (!divisor) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !divisor");
             int64_t quotient=(int64_t)(int32_t)numerator/divisor;
             if (quotient>=INT16_MIN && quotient<=INT16_MAX) {left=(int16_t)(left+quotient);break;}
             numerator=BtechDivideErrorInterrupt(numerator);
@@ -121,7 +122,7 @@ dividePitch: ;
         int16_t divisor=leftY-rightY;
         for (;;)
         {
-            if (!divisor) abort();
+            if (!divisor) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !divisor");
             int64_t quotient=(int64_t)(int32_t)numerator/divisor;
             if (quotient>=INT16_MIN && quotient<=INT16_MAX) {right=(int16_t)(right+quotient);break;}
             numerator=BtechDivideErrorInterrupt(numerator);
@@ -136,7 +137,7 @@ clipLeftBottom:
         int16_t divisor=rightY-leftY;
         for (;;)
         {
-            if (!divisor) abort();
+            if (!divisor) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !divisor");
             int64_t quotient=(int64_t)(int32_t)numerator/divisor;
             if (quotient>=INT16_MIN && quotient<=INT16_MAX) {left=(int16_t)(left+quotient);break;}
             numerator=BtechDivideErrorInterrupt(numerator);

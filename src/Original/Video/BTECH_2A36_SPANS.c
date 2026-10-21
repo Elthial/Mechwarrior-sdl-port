@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_video.h"
 #include <stdlib.h>
 
@@ -6,7 +7,7 @@
 void BtechEgaFillSolidSpan(uint16_t pattern,uint16_t x,int16_t count,uint16_t rowOffset,uint16_t page)
 {
     if (count<=0) return;
-    if (!btechHostWritePortWord || !btechHostReadVideoByte || !btechHostWriteVideoByte) abort();
+    if (!btechHostWritePortWord || !btechHostReadVideoByte || !btechHostWriteVideoByte) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostWritePortWord || !btechHostReadVideoByte || !btechHostWriteVideoByte");
     uint16_t cursor=rowOffset+(x>>3);
     uint16_t firstPixel=x&7,endPixel=(uint16_t)(firstPixel+(uint16_t)count);
     uint8_t mask=egaSpanLeadingMasks[firstPixel];
@@ -45,7 +46,7 @@ void BtechEgaFillAlternatingSpan(uint16_t primary,uint16_t x,int16_t count,uint1
     spanAlternationState^=1;
     uint16_t pattern=spanAlternationState?alternate:primary;
     if (count<=0) return;
-    if (!btechHostWritePortWord || !btechHostReadVideoByte || !btechHostWriteVideoByte) abort();
+    if (!btechHostWritePortWord || !btechHostReadVideoByte || !btechHostWriteVideoByte) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostWritePortWord || !btechHostReadVideoByte || !btechHostWriteVideoByte");
     egaSpanPrimaryColour=(uint8_t)(pattern>>8);
     egaSpanSecondaryColour=(uint8_t)pattern;
     uint16_t firstPixel=x&7,endPixel=(uint16_t)(firstPixel+(uint16_t)count);

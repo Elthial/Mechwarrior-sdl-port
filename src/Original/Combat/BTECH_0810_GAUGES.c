@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_cockpit.h"
 #include "mechwarrior/combat_import.h"
 #include "mechwarrior/combat_orders.h"
@@ -25,14 +26,14 @@ void BtechUpdateHeatGauge(int16_t heatLevel)
     if ((uint16_t)(cachedHeatGaugeLevel-(uint16_t)heatLevel)==0x8000) difference=0x7FFF;
     else if ((int16_t)cachedHeatGaugeLevel<heatLevel) difference=(uint16_t)(heatLevel-cachedHeatGaugeLevel);
     else difference=(uint16_t)(cachedHeatGaugeLevel-heatLevel);
-    if (hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES) abort();
+    if (hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES");
     drawFillColour=(uint8_t)(heatLevel<(int16_t)cachedHeatGaugeLevel?
         hudColourSchemes[hudColourSchemeIndex].heatFalling:hudColourSchemes[hudColourSchemeIndex].heatRising);
     uint16_t pixelColour=heatLevel<(int16_t)cachedHeatGaugeLevel?Combat_Pal_EGA_White:Combat_Pal_EGA_LightRed;
     screenPolygonNeedsClip=false;drawPageSelector=backPageSelector;
-    if (!unitBindings[0].mech || unitBindings[0].mech->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
+    if (!unitBindings[0].mech || unitBindings[0].mech->templateIndex>=COMBAT_MECH_TEMPLATES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !unitBindings[0].mech || unitBindings[0].mech->templateIndex>=COMBAT_MECH_TEMPLATES");
     uint16_t layoutIndex=mechCockpitLayoutIndices[unitBindings[0].mech->templateIndex];
-    if (layoutIndex>=COMBAT_COCKPIT_LAYOUTS) abort();
+    if (layoutIndex>=COMBAT_COCKPIT_LAYOUTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: layoutIndex>=COMBAT_COCKPIT_LAYOUTS");
     const BtechHudGaugeAnchor *gauge=&cockpitLayouts[layoutIndex].heatGauge;
     uint16_t rowY=gauge->y-((uint16_t)lowerLevel<<HEAT_GAUGE_ROW_SHIFT);
     for (int16_t row=0;row<(int16_t)difference;++row)
@@ -55,9 +56,9 @@ void BtechUpdateHeatGauge(int16_t heatLevel)
  * not merely its one marker tick. Final present takes x+1E/y+7 as dimensions. */
 void BtechDrawForwardMovementGauge(int16_t forwardScale)
 {
-    if (!unitBindings[0].mech || unitBindings[0].mech->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
+    if (!unitBindings[0].mech || unitBindings[0].mech->templateIndex>=COMBAT_MECH_TEMPLATES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !unitBindings[0].mech || unitBindings[0].mech->templateIndex>=COMBAT_MECH_TEMPLATES");
     uint16_t layoutIndex=mechCockpitLayoutIndices[unitBindings[0].mech->templateIndex];
-    if (layoutIndex>=COMBAT_COCKPIT_LAYOUTS || hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES) abort();
+    if (layoutIndex>=COMBAT_COCKPIT_LAYOUTS || hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: layoutIndex>=COMBAT_COCKPIT_LAYOUTS || hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES");
     const BtechHudGaugeAnchor *gauge=&cockpitLayouts[layoutIndex].movementGauge;
     int16_t forward=forwardScale<0?0:forwardScale;
     uint16_t reverse=forward?0:(uint16_t)(0-(uint16_t)forwardScale);
@@ -98,9 +99,9 @@ void BtechUpdateJumpChargeGauge(int16_t jumpCharge)
     int16_t level=jumpCharge/JUMP_GAUGE_CHARGE_PER_ROW;
     if (level==(int16_t)cachedJumpChargeGaugeLevel) return;
     drawPolygonFilled=true;screenPolygonNeedsClip=false;drawPageSelector=backPageSelector;
-    if (!unitBindings[0].mech || unitBindings[0].mech->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
+    if (!unitBindings[0].mech || unitBindings[0].mech->templateIndex>=COMBAT_MECH_TEMPLATES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !unitBindings[0].mech || unitBindings[0].mech->templateIndex>=COMBAT_MECH_TEMPLATES");
     uint16_t layoutIndex=mechCockpitLayoutIndices[unitBindings[0].mech->templateIndex];
-    if (layoutIndex>=COMBAT_COCKPIT_LAYOUTS || hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES) abort();
+    if (layoutIndex>=COMBAT_COCKPIT_LAYOUTS || hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: layoutIndex>=COMBAT_COCKPIT_LAYOUTS || hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES");
     const BtechHudGaugeAnchor *gauge=&cockpitLayouts[layoutIndex].jumpChargeGauge;
     uint16_t belowThreshold=jumpCharge<JUMP_GAUGE_READY_CHARGE;
     drawFillColour=drawLineColour=belowThreshold?

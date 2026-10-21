@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_surface.h"
 #include "mechwarrior/combat_render.h"
 #include "mechwarrior/combat_startup.h"
@@ -11,7 +12,7 @@ uint8_t BtechTestPatchBoundaryHalfPlanes(const BtechSurfacePatch *patch,uint16_t
     uint16_t count=patch->boundaryCount;
     if (!count) return 0;
     if (count>SURFACE_MAXIMUM_BOUNDARIES) BtechShowFatalErrorAndExit("too many edges"); // Authored304E:2CB6.
-    if (!patch->boundaries) abort();
+    if (!patch->boundaries) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !patch->boundaries");
     for (uint16_t index=0;index<count;++index)
     {
         const BtechSurfaceBoundary *boundary=&patch->boundaries[index];
@@ -72,7 +73,7 @@ uint16_t BtechTestSurfacePatches(BtechSurfaceQueryResult *result,const BtechPosi
         if ((uint8_t)cachedPatchFirst)
         {
             uint16_t cachedIndex=result->patchIndex;
-            if (cachedIndex>=surface->patchCount || !surface->patches) abort(); /* Native overrun aliases unknown storage. */
+            if (cachedIndex>=surface->patchCount || !surface->patches) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: cachedIndex>=surface->patchCount || !surface->patches"); /* Native overrun aliases unknown storage. */
             patch=&surface->patches[cachedIndex];
             if (BtechTestPatchBoundaryHalfPlanes(patch,queryA,queryB)) {patchIndex=cachedIndex;accepted=1;}
             else patch=surface->patches;
@@ -82,7 +83,7 @@ uint16_t BtechTestSurfacePatches(BtechSurfaceQueryResult *result,const BtechPosi
             uint16_t patchCount=surface->patchCount;
             while (patchIndex<patchCount)
             {
-                if (!patch) abort();
+                if (!patch) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !patch");
                 if (BtechTestPatchBoundaryHalfPlanes(patch,queryA,queryB)) break;
                 ++patchIndex;++patch;
             }
@@ -95,7 +96,7 @@ uint16_t BtechTestSurfacePatches(BtechSurfaceQueryResult *result,const BtechPosi
     if (surface->priorityClass) result->surfacePositionC=0;
     else
     {
-        if (!patch) abort();
+        if (!patch) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !patch");
         uint16_t height=BtechEvaluateSurfacePatchHeight(patch,queryA,queryB);
         result->surfacePositionC=(int16_t)height;
         result->surfacePositionC=BtechShiftDwordLeft(result->surfacePositionC,(uint8_t)resourceScaleShift);
@@ -114,7 +115,7 @@ uint16_t BtechQueryWorldSurface(BtechSurfaceQueryResult *result,const BtechPosit
     if (surface && !surface->priorityClass)
     {
         BtechWorldObjectPrefix *object=result->worldObject;
-        if (!object) abort();
+        if (!object) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !object");
         resourceScaleShift=BtechGetResourceScaleShift(object->resourceId);
         if (BtechTestSurfacePatches(result,position,surface,object,1)) return 1;
     }
@@ -122,12 +123,12 @@ uint16_t BtechQueryWorldSurface(BtechSurfaceQueryResult *result,const BtechPosit
     uint8_t found=0;uint16_t bestPriority=0;
     for (int16_t index=0;index<objectCount;++index)
     {
-        if (index>=COMBAT_WORLD_OBJECTS || !objects[index]) abort();
+        if (index>=COMBAT_WORLD_OBJECTS || !objects[index]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: index>=COMBAT_WORLD_OBJECTS || !objects[index]");
         BtechWorldObjectPrefix *object=objects[index];
         if (!(object->renderFlags&WORLD_OBJECT_SURFACE_QUERY_CANDIDATE)) continue;
         uint16_t resource=object->resourceId;
         if (resource>=surfaceResourceBank.resourceCount || !surfaceResourceBank.surfaces
-            || !surfaceResourceBank.surfaces[resource]) abort();
+            || !surfaceResourceBank.surfaces[resource]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: resource>=surfaceResourceBank.resourceCount || !surfaceResourceBank.surfaces || !surfaceResourceBank.surfaces[resource]");
         surface=surfaceResourceBank.surfaces[resource];
         if (!surface->patchCount || (found && surface->priorityClass>bestPriority)) continue;
         resourceScaleShift=BtechGetResourceScaleShift(object->resourceId);
@@ -165,11 +166,11 @@ uint16_t BtechResolveGroundSurfaceAndSlope(BtechPooledWorldObject *object,int16_
     if (BtechQueryWorldSurface(&object->surfaceQuery,&pose->position,objects,objectCount))
     {
         surface=object->surfaceQuery.surface;
-        if (!surface) abort();
+        if (!surface) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !surface");
         if (!surface->priorityClass)
         {
             uint16_t patchIndex=object->surfaceQuery.patchIndex;
-            if (patchIndex>=surface->patchCount || !surface->patches) abort();
+            if (patchIndex>=surface->patchCount || !surface->patches) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: patchIndex>=surface->patchCount || !surface->patches");
             const BtechSurfacePatch *patch=&surface->patches[patchIndex];
             uint8_t difference=patch->orientationResponseHeading-heading;
             if (difference>=0x80) difference=(uint8_t)(0-difference);

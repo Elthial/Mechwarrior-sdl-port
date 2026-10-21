@@ -1,10 +1,11 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_render.h"
 #include <stdlib.h>
 
 /*22B6:02D2. Clear ONLY the occupied flags BYTE. Camera object/pose stay stale. */
 void BtechReleaseCameraContextFar(BtechCameraContext *camera)
 {
-    if (!camera) abort(); /* Unrepresented native near-zero corruption. */
+    if (!camera) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !camera"); /* Unrepresented native near-zero corruption. */
     camera->flags=0;
 }
 
@@ -78,7 +79,7 @@ void BtechPrepareCameraContext(BtechCameraContext *camera)
         if (activePaletteRemap) fillA=activePaletteRemap[fillA];
         uint8_t fillB=activeCameraContext->fillPaletteB;
         if (activePaletteRemap) fillB=activePaletteRemap[fillB];
-        if ((camera->flags&CAMERA_GRADIENT_BACKGROUND) && graphicsColourMode) abort(); /*2D03 alternate adapter. */
+        if ((camera->flags&CAMERA_GRADIENT_BACKGROUND) && graphicsColourMode) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (camera->flags&CAMERA_GRADIENT_BACKGROUND) && graphicsColourMode"); /*2D03 alternate adapter. */
         BtechFillTiltedCameraHorizonRegions(fillA,fillB,cameraViewOrientation[0],cameraViewOrientation[1]);
     }
 }

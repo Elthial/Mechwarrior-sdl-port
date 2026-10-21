@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_heap.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -27,7 +28,7 @@ uint16_t BtechNearHeapHeader(uint16_t offset)
     for (NearHeapHeader *header=headers;header;header=header->next)
         if (header->offset==offset) return header->value;
     fprintf(stderr,"Unrepresented near-heap header %04X\n",offset);
-    abort(); /* A header that aliases an unrepresented payload is not zero. */
+    /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("A header that aliases an unrepresented payload is not zero."); /* A header that aliases an unrepresented payload is not zero. */
 }
 void BtechSetNearHeapHeader(uint16_t offset,uint16_t value)
 {
@@ -42,7 +43,7 @@ void BtechSetNearHeapHeader(uint16_t offset,uint16_t value)
     }
     if (!selected)
     {
-        selected=malloc(sizeof(*selected));if (!selected) abort();
+        selected=malloc(sizeof(*selected));if (!selected) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !selected");
         *selected=(NearHeapHeader){headers,offset,0};headers=selected;
     }
     selected->value=value;
@@ -200,7 +201,7 @@ void *BtechAllocateNearBytes(uint16_t bytes,size_t hostBytes,BtechNearOwner owne
         link=&record->next;
     }
     NearHeapRecord *record=malloc(sizeof(*record));void *object=malloc(hostBytes?hostBytes:1);
-    if (!record || !object) abort(); /* Host representation failure is not DOS heap exhaustion. */
+    if (!record || !object) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !record || !object"); /* Host representation failure is not DOS heap exhaustion. */
     *record=(NearHeapRecord){records,object,hostBytes,offset,bytes,owner,false,false};records=record;
     return object;
 }
@@ -215,20 +216,20 @@ size_t BtechNearAllocationBytes(const void *object)
 {
     for (NearHeapRecord *record=records;record;record=record->next)
         if (record->object==object) return record->bytes;
-    abort();
+    /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Allocation size requested for an unknown near-heap object.");
 }
 bool BtechNearAllocationBytesDefined(const void *object)
 {
     for (NearHeapRecord *record=records;record;record=record->next)
         if (record->object==object) return record->bytesDefined;
-    abort();
+    /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Defined-byte count requested for an unknown near-heap object.");
 }
 uint16_t BtechNearAllocationOffset(const void *object)
 {
     if (!object) return 0;
     for (NearHeapRecord *record=records;record;record=record->next)
         if (record->object==object) return record->offset;
-    abort();
+    /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Near offset requested for an unknown heap object.");
 }
 bool BtechNearAllocationIsCurrent(const void *object)
 {
@@ -256,16 +257,16 @@ void *BtechNearAllocationOwner(const void *object,BtechNearOwner *owner,uint16_t
         }
         if ((uint16_t)(record->offset-2)<=offset
             && (uint32_t)offset<(uint32_t)record->offset+((record->bytes+1u)&0xFFFEu)+2)
-            abort(); /* Header/padding alias: never fall through to an obsolete C payload. */
+            /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (uint16_t)(record->offset-2)<=offset && (uint32_t)offset<(uint32_t)record->offset+((record->bytes+1u)&0xFFFEu)+2"); /* Header/padding alias: never fall through to an obsolete C payload. */
     }
-    abort();
+    /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Near-heap reference has no matching typed owner.");
 }
 void *BtechNearObjectAtOffset(uint16_t offset,BtechNearOwner owner)
 {
     if (!offset) return NULL;
     for (NearHeapRecord *record=records;record;record=record->next)
         if (record->offset==offset && record->owner==owner) return record->object;
-    abort(); /* A corrupt near reference to an unrelated global is not a host pointer. */
+    /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("A corrupt near reference to an unrelated global is not a host pointer."); /* A corrupt near reference to an unrelated global is not a host pointer. */
 }
 void BtechReleaseNearHeapBlock(void *object)
 {
@@ -289,13 +290,13 @@ void BtechReleaseNearHeapBlock(void *object)
                 {
                     if (address>=current->offset
                         && (uint32_t)address<(uint32_t)current->offset+((current->bytes+1u)&0xFFFEu))
-                        abort(); /* Unrepresented alignment byte. */
+                        /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: address>=current->offset && (uint32_t)address<(uint32_t)current->offset+((current->bytes+1u)&0xFFFEu)"); /* Unrepresented alignment byte. */
                     break; /* Newest allocator header, not an older payload. */
                 }
             }
             BtechReleaseNearHeapOffset(record->offset);record->released=true;return;
         }
-    abort();
+    /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Released object has no registered near-heap allocation.");
 }
 void BtechReleaseNearBlockAndProbeAllocation(void *object)
 {BtechReleaseNearHeapBlock(object);BtechAllocateNearHeapBlock(UINT16_MAX);}

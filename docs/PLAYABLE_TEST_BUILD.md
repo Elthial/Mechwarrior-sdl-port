@@ -42,6 +42,14 @@ configurations which used faster settings.
 
 ## Reporting a problem
 
+The launcher prints the location of `runtime.log` inside its private capture
+directory. A port failsafe records its reason, function, source file and line
+before stopping. Documented native CPU-fault emulation is labelled separately;
+these host aborts are not original DOS error exits. On Windows the handler also
+attempts a stack trace; frame names depend on available debugging symbols.
+Without the PowerShell launcher, retain the program's standard error output.
+An abort does not save the company or perform normal campaign shutdown.
+
 Keep the runtime log and full F12 capture set privately. Report the planet,
 contract objective, chassis, repair/rearm state, recent inputs and what happened
 before the failure. Do not upload the game installation or saves publicly.

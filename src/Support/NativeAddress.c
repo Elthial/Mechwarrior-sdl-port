@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/native_address.h"
 
 #include <stdlib.h>
@@ -16,6 +17,6 @@ void MwBindNativeSegment(uint16_t selector, uint8_t *segmentBytes)
 uint8_t *MwResolveNativeSegment(uint16_t selector)
 {
     if (nativeSegmentBytes[selector] == NULL)
-        abort();
+        /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: nativeSegmentBytes[selector] == NULL");
     return nativeSegmentBytes[selector];
 }

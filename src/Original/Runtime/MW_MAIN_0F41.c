@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/campaign_music.h"
 #include "mechwarrior/native_address.h"
 #include <stdlib.h>
@@ -20,15 +21,15 @@ void MwCampaignTimerInterrupt(void)
     }
     if (!previousPhase)
     {
-        if (!timerCallbackSlots[0]) abort(); /* Unmapped FAR tail, never a no-op. */
+        if (!timerCallbackSlots[0]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !timerCallbackSlots[0]"); /* Unmapped FAR tail, never a no-op. */
         timerCallbackSlots[0]();
         return;
     }
-    if (!mwMusicHardware.writePort) abort();
+    if (!mwMusicHardware.writePort) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwMusicHardware.writePort");
     mwMusicHardware.writePort(PIC_COMMAND_PORT,PIC_END_OF_INTERRUPT);
     if (!(previousPhase&MUSIC_TIMER_PHASE_MASK))
     {
-        if (!mwMusicHardware.setInterruptsEnabled) abort();
+        if (!mwMusicHardware.setInterruptsEnabled) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwMusicHardware.setInterruptsEnabled");
         mwMusicHardware.setInterruptsEnabled(true);
         uint16_t slot=(previousPhase&MUSIC_TIMER_COARSE_MASK)>>5;
         if (timerCallbackSlots[slot]) timerCallbackSlots[slot]();
@@ -37,7 +38,7 @@ void MwCampaignTimerInterrupt(void)
     {
         /* Native fast path attempts even0000:0000. That unmapped code target
          * is unsupported here; it is NOT a successful empty callback. */
-        if (!timerCallbackSlots[MUSIC_TIMER_FAST_SLOT]) abort();
+        if (!timerCallbackSlots[MUSIC_TIMER_FAST_SLOT]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !timerCallbackSlots[MUSIC_TIMER_FAST_SLOT]");
         timerCallbackSlots[MUSIC_TIMER_FAST_SLOT]();
     }
 }
@@ -47,7 +48,7 @@ void MwCampaignTimerInterrupt(void)
 void MwInstallMusicTimer(void)
 {
     if (!mwMusicHardware.setInterruptsEnabled || !mwMusicHardware.readIrq0Handler
-        || !mwMusicHardware.writeIrq0Handler || !mwMusicHardware.writePort) abort();
+        || !mwMusicHardware.writeIrq0Handler || !mwMusicHardware.writePort) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwMusicHardware.setInterruptsEnabled || !mwMusicHardware.readIrq0Handler || !mwMusicHardware.writeIrq0Handler || !mwMusicHardware.writePort");
     mwMusicHardware.setInterruptsEnabled(false);
     for (uint16_t slot=0;slot<MUSIC_TIMER_CALLBACK_COUNT;++slot) timerCallbackSlots[slot]=NULL;
     timerCallbackSlots[0]=mwMusicHardware.readIrq0Handler();
@@ -66,7 +67,7 @@ void MwInstallMusicTimer(void)
 void MwRestoreBiosTimer(void)
 {
     if (!mwMusicHardware.setInterruptsEnabled || !mwMusicHardware.writeIrq0Handler
-        || !mwMusicHardware.writePort) abort();
+        || !mwMusicHardware.writePort) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwMusicHardware.setInterruptsEnabled || !mwMusicHardware.writeIrq0Handler || !mwMusicHardware.writePort");
     mwMusicHardware.setInterruptsEnabled(false);
     mwMusicHardware.writeIrq0Handler(timerCallbackSlots[0]);
     mwMusicHardware.writePort(PIT_CONTROL_PORT,PIT_CHANNEL0_SQUARE_WAVE);
@@ -80,7 +81,7 @@ void MwRestoreBiosTimer(void)
 void MwTimerSetCallback(uint16_t slot,MwMusicTimerHandler handler,uint16_t rateShift)
 {
     if (slot>=MUSIC_TIMER_CALLBACK_COUNT) return;
-    if (!mwMusicHardware.setInterruptsEnabled || !mwMusicHardware.writePort) abort();
+    if (!mwMusicHardware.setInterruptsEnabled || !mwMusicHardware.writePort) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwMusicHardware.setInterruptsEnabled || !mwMusicHardware.writePort");
     mwMusicHardware.setInterruptsEnabled(false);
     timerCallbackSlots[slot]=handler;
     if (slot==MUSIC_TIMER_FAST_SLOT)
@@ -109,7 +110,7 @@ uint16_t MwSetMidiTickDenominator(uint16_t denominator)
 {
     if (denominator)
     {
-        if (!mwMusicHardware.setInterruptsEnabled) abort();
+        if (!mwMusicHardware.setInterruptsEnabled) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwMusicHardware.setInterruptsEnabled");
         mwMusicHardware.setInterruptsEnabled(false);
         midiTickDenominator=denominator;
         midiTickRemainder=0;
@@ -122,7 +123,7 @@ uint16_t MwSetMidiTickDenominator(uint16_t denominator)
 void MwSetMidiTickNumerator(uint16_t division,uint16_t tempo)
 {
     uint16_t numerator=(uint32_t)division*tempo;
-    if (!mwMusicHardware.setInterruptsEnabled) abort();
+    if (!mwMusicHardware.setInterruptsEnabled) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwMusicHardware.setInterruptsEnabled");
     mwMusicHardware.setInterruptsEnabled(false);
     midiTickNumerator=numerator;
     midiTickRemainder=0;
@@ -136,7 +137,7 @@ void MwSetMidiBeatBarDivisions(uint16_t beatScale,uint16_t denominatorScale,uint
     midiBarDivision=barDivision;
     uint16_t divisor=(uint32_t)barDivision*denominatorScale;
     uint32_t scaledBeat=(uint32_t)(MIDI_TICKS_PER_QUARTER*4)*beatScale;
-    if (!divisor || scaledBeat/divisor>UINT16_MAX) abort();
+    if (!divisor || scaledBeat/divisor>UINT16_MAX) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !divisor || scaledBeat/divisor>UINT16_MAX");
     midiBeatDivision=(uint16_t)(scaledBeat/divisor);
 }
 
@@ -272,7 +273,7 @@ void MwTickMidiTrack(void)
     if ((midiPlaybackFlags&(MIDI_TRACK_ACTIVE|MIDI_TRACK_PAUSED))!=MIDI_TRACK_ACTIVE) goto tickFinished;
     uint16_t tickUnits=midiTickRemainder+midiTickNumerator;
     uint16_t tickDenominator=midiTickDenominator;
-    if (!tickDenominator) abort();
+    if (!tickDenominator) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !tickDenominator");
     midiTickRemainder=tickUnits%tickDenominator;
     midiEventTickBalance+=tickUnits/tickDenominator;
     if (midiStateUpdateInProgress==1) goto tickFinished;
@@ -304,7 +305,7 @@ nextEvent:
     case MIDI_FORWARD_STATUS_TWO_DATA: goto forwardStatusAndTwoData;
     case MIDI_FORWARD_STATUS_ONE_DATA: goto forwardStatusAndOneData;
     case MIDI_FORWARD_CURRENT_BYTE: goto forwardCurrentByte;
-    default: abort(); /* Unmapped writable code target, not a successful event. */
+    default: /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Unmapped writable code target, not a successful event."); /* Unmapped writable code target, not a successful event. */
     }
 forwardSysexStatus:
     MwDispatchMidiByte(status);
@@ -341,7 +342,7 @@ metaEvent: ;
         uint8_t denominator=exponent<8 ? 1u<<exponent : 0;
         uint16_t signatureDivisor=(uint16_t)denominator*(uint8_t)(signature>>8);
         uint16_t signatureUnits=MIDI_TICKS_PER_QUARTER*numerator;
-        if (!signatureDivisor) abort();
+        if (!signatureDivisor) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !signatureDivisor");
         uint16_t quotient=signatureUnits/signatureDivisor;
         uint16_t remainder=signatureUnits%signatureDivisor;
         MwSetMidiBeatBarDivisions((remainder&0xFF00)|numerator,
@@ -368,11 +369,11 @@ readNextDelta: ;
         {
             uint16_t beatUnits=nextDelta+midiBeatRemainder;
             uint16_t beatDivision=midiBeatDivision;
-            if (!beatDivision) abort();
+            if (!beatDivision) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !beatDivision");
             midiBeatRemainder=beatUnits%beatDivision;
             uint16_t barUnits=beatUnits/beatDivision+midiBarRemainder;
             uint16_t barDivision=midiBarDivision;
-            if (!barDivision) abort();
+            if (!barDivision) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !barDivision");
             midiBarRemainder=barUnits%barDivision;
             midiElapsedBars+=barUnits/barDivision;
         }

@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_video.h"
 #include <stdlib.h>
 
@@ -5,11 +6,11 @@
  * No clip, page swap, map-mask reset or invented logical-pixel blit. */
 void BtechEgaCopyScreenRectangle(uint16_t x,uint16_t y,uint16_t width,uint16_t height)
 {
-    if (!btechHostWritePortWord || !btechHostReadVideoByte || !btechHostWriteVideoByte) abort();
+    if (!btechHostWritePortWord || !btechHostReadVideoByte || !btechHostWriteVideoByte) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostWritePortWord || !btechHostReadVideoByte || !btechHostWriteVideoByte");
     btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,COMBAT_EGA_WRITE_MODE_ONE);
     uint16_t end=(uint16_t)(x+width+7)&0xFFF8,first=x&0xFFF8;
     uint16_t bytes=(uint16_t)(end-first)>>3,row=(uint16_t)(y*2)>>1;
-    if (row>=COMBAT_SCREEN_HEIGHT) abort();
+    if (row>=COMBAT_SCREEN_HEIGHT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: row>=COMBAT_SCREEN_HEIGHT");
     uint16_t cursor=graphicsRowOffsets[row]+(first>>3);
     uint16_t destinationPage=drawPageSelector,sourcePage=copySourcePageSelector;
     do
@@ -37,11 +38,11 @@ void BtechEgaNoOperation(void)
  * This typed source covers forward, non-video IO buffers, not physical aliases. */
 void BtechEgaUploadPackedScreenRegion(BtechResourceAllocation source,uint16_t left,uint16_t top,uint16_t width,uint16_t height)
 {
-    if (!btechHostWritePortWord || !btechHostWritePort || !btechHostWriteVideoByte) abort();
+    if (!btechHostWritePortWord || !btechHostWritePort || !btechHostWriteVideoByte) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostWritePortWord || !btechHostWritePort || !btechHostWriteVideoByte");
     btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,COMBAT_EGA_WRITE_MODE_ZERO);
     btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,COMBAT_EGA_ALL_PIXEL_BITS);
     btechHostWritePort(COMBAT_EGA_SEQUENCER_PORT,COMBAT_EGA_SEQUENCER_MAP_MASK);
-    if (top>=COMBAT_SCREEN_HEIGHT) abort(); /* Native row-table adjacent-owner alias not represented. */
+    if (top>=COMBAT_SCREEN_HEIGHT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: top>=COMBAT_SCREEN_HEIGHT"); /* Native row-table adjacent-owner alias not represented. */
     uint16_t destination=graphicsRowOffsets[top]+(left>>3);
     uint16_t page=drawPageSelector;
     egaScreenUploadRowsRemaining=height;
@@ -54,7 +55,7 @@ void BtechEgaUploadPackedScreenRegion(BtechResourceAllocation source,uint16_t le
         uint8_t planeBits[COMBAT_EGA_PLANES]={0};
         for (uint16_t sourceWord=0;sourceWord<2;++sourceWord)
         {
-            if (!source.bytes || sourceCursor+2>source.byteCount || sourceCursor+2>0x10000) abort();
+            if (!source.bytes || sourceCursor+2>source.byteCount || sourceCursor+2>0x10000) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !source.bytes || sourceCursor+2>source.byteCount || sourceCursor+2>0x10000");
             uint16_t packedPixels=source.bytes[sourceCursor]|((uint16_t)source.bytes[sourceCursor+1]<<8);
             sourceCursor+=2;
             for (uint16_t sourceByte=0;sourceByte<2;++sourceByte)

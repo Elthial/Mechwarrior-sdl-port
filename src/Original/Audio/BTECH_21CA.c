@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_adlib.h"
 #include "mechwarrior/combat_sound.h"
 #include "mechwarrior/combat_startup.h"
@@ -72,7 +73,7 @@ uint32_t BtechCalculateAdlibRowBaseFrequency(uint16_t step,int16_t scale)
     int32_t stepProduct=(int16_t)(step*6);
     uint32_t numerator=(uint32_t)(scaleProduct+stepProduct)*(0x65BCu*2);
     int32_t denominator=(uint32_t)scaleProduct*25;
-    if (!denominator || ((int32_t)numerator==INT32_MIN && denominator==-1)) abort();
+    if (!denominator || ((int32_t)numerator==INT32_MIN && denominator==-1)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !denominator || ((int32_t)numerator==INT32_MIN && denominator==-1)");
     uint32_t ratio=(int32_t)numerator/denominator;
     numerator=(ratio<<14)*9;
     return (uint32_t)((int32_t)numerator/(0xB3*0x271));
@@ -100,7 +101,7 @@ void BtechBuildAdlibFrequencyTables(void)
 /* 21CA:0808. Parameters are thirteen low BYTEs of actual caller WORDs. */
 void BtechStoreAdlibInstrumentParameters(uint16_t operatorIndex,const int16_t *parameters,uint16_t waveform)
 {
-    if (operatorIndex>=BTECH_OPL_OPERATORS) abort();
+    if (operatorIndex>=BTECH_OPL_OPERATORS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: operatorIndex>=BTECH_OPL_OPERATORS");
     uint8_t *destination=(uint8_t *)&combatAdlibOperators[operatorIndex];
     for (unsigned parameter=0;parameter<BTECH_OPL_PARAMETER_BYTES;++parameter) destination[parameter]=(uint8_t)parameters[parameter];
     combatAdlibOperators[operatorIndex].waveform=(uint8_t)(waveform&3);
@@ -124,7 +125,7 @@ void BtechApplyAdlibInstrumentRegisters(uint16_t operatorIndex)
 /* 21CA:0958. MUL discards DX before rounding and unsigned division. */
 void BtechWriteAdlibOperatorLevel(uint16_t operatorIndex)
 {
-    if (operatorIndex>=BTECH_OPL_OPERATORS) abort();
+    if (operatorIndex>=BTECH_OPL_OPERATORS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: operatorIndex>=BTECH_OPL_OPERATORS");
     BtechAdlibOperator *parameters=&combatAdlibOperators[operatorIndex];
     uint16_t amplitude=0x3F-(parameters->attenuation&0x3F);
     uint16_t product=amplitude*(uint16_t)(int8_t)combatAdlibLevels[operatorIndex];
@@ -137,7 +138,7 @@ void BtechWriteAdlibNoteSelect(void) {BtechWriteAdlibRegister(8,combatAdlibNoteS
 /* 21CA:09E2. Only modulators own the channel connection register. */
 void BtechWriteAdlibFeedbackAndConnection(uint16_t operatorIndex)
 {
-    if (operatorIndex>=BTECH_OPL_OPERATORS) abort();
+    if (operatorIndex>=BTECH_OPL_OPERATORS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: operatorIndex>=BTECH_OPL_OPERATORS");
     if (combatAdlibCarrierFlags[operatorIndex]) return;
     BtechAdlibOperator *parameters=&combatAdlibOperators[operatorIndex];
     uint16_t feedback=(uint16_t)(int8_t)parameters->feedback<<1;
@@ -147,7 +148,7 @@ void BtechWriteAdlibFeedbackAndConnection(uint16_t operatorIndex)
 /* 21CA:0A34. */
 void BtechWriteAdlibAttackDecay(uint16_t operatorIndex)
 {
-    if (operatorIndex>=BTECH_OPL_OPERATORS) abort();
+    if (operatorIndex>=BTECH_OPL_OPERATORS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: operatorIndex>=BTECH_OPL_OPERATORS");
     BtechAdlibOperator *parameters=&combatAdlibOperators[operatorIndex];
     uint16_t envelope=(uint16_t)((uint16_t)(int8_t)parameters->attack<<4)|(parameters->decay&0x0F);
     BtechWriteAdlibRegister((int8_t)combatAdlibRegisterOffsets[operatorIndex]+0x60,envelope);
@@ -155,7 +156,7 @@ void BtechWriteAdlibAttackDecay(uint16_t operatorIndex)
 /* 21CA:0A7C. */
 void BtechWriteAdlibSustainRelease(uint16_t operatorIndex)
 {
-    if (operatorIndex>=BTECH_OPL_OPERATORS) abort();
+    if (operatorIndex>=BTECH_OPL_OPERATORS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: operatorIndex>=BTECH_OPL_OPERATORS");
     BtechAdlibOperator *parameters=&combatAdlibOperators[operatorIndex];
     uint16_t envelope=(uint16_t)((uint16_t)(int8_t)parameters->sustainLevel<<4)|(parameters->release&0x0F);
     BtechWriteAdlibRegister((int8_t)combatAdlibRegisterOffsets[operatorIndex]+0x80,envelope);
@@ -163,7 +164,7 @@ void BtechWriteAdlibSustainRelease(uint16_t operatorIndex)
 /* 21CA:0AC4. */
 void BtechWriteAdlibOperatorModeMultiplier(uint16_t operatorIndex)
 {
-    if (operatorIndex>=BTECH_OPL_OPERATORS) abort();
+    if (operatorIndex>=BTECH_OPL_OPERATORS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: operatorIndex>=BTECH_OPL_OPERATORS");
     BtechAdlibOperator *parameters=&combatAdlibOperators[operatorIndex];
     uint16_t mode=(parameters->tremoloEnabled?0x80:0)+(parameters->vibratoEnabled?0x40:0)
         +(parameters->sustainEnabled?0x20:0)+(parameters->keyScaleRateEnabled?0x10:0)+(parameters->frequencyMultiplier&0x0F);
@@ -179,20 +180,20 @@ void BtechWriteAdlibRhythmDepthState(void)
 /* 21CA:0BA0. */
 void BtechWriteAdlibOperatorWaveform(uint16_t operatorIndex)
 {
-    if (operatorIndex>=BTECH_OPL_OPERATORS) abort();
+    if (operatorIndex>=BTECH_OPL_OPERATORS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: operatorIndex>=BTECH_OPL_OPERATORS");
     BtechWriteAdlibRegister((int8_t)combatAdlibRegisterOffsets[operatorIndex]+BTECH_OPL_WAVEFORM_REGISTER,
         combatAdlibWaveforms?(combatAdlibOperators[operatorIndex].waveform&3):0);
 }
 /* 21CA:0BE4. Keep original note/key bytes, then transpose and signed clamp. */
 void BtechSetAdlibChannelNoteAndKeyState(uint16_t channel,uint16_t note,uint16_t keyOn)
 {
-    if (channel>=BTECH_OPL_CHANNELS) abort();
+    if (channel>=BTECH_OPL_CHANNELS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: channel>=BTECH_OPL_CHANNELS");
     combatAdlibKeys[channel]=(uint8_t)keyOn;combatAdlibNotes[channel]=(uint8_t)note;
     note+=combatAdlibTransposes[channel];
     if ((int16_t)note>95) note=95;
     if ((int16_t)note<0) note=0;
     int16_t pitch=(int8_t)combatAdlibPitchClasses[note];
-    if (!combatAdlibFrequencyRows[channel] || pitch<0 || pitch>=BTECH_OPL_SEMITONES) abort();
+    if (!combatAdlibFrequencyRows[channel] || pitch<0 || pitch>=BTECH_OPL_SEMITONES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !combatAdlibFrequencyRows[channel] || pitch<0 || pitch>=BTECH_OPL_SEMITONES");
     uint16_t frequency=combatAdlibFrequencyRows[channel][pitch];
     BtechWriteAdlibRegister(channel+BTECH_OPL_FREQUENCY_LOW,frequency);
     uint16_t key=keyOn?BTECH_OPL_KEY_ON:0;
@@ -205,7 +206,7 @@ void BtechClearAdlibChannelFrequency(uint16_t channel)
 /* 21CA:0CAE. Index and data precede all six reads; final status is the return. */
 uint16_t BtechWriteAdlibRegister(uint16_t index,uint16_t value)
 {
-    if (!btechHostWritePort || !btechHostReadPort) abort();
+    if (!btechHostWritePort || !btechHostReadPort) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostWritePort || !btechHostReadPort");
     btechHostWritePort(ADLIB_INDEX_PORT,(uint8_t)index);btechHostWritePort(ADLIB_DATA_PORT,(uint8_t)value);
     for (unsigned delay=0;delay<5;++delay) btechHostReadPort(ADLIB_INDEX_PORT);
     return btechHostReadPort(ADLIB_INDEX_PORT);
@@ -218,7 +219,7 @@ void BtechSetAdlibMidiNote(uint16_t channel,int16_t note,uint16_t velocity)
 {
     if (channel>9) return;
     --channel;
-    if (channel>=BTECH_OPL_CHANNELS) abort(); /* Native channel zero aliases another owner. */
+    if (channel>=BTECH_OPL_CHANNELS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: channel>=BTECH_OPL_CHANNELS"); /* Native channel zero aliases another owner. */
     if (!velocity)
     {
         if (combatAdlibRhythm && channel>=6)
@@ -270,7 +271,7 @@ void BtechLoadAdlibChannelInstrument(uint16_t channel,const BtechAdlibWordInstru
     if (!combatAdlibRhythm || (int16_t)channel<BTECH_OPL_FIRST_RHYTHM_CHANNEL)
     {
         uint16_t mapping=channel*2;
-        if (mapping>=sizeof(combatAdlibOperatorMapping)-1) abort();
+        if (mapping>=sizeof(combatAdlibOperatorMapping)-1) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mapping>=sizeof(combatAdlibOperatorMapping)-1");
         BtechStoreAdlibInstrumentParameters((int8_t)combatAdlibOperatorMapping[mapping],instrument->modulator,firstWaveform);
         BtechStoreAdlibInstrumentParameters((int8_t)combatAdlibOperatorMapping[mapping+1],instrument->carrier,secondWaveform);
     }
@@ -282,7 +283,7 @@ void BtechLoadAdlibChannelInstrument(uint16_t channel,const BtechAdlibWordInstru
     else
     {
         uint16_t mapping=BTECH_OPL_RHYTHM_MAPPING_START+channel*2;
-        if (mapping>=sizeof(combatAdlibOperatorMapping)) abort();
+        if (mapping>=sizeof(combatAdlibOperatorMapping)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mapping>=sizeof(combatAdlibOperatorMapping)");
         BtechStoreAdlibInstrumentParameters((int8_t)combatAdlibOperatorMapping[mapping],instrument->modulator,firstWaveform);
     }
 }
@@ -293,9 +294,9 @@ void BtechSetAdlibChannelOperatorLevel(uint16_t channel,uint16_t level)
     uint16_t mapping;
     if (!combatAdlibRhythm || (int16_t)channel<BTECH_OPL_FIRST_RHYTHM_CHANNEL) mapping=(uint16_t)(1+channel*2);
     else mapping=(uint16_t)(BTECH_OPL_RHYTHM_MAPPING_START+channel*2+(channel==BTECH_OPL_FIRST_RHYTHM_CHANNEL?1:0));
-    if (mapping>=sizeof(combatAdlibOperatorMapping)) abort();
+    if (mapping>=sizeof(combatAdlibOperatorMapping)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mapping>=sizeof(combatAdlibOperatorMapping)");
     uint16_t operatorIndex=(int8_t)combatAdlibOperatorMapping[mapping];
-    if (operatorIndex>=BTECH_OPL_OPERATORS) abort();
+    if (operatorIndex>=BTECH_OPL_OPERATORS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: operatorIndex>=BTECH_OPL_OPERATORS");
     if (level>BTECH_OPL_LEVEL_MAXIMUM) level=BTECH_OPL_LEVEL_MAXIMUM;
     combatAdlibLevels[operatorIndex]=(uint8_t)level;BtechWriteAdlibOperatorLevel(operatorIndex);
 }
@@ -306,7 +307,7 @@ void BtechSetAdlibChannelPitchBend(uint16_t channel,uint16_t bend)
     if (combatAdlibRhythm && channel>BTECH_OPL_FIRST_RHYTHM_CHANNEL) return;
     if (bend>BTECH_OPL_BEND_MAXIMUM) bend=BTECH_OPL_BEND_MAXIMUM;
     BtechUpdateAdlibPitchBend(channel,bend);
-    if (channel>=BTECH_OPL_CHANNELS) abort();
+    if (channel>=BTECH_OPL_CHANNELS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: channel>=BTECH_OPL_CHANNELS");
     uint16_t key=(int8_t)combatAdlibKeys[channel];
     uint16_t note=(int8_t)combatAdlibNotes[channel];
     BtechSetAdlibChannelNoteAndKeyState(channel,note,key);
@@ -317,13 +318,13 @@ void BtechStopAdlibMidiChannel(uint16_t channel)
 {
     if (!combatAdlibRhythm || channel<BTECH_OPL_FIRST_RHYTHM_CHANNEL)
     {
-        if (channel>=BTECH_OPL_CHANNELS) abort();
+        if (channel>=BTECH_OPL_CHANNELS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: channel>=BTECH_OPL_CHANNELS");
         uint16_t note=(int8_t)combatAdlibNotes[channel];
         BtechSetAdlibChannelNoteAndKeyState((uint16_t)(channel-1),note,0);
     }
     else
     {
-        if (channel>=sizeof(combatAdlibNoteReferences.fields.percussionMasks)) abort();
+        if (channel>=sizeof(combatAdlibNoteReferences.fields.percussionMasks)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: channel>=sizeof(combatAdlibNoteReferences.fields.percussionMasks)");
         combatAdlibPercussionKeys&=(uint8_t)~combatAdlibNoteReferences.fields.percussionMasks[channel];
         BtechWriteAdlibRhythmDepthState();
     }
@@ -334,7 +335,7 @@ void BtechUpdateAdlibPitchBend(uint16_t channel,uint16_t bend)
 {
     int16_t centered=bend-BTECH_OPL_BEND_CENTER;
     int32_t scaled=(int32_t)centered*(int16_t)combatAdlibBendScale;
-    if (channel>=BTECH_OPL_TUNING_CHANNELS) abort();
+    if (channel>=BTECH_OPL_TUNING_CHANNELS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: channel>=BTECH_OPL_TUNING_CHANNELS");
     if (scaled==combatAdlibCachedScaledBend)
     {
         combatAdlibFrequencyRows[channel]=combatAdlibCachedFrequencyRow;
@@ -356,7 +357,7 @@ void BtechUpdateAdlibPitchBend(uint16_t channel,uint16_t bend)
         remainder=(uint16_t)(steps%BTECH_OPL_BEND_STEPS_PER_NOTE);
     }
     combatAdlibTransposes[channel]=transpose;combatAdlibCachedTranspose=transpose;
-    if (remainder>=BTECH_OPL_FREQUENCY_ROWS) abort(); /* Unrepresented native row alias, after transpose stores. */
+    if (remainder>=BTECH_OPL_FREQUENCY_ROWS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: remainder>=BTECH_OPL_FREQUENCY_ROWS"); /* Unrepresented native row alias, after transpose stores. */
     combatAdlibFrequencyRows[channel]=combatAdlibFrequencies[remainder];
     combatAdlibCachedFrequencyRow=combatAdlibFrequencies[remainder];combatAdlibCachedScaledBend=scaled;
 }

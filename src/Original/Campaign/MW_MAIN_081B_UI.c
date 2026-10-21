@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/campaign_continuations.h"
 #include "mechwarrior/campaign_ui.h"
 #include "mechwarrior/ega_campaign.h"
@@ -28,16 +29,16 @@ uint16_t MwCampaignUiEventLoop(void)
             if (uiIdleCodeOffset==CAMPAIGN_CALLBACK_MECH_SERVICE_IDLE) MwAnimateMechServiceIdle();
             else
             {
-                if (!campaignNearCallback) abort();
+                if (!campaignNearCallback) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !campaignNearCallback");
                 campaignNearCallback(uiIdleCodeOffset);
             }
         }
         uint16_t key;
         if (!MwPollNavigationKeyFromMouseOrJoystick(&key))
         {
-            if (!mwCampaignInput.keyboardAvailable) abort();
+            if (!mwCampaignInput.keyboardAvailable) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwCampaignInput.keyboardAvailable");
             if (!mwCampaignInput.keyboardAvailable()) continue;
-            if (!mwCampaignInput.readKeyboard) abort();
+            if (!mwCampaignInput.readKeyboard) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwCampaignInput.readKeyboard");
             key=mwCampaignInput.readKeyboard();
         }
         if (key==CAMPAIGN_KEY_CALIBRATE) { MwCalibrateJoystickA();continue; }
@@ -116,7 +117,7 @@ uint16_t MwCampaignUiEventLoop(void)
                 case CAMPAIGN_CONTINUE_EVENT_COMBAT:codeOffset=MwPrepareEventSpecialCombatContinuation();break;
                 case CAMPAIGN_CONTINUE_INITIALIZE_COMPANY:codeOffset=MwRunCopyProtectionAndInitializeCampaign(codeOffset);break;
                 case CAMPAIGN_CONTINUE_EVENT_COMBAT_RETURN: /* STC/RET; the mapped6236 caller ignores CF. */
-                    if (campaignEventReturnContinuation!=CAMPAIGN_CONTINUE_NEXT_EVENT) abort();
+                    if (campaignEventReturnContinuation!=CAMPAIGN_CONTINUE_NEXT_EVENT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: campaignEventReturnContinuation!=CAMPAIGN_CONTINUE_NEXT_EVENT");
                     codeOffset=campaignEventReturnContinuation;break;
                 case CAMPAIGN_CONTINUE_NEXT_EVENT:
                     codeOffset=MwDispatchCampaignEvents(campaignEventClass,codeOffset);
@@ -124,7 +125,7 @@ uint16_t MwCampaignUiEventLoop(void)
                     {
                         codeOffset=campaignEventDispatchReturnContinuation;
                         campaignEventDispatchReturnContinuation=0;
-                        if (!codeOffset) abort(); /* Unrepresented outer caller frame. */
+                        if (!codeOffset) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !codeOffset"); /* Unrepresented outer caller frame. */
                     }
                     break;
                 case CAMPAIGN_CONTINUE_OWNED_MECH_LIST:codeOffset=MwOpenOwnedMechList();break;
@@ -152,7 +153,7 @@ uint16_t MwCampaignUiEventLoop(void)
                 case CAMPAIGN_CALLBACK_REPAIR_MECH_COMPONENT:codeOffset=MwRepairSelectedMechComponentCallback();break;
                 case CAMPAIGN_CALLBACK_REPAIR_ALL_COMPONENTS:codeOffset=MwRepairAllSelectedMechComponentsCallback();break;
                 default:
-                    if (!campaignNearCallback) abort();
+                    if (!campaignNearCallback) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !campaignNearCallback");
                     campaignNearCallback(codeOffset); /* A bound ordinary native CALL. */
                     codeOffset=0;
                     break;
@@ -167,7 +168,7 @@ uint16_t MwCampaignUiEventLoop(void)
         default:
             if (key==CAMPAIGN_KEY_ESCAPE)
             {
-                if (!mwCampaignInput.readKeyboardShiftFlags) abort();
+                if (!mwCampaignInput.readKeyboardShiftFlags) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwCampaignInput.readKeyboardShiftFlags");
                 if (mwCampaignInput.readKeyboardShiftFlags()&BIOS_SHIFT_CONTROL)
                 {
                     return CAMPAIGN_CONTINUE_CLEANUP;
@@ -187,9 +188,9 @@ uint16_t MwCampaignUiEventLoop(void)
         if (selectionTransfer==CAMPAIGN_CONTINUE_TRAVEL_MAP)
         {
             selectionTransfer=MwEnterTravelMapMenuContinuation();
-            if (selectionTransfer!=CAMPAIGN_CONTINUE_UI) abort();
+            if (selectionTransfer!=CAMPAIGN_CONTINUE_UI) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: selectionTransfer!=CAMPAIGN_CONTINUE_UI");
         }
-        else if (selectionTransfer!=0) abort();
+        else if (selectionTransfer!=0) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: selectionTransfer!=0");
     }
 }
 
@@ -215,7 +216,7 @@ void MwDrawStoredPicturePanelBorder(void)
 {
     if (panelWidth < PANEL_HORIZONTAL_TILE_PIXELS) return;
     uint16_t horizontalTiles = panelWidth / PANEL_HORIZONTAL_TILE_PIXELS;
-    if (horizontalTiles > UINT8_MAX) abort(); /* Native DIV BL faults before drawing. */
+    if (horizontalTiles > UINT8_MAX) /* Port emulation of a native CPU fault. */ MW_NATIVE_FAULT("Rejected condition: horizontalTiles > UINT8_MAX"); /* Native DIV BL faults before drawing. */
     uint16_t x = panelOriginX, tilesRemaining = horizontalTiles;
     do
     {
@@ -236,7 +237,7 @@ void MwDrawStoredPicturePanelBorder(void)
         EGA_DISPLAY_PAGE,panelBorderPictureBase + PANEL_BOTTOM_TILE);
     if (panelHeight < PANEL_VERTICAL_TILE_PIXELS) return;
     uint16_t verticalTiles = panelHeight / PANEL_VERTICAL_TILE_PIXELS;
-    if (verticalTiles > UINT8_MAX) abort(); /* Horizontal writes survive native DIV fault. */
+    if (verticalTiles > UINT8_MAX) /* Port emulation of a native CPU fault. */ MW_NATIVE_FAULT("Rejected condition: verticalTiles > UINT8_MAX"); /* Horizontal writes survive native DIV fault. */
     uint16_t y = panelOriginY; tilesRemaining = verticalTiles;
     do
     {
@@ -359,7 +360,7 @@ void MwShowPendingNotifications(void)
             &text,notificationTextOffsets[slot]);
         /* Native mode1 would RET through the saved slot WORD instead of6146.
          * That startup/code continuation is outside this compiled slice. */
-        if (result.discardReturnWord) abort();
+        if (result.discardReturnWord) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: result.discardReturnWord");
         notificationPending[slot] = 0;
     }
 }
@@ -368,7 +369,7 @@ uint16_t MwSelectUiRecordTable(uint16_t selectedIndex, MwUiMenu *menu)
 {
     if (mouseInstalled != 0)
     {
-        if (mwCampaignInput.resetMouse == NULL) abort();
+        if (mwCampaignInput.resetMouse == NULL) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mwCampaignInput.resetMouse == NULL");
         mwCampaignInput.resetMouse();
     }
     uiMenu = menu;
@@ -389,7 +390,7 @@ uint16_t MwSelectUiRecord(uint16_t selectedIndex)
         else if (callback==CAMPAIGN_CALLBACK_SELECT_TRAVEL_MAP_PLANET) return MwHandleTravelMapSelection();
         else
         {
-            if (campaignNearCallback == NULL) abort();
+            if (campaignNearCallback == NULL) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: campaignNearCallback == NULL");
             campaignNearCallback(callback);
         }
     }
@@ -417,7 +418,7 @@ void MwPresentUiRecord(uint16_t x, uint16_t y, const MwUiRecord *record)
 {
     if (record->textRecord != 0)
     {
-        if (!record->text || !record->textColour) abort();
+        if (!record->text || !record->textColour) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !record->text || !record->textColour");
         MwNativeByteView text = { (const uint8_t *)record->text, 0, (uint32_t)strlen(record->text)+1 };
         EgaDrawTransparentText(x,y,*record->textColour,&text,0);
     }
@@ -430,7 +431,7 @@ MwUiRecord *MwGetSelectedUiRecord(void)
 {
     uint16_t byteOffset = selectedUiRecordIndex * CAMPAIGN_UI_RECORD_BYTES;
     if (!uiMenu || byteOffset % CAMPAIGN_UI_RECORD_BYTES != 0
-        || byteOffset / CAMPAIGN_UI_RECORD_BYTES >= uiMenu->recordCount) abort();
+        || byteOffset / CAMPAIGN_UI_RECORD_BYTES >= uiMenu->recordCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !uiMenu || byteOffset % CAMPAIGN_UI_RECORD_BYTES != 0 || byteOffset / CAMPAIGN_UI_RECORD_BYTES >= uiMenu->recordCount");
     return &uiMenu->records[byteOffset / CAMPAIGN_UI_RECORD_BYTES];
 }
 /* MW_MAIN081B:0960..0979. FF probing precedes the caller's sentinel test. */
@@ -439,11 +440,11 @@ bool MwIsUiRecordDisabled(uint16_t recordIndex)
     if (recordIndex==UI_NO_NEIGHBOUR)
     {
         if (uiMenu->sentinelEnabled) return *uiMenu->sentinelEnabled==0;
-        if (!uiMenu->sentinelEnabledWord) abort();
+        if (!uiMenu->sentinelEnabledWord) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !uiMenu->sentinelEnabledWord");
         return (uint8_t)(*uiMenu->sentinelEnabledWord>>uiMenu->sentinelEnabledShift)==0;
     }
     uint16_t byteOffset=recordIndex*CAMPAIGN_UI_RECORD_BYTES;
-    if (byteOffset%CAMPAIGN_UI_RECORD_BYTES!=0 || byteOffset/CAMPAIGN_UI_RECORD_BYTES>=uiMenu->recordCount) abort();
+    if (byteOffset%CAMPAIGN_UI_RECORD_BYTES!=0 || byteOffset/CAMPAIGN_UI_RECORD_BYTES>=uiMenu->recordCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: byteOffset%CAMPAIGN_UI_RECORD_BYTES!=0 || byteOffset/CAMPAIGN_UI_RECORD_BYTES>=uiMenu->recordCount");
     return uiMenu->records[byteOffset/CAMPAIGN_UI_RECORD_BYTES].enabled==0;
 }
 /* MW_MAIN081B:097A..09B1. Retain tick equality and live fields after waits. */
@@ -455,14 +456,14 @@ void MwFlashActivatedUiRecord(const MwUiRecord *record)
         MwPresentUiRecord(record->x,record->y,record);
         while (campaignTimerTicks != targetTick)
         {
-            if (mwCampaignInput.waitForInterrupt == NULL) abort();
+            if (mwCampaignInput.waitForInterrupt == NULL) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mwCampaignInput.waitForInterrupt == NULL");
             mwCampaignInput.waitForInterrupt();
         }
         targetTick++;
         MwCaptureAndDrawUiRecord(record->x,record->y,record->pictureIndex,record);
         while (campaignTimerTicks != targetTick)
         {
-            if (mwCampaignInput.waitForInterrupt == NULL) abort();
+            if (mwCampaignInput.waitForInterrupt == NULL) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mwCampaignInput.waitForInterrupt == NULL");
             mwCampaignInput.waitForInterrupt();
         }
     }

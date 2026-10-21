@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_render.h"
 #include "mechwarrior/combat_world.h"
 #include <stdlib.h>
@@ -18,7 +19,7 @@ uint32_t BtechDotProductSignedWordVectors(const uint16_t first[3],const uint16_t
 /*22B6:272A. Code-owned BYTE flags, normal forward REP STOSW and odd tail. */
 void BtechClearGeometryVectorCacheFlags(void)
 {
-    if (renderGeometryVectorCount>sizeof(vertexNearPlaneState)) abort(); /* Unrelated CS-owner overwrite, not extra cache slots. */
+    if (renderGeometryVectorCount>sizeof(vertexNearPlaneState)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: renderGeometryVectorCount>sizeof(vertexNearPlaneState)"); /* Unrelated CS-owner overwrite, not extra cache slots. */
     uint16_t destination=0;
     for (uint16_t words=renderGeometryVectorCount>>1;words;--words)
     {vertexNearPlaneState[destination++]=0;vertexNearPlaneState[destination++]=0;}
@@ -37,7 +38,7 @@ void BtechPrepareRenderResourceEntries(uint16_t resourceId,const uint8_t *entryV
     int16_t entryCount=activeRenderHeader->entryCount;
     for (int16_t entryIndex=0;entryIndex<entryCount;++entryIndex)
     {
-        if (entryIndex>=RENDER_ENTRY_PREFIX_CAPACITY) abort(); /* Native keys overlap7538; no padded allocation. */
+        if (entryIndex>=RENDER_ENTRY_PREFIX_CAPACITY) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: entryIndex>=RENDER_ENTRY_PREFIX_CAPACITY"); /* Native keys overlap7538; no padded allocation. */
         orderedRenderEntries[entryIndex]=activeRenderEntry;
         activeEntryGeometry=activeRenderEntry->vectors;
         const uint16_t *vector=activeEntryGeometry[activeRenderEntry->firstVectorIndex];
@@ -76,7 +77,7 @@ void BtechPrepareRenderResourceEntries(uint16_t resourceId,const uint8_t *entryV
     if (sharedGeometry)
     {
         activeRenderEntry=orderedRenderEntries[0]; /* Retained entry zero even when count<=0. */
-        if (!activeRenderEntry) abort(); /* Unsupported native null-near alias. */
+        if (!activeRenderEntry) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !activeRenderEntry"); /* Unsupported native null-near alias. */
         renderGeometry=activeRenderEntry->vectors;
         renderGeometryVectorCount=activeRenderEntry->vectorCount;
         BtechClearGeometryVectorCacheFlags();
@@ -103,8 +104,8 @@ void BtechPrepareRenderResourceEntries(uint16_t resourceId,const uint8_t *entryV
         {
         case RENDER_PRIMITIVE_POLYGON: BtechDrawPolygonPayload(&activePrimitiveRecord->polygonPayload);break;
         case RENDER_PRIMITIVE_ELLIPSE: BtechDrawReferencePointEllipse(&activePrimitiveRecord->ellipsePayload);break;
-        case RENDER_PRIMITIVE_ORIGIN_PICTURE: abort(); /*176E. */
-        case RENDER_PRIMITIVE_REFERENCE_PICTURE: abort(); /*1862. */
+        case RENDER_PRIMITIVE_ORIGIN_PICTURE: /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Render resource uses an unsupported origin-picture primitive."); /*176E. */
+        case RENDER_PRIMITIVE_REFERENCE_PICTURE: /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Render resource uses an unsupported reference-picture primitive."); /*1862. */
         } /* Other native BYTE kinds really are skipped. No returning renderer seam. */
     }
 }

@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/ega_campaign.h"
 #include "mechwarrior/dos_files.h"
 #include <stdlib.h>
@@ -15,7 +16,7 @@ void (*egaSetPaletteTable)(const uint8_t *paletteCodes);
 /* MW_EGA0800:003D..0057. Scanline generation is a separate ordinal01. */
 void EgaInitializeGraphics(void)
 {
-    if (!egaSetVideoMode || !egaSetPaletteRegister) abort();
+    if (!egaSetVideoMode || !egaSetPaletteRegister) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !egaSetVideoMode || !egaSetPaletteRegister");
     egaSetVideoMode(EGA_BIOS_MODE_320X200);
     EgaClearDrawPage(1);
     egaSetPaletteRegister(Campaign_Pal_EGA_Black,EGA_PALETTE_BLACK);
@@ -25,12 +26,12 @@ void EgaInitializeGraphics(void)
 /* MW_EGA0800:13CE..13D9;13DA..13DE is the alternate entry. */
 void EgaLoadDefaultPalette(void)
 {
-    if (!egaSetPaletteTable) abort();
+    if (!egaSetPaletteTable) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !egaSetPaletteTable");
     egaSetPaletteTable(defaultPaletteCodes);
 }
 void EgaLoadAlternatePalette(void)
 {
-    if (!egaSetPaletteTable) abort();
+    if (!egaSetPaletteTable) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !egaSetPaletteTable");
     egaSetPaletteTable(alternatePaletteCodes);
 }
 
@@ -75,13 +76,13 @@ bool EgaDosOpenFontFile(uint16_t filenameOffset, uint16_t *handleOrError)
     {
         filename[filenameBytes] = (char)EgaReadOverlayByte((uint16_t)(filenameOffset + filenameBytes));
     } while (filename[filenameBytes++] != 0 && filenameBytes < EGA_DATA_BYTE_COUNT);
-    if (filename[filenameBytes - 1] != 0) abort(); /* Unsupported unterminated DOS name. */
+    if (filename[filenameBytes - 1] != 0) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: filename[filenameBytes - 1] != 0"); /* Unsupported unterminated DOS name. */
     return mwDosFiles.openReadWrite(filename, handleOrError);
 }
 /* MW_EGA 0800:10C1..10C7: INT21/3F. AX's byte count is not tested by its caller. */
 bool EgaDosReadFontFile(uint16_t bufferOffset, uint16_t byteCount, uint16_t fileHandle)
 {
-    if ((uint32_t)bufferOffset + byteCount > EGA_DATA_BYTE_COUNT) abort(); /* Unsupported DOS transfer window. */
+    if ((uint32_t)bufferOffset + byteCount > EGA_DATA_BYTE_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (uint32_t)bufferOffset + byteCount > EGA_DATA_BYTE_COUNT"); /* Unsupported DOS transfer window. */
     uint16_t bytesReadOrError;
     bool readFailed;
     if (bufferOffset >= EGA_SMALL_FONT_BITMAP
@@ -96,7 +97,7 @@ bool EgaDosReadFontFile(uint16_t bufferOffset, uint16_t byteCount, uint16_t file
          * partial/error writes, then scatter back into the canonical owners.
          * This temporary IO window is not persistent game state or a DS mirror. */
         uint8_t *transferBuffer = malloc(byteCount != 0 ? byteCount : 1);
-        if (transferBuffer == NULL) abort();
+        if (transferBuffer == NULL) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: transferBuffer == NULL");
         for (uint32_t byteIndex = 0; byteIndex < byteCount; ++byteIndex)
             transferBuffer[byteIndex] = EgaReadOverlayByte((uint16_t)(bufferOffset + byteIndex));
         readFailed = mwDosFiles.read(transferBuffer, byteCount, fileHandle, &bytesReadOrError);
@@ -107,7 +108,7 @@ bool EgaDosReadFontFile(uint16_t bufferOffset, uint16_t byteCount, uint16_t file
     /* A long second font can overwrite the executing loader's machine code.
      * Compiled C cannot pretend to execute those changed opcodes. The bytes
      * have been written, but this native self-modification is unsupported. */
-    if (!readFailed && bytesReadOrError != 0 && (uint32_t)bufferOffset + bytesReadOrError > EGA_FONT_DATA_END) abort();
+    if (!readFailed && bytesReadOrError != 0 && (uint32_t)bufferOffset + bytesReadOrError > EGA_FONT_DATA_END) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !readFailed && bytesReadOrError != 0 && (uint32_t)bufferOffset + bytesReadOrError > EGA_FONT_DATA_END");
     return readFailed;
 }
 /* MW_EGA 0800:10C8..10CE: INT21/3E. */
@@ -167,7 +168,7 @@ void EgaFillRectangleOnPage(uint16_t x, uint16_t y, uint16_t width, uint16_t hei
             uint8_t mask = byteIndex == 0 ? firstByteMask
                 : byteIndex == interiorBytes + 1 ? lastByteMask : 0xFF;
             uint32_t apertureByte = pageOffset + destinationOffset;
-            if (apertureByte >= EGA_DATA_BYTE_COUNT) abort(); /* Unsupported aperture, not a native bounds check. */
+            if (apertureByte >= EGA_DATA_BYTE_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: apertureByte >= EGA_DATA_BYTE_COUNT"); /* Unsupported aperture, not a native bounds check. */
             uint8_t *pixels = &egaVideoPixels[apertureByte * EGA_PIXELS_PER_BYTE];
             for (uint8_t pixel = 0; pixel < EGA_PIXELS_PER_BYTE; ++pixel)
                 if (mask & (EGA_BYTE_HIGH_BIT >> pixel)) pixels[pixel] = (uint8_t)rectangleColour & EGA_NIBBLE_MASK;
@@ -199,7 +200,7 @@ void EgaCopyDrawPageToDisplay(uint16_t x, uint16_t y, uint16_t width, uint16_t h
         do
         {
             uint32_t sourceByte = sourcePage + copyOffset, destinationByte = destinationPage + copyOffset;
-            if (sourceByte >= EGA_DATA_BYTE_COUNT || destinationByte >= EGA_DATA_BYTE_COUNT) abort();
+            if (sourceByte >= EGA_DATA_BYTE_COUNT || destinationByte >= EGA_DATA_BYTE_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: sourceByte >= EGA_DATA_BYTE_COUNT || destinationByte >= EGA_DATA_BYTE_COUNT");
             uint8_t latchedPixels[EGA_PIXELS_PER_BYTE];
             for (uint8_t pixel = 0; pixel < EGA_PIXELS_PER_BYTE; ++pixel)
                 latchedPixels[pixel] = egaVideoPixels[sourceByte * EGA_PIXELS_PER_BYTE + pixel];
@@ -229,7 +230,7 @@ void EgaCopyDisplayToDrawPage(uint16_t x, uint16_t y, uint16_t width, uint16_t h
         do
         {
             uint32_t sourceByte = sourcePage + copyOffset, destinationByte = destinationPage + copyOffset;
-            if (sourceByte >= EGA_DATA_BYTE_COUNT || destinationByte >= EGA_DATA_BYTE_COUNT) abort();
+            if (sourceByte >= EGA_DATA_BYTE_COUNT || destinationByte >= EGA_DATA_BYTE_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: sourceByte >= EGA_DATA_BYTE_COUNT || destinationByte >= EGA_DATA_BYTE_COUNT");
             uint8_t latchedPixels[EGA_PIXELS_PER_BYTE];
             for (uint8_t pixel = 0; pixel < EGA_PIXELS_PER_BYTE; ++pixel)
                 latchedPixels[pixel] = egaVideoPixels[sourceByte * EGA_PIXELS_PER_BYTE + pixel];
@@ -286,7 +287,7 @@ uint16_t EgaDrawPackedSprite(uint16_t x, uint16_t y, uint8_t targetPage,
                 if (color != 0)
                 {
                     uint32_t apertureByte = pageByteOffset + destinationOffset;
-                    if (apertureByte >= EGA_DATA_BYTE_COUNT) abort(); /* Unsupported aperture, not clipping. */
+                    if (apertureByte >= EGA_DATA_BYTE_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: apertureByte >= EGA_DATA_BYTE_COUNT"); /* Unsupported aperture, not clipping. */
                     uint8_t *destinationPixels = &egaVideoPixels[apertureByte * EGA_PIXELS_PER_BYTE];
                     for (uint8_t pixel = 0; pixel < EGA_PIXELS_PER_BYTE; ++pixel)
                     {
@@ -298,7 +299,7 @@ uint16_t EgaDrawPackedSprite(uint16_t x, uint16_t y, uint8_t targetPage,
                         case EGA_AND: destinationPixels[pixel] &= color; break;
                         case EGA_OR: destinationPixels[pixel] |= color; break;
                         case EGA_XOR: destinationPixels[pixel] ^= color; break;
-                        default: abort();
+                        default: /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Fatal path under condition: color != 0");
                         }
                     }
                 }
@@ -348,7 +349,7 @@ uint16_t EgaDrawCharacter(uint16_t x, uint16_t *y, uint8_t character,
             /* SI wraps before the page base is added; adjacent bytes need not
              * be adjacent host pointers at FFFF. This is not screen clipping. */
             uint32_t apertureByte = pageByteOffset + (uint16_t)(destinationOffset + byteIndex);
-            if (apertureByte >= EGA_DATA_BYTE_COUNT) abort(); /* Unsupported aperture. */
+            if (apertureByte >= EGA_DATA_BYTE_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: apertureByte >= EGA_DATA_BYTE_COUNT"); /* Unsupported aperture. */
             uint8_t *destinationPixels = &egaVideoPixels[apertureByte * EGA_PIXELS_PER_BYTE];
             for (uint8_t pixel = 0; pixel < EGA_PIXELS_PER_BYTE; ++pixel, pixelMask >>= 1)
             {
@@ -433,7 +434,7 @@ uint16_t EgaDrawTransparentCharacter(uint8_t character, uint16_t destinationOffs
         for (uint8_t byteIndex = 0; byteIndex < EGA_WORD_BYTES; ++byteIndex)
         {
             uint32_t apertureByte = pageByteOffset + (uint16_t)(rowDestinationOffset + byteIndex);
-            if (apertureByte >= EGA_DATA_BYTE_COUNT) abort(); /* Unsupported aperture, not clipping. */
+            if (apertureByte >= EGA_DATA_BYTE_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: apertureByte >= EGA_DATA_BYTE_COUNT"); /* Unsupported aperture, not clipping. */
             uint8_t *destinationPixels = &egaVideoPixels[apertureByte * EGA_PIXELS_PER_BYTE];
             for (uint8_t pixel = 0; pixel < EGA_PIXELS_PER_BYTE; ++pixel, pixelMask >>= 1)
             {
@@ -454,7 +455,7 @@ uint16_t EgaDrawTransparentCharacter(uint8_t character, uint16_t destinationOffs
  * output boundary and cannot silently be a success stub when unbound. */
 void EgaFlipPages(void)
 {
-    if (egaPresentPage == NULL) abort(); /* Host boundary must exist before changing page state. */
+    if (egaPresentPage == NULL) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: egaPresentPage == NULL"); /* Host boundary must exist before changing page state. */
     if (egaDisplayPage == EGA_FIRST_PAGE_SELECTOR)
     {
         egaDisplayPage = EGA_SECOND_PAGE_SELECTOR;
@@ -472,11 +473,11 @@ void EgaFlipPages(void)
  * Non-COPY clear needs retained physical latches, not per-pixel destination reads. */
 void EgaClearDrawPage(uint8_t colour)
 {
-    if (egaLogicalFunction!=EGA_COPY) abort(); /* Unsupported inherited latch state. */
+    if (egaLogicalFunction!=EGA_COPY) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: egaLogicalFunction!=EGA_COPY"); /* Unsupported inherited latch state. */
     uint32_t page=(uint32_t)(uint16_t)(egaDrawPage-EGA_FIRST_PAGE_SELECTOR)*EGA_SELECTOR_PARAGRAPH_BYTES;
     for (uint16_t offset=0;offset<EGA_ROWS*EGA_ROW_BYTES;++offset)
     {
-        if (page+offset>=EGA_DATA_BYTE_COUNT) abort();
+        if (page+offset>=EGA_DATA_BYTE_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: page+offset>=EGA_DATA_BYTE_COUNT");
         for (uint8_t pixel=0;pixel<EGA_PIXELS_PER_BYTE;++pixel)
             egaVideoPixels[(page+offset)*EGA_PIXELS_PER_BYTE+pixel]=colour&EGA_NIBBLE_MASK;
     }
@@ -493,7 +494,7 @@ void EgaDrawPixel(uint16_t x,uint16_t y,uint8_t targetPage,uint8_t colour)
         EgaReadOverlayWord((uint16_t)(EGA_PIXEL_BYTE_OFFSETS+(uint16_t)(x*EGA_WORD_BYTES)));
     uint16_t page=targetPage==EGA_DISPLAY_PAGE?egaDisplayPage:egaDrawPage;
     uint32_t aperture=(uint32_t)(uint16_t)(page-EGA_FIRST_PAGE_SELECTOR)*EGA_SELECTOR_PARAGRAPH_BYTES+offset;
-    if (aperture>=EGA_DATA_BYTE_COUNT) abort();
+    if (aperture>=EGA_DATA_BYTE_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: aperture>=EGA_DATA_BYTE_COUNT");
     uint8_t *pixels=&egaVideoPixels[aperture*EGA_PIXELS_PER_BYTE];
     for (uint8_t pixel=0;pixel<EGA_PIXELS_PER_BYTE;++pixel)
         if (mask&(EGA_BYTE_HIGH_BIT>>pixel))
@@ -503,7 +504,7 @@ void EgaDrawPixel(uint16_t x,uint16_t y,uint8_t targetPage,uint8_t colour)
             case EGA_AND:pixels[pixel]&=colour&EGA_NIBBLE_MASK;break;
             case EGA_OR:pixels[pixel]|=colour&EGA_NIBBLE_MASK;break;
             case EGA_XOR:pixels[pixel]^=colour&EGA_NIBBLE_MASK;break;
-            default:abort();
+            default:/* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Fatal path under condition: mask&(EGA_BYTE_HIGH_BIT>>pixel)");
             }
     egaLogicalFunction=EGA_COPY;
 }

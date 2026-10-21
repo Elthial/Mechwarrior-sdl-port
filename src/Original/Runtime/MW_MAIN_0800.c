@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/campaign_runtime.h"
 #include "mechwarrior/campaign_music.h"
 #include <stdlib.h>
@@ -9,7 +10,7 @@
 int16_t MwRunCampaignProgram(const MwCampaignLaunch *launch,uint8_t audioCode)
 {
     /* Tandy remains unconverted; do not silently substitute another device. */
-    if (audioCode=='T' || audioCode=='t') abort();
+    if (audioCode=='T' || audioCode=='t') /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: audioCode=='T' || audioCode=='t'");
     MwCampaignAudioBackend *backend=&speakerBackend;
     if (audioCode=='R' || audioCode=='r') backend=&mpuBackend;
     if (audioCode=='A' || audioCode=='a') backend=&adlibBackend;
@@ -19,7 +20,7 @@ int16_t MwRunCampaignProgram(const MwCampaignLaunch *launch,uint8_t audioCode)
     MwTimerSetCallback(5,MwTickMidiTrack,0);
     MwTimerSetCallback(7,MwTickMidiTrack,0);
     /* The selected hardware's original probe must succeed before playback. */
-    if (!MwProbeMusicBackend(backend)) abort();
+    if (!MwProbeMusicBackend(backend)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !MwProbeMusicBackend(backend)");
     MwSelectAndInitializeMidiBackend(backend);
     uint8_t campaignResult=MwRunCampaign(launch);
     MwShutdownMusicBackend();

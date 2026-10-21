@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/campaign_continuations.h"
 #include "mechwarrior/campaign_service.h"
 #include "mechwarrior/ega_campaign.h"
@@ -37,7 +38,7 @@ uint16_t MwRepairSelectedMechComponentCallback(void)
             uint16_t roll=MwRandomUpTo(REPAIR_ATTEMPT_ROLL_MAXIMUM);
             uint16_t marketTier=currentPlanetMarketTier;
             uint8_t limit=repairSuccessRollLimitsByMarketTier[marketTier];
-            if (limit==0 || roll/limit>UINT8_MAX) abort(); /* Native DIV BYTE fault. */
+            if (limit==0 || roll/limit>UINT8_MAX) /* Port emulation of a native CPU fault. */ MW_NATIVE_FAULT("Rejected condition: limit==0 || roll/limit>UINT8_MAX"); /* Native DIV BYTE fault. */
             failed=roll/limit!=0;
         }
         if (failed)
@@ -111,7 +112,7 @@ uint16_t MwRepairAllSelectedMechComponentsCallback(void)
                     uint16_t roll=MwRandomUpTo(REPAIR_ATTEMPT_ROLL_MAXIMUM);
                     uint16_t marketTier=currentPlanetMarketTier;
                     uint8_t limit=repairSuccessRollLimitsByMarketTier[marketTier];
-                    if (limit==0 || roll/limit>UINT8_MAX) abort();
+                    if (limit==0 || roll/limit>UINT8_MAX) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: limit==0 || roll/limit>UINT8_MAX");
                     if (roll/limit!=0)
                     {
                         failedRepairs->failedByDamageIndex[damageIndex]=1;
@@ -235,7 +236,7 @@ uint16_t MwOpenMechComponentRepairMenuCallback(void)
     uint16_t mount=0;
     do
     {
-        if (mount>=CAMPAIGN_WEAPON_SLOTS) abort(); /* Zero underflows natively; never a zero-weapon no-op. */
+        if (mount>=CAMPAIGN_WEAPON_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mount>=CAMPAIGN_WEAPON_SLOTS"); /* Zero underflows natively; never a zero-weapon no-op. */
         uint8_t tier=*damagedComponent++;
         MwComponentConditionTextRow *row=&repairWeaponConditionRows[mount++];
         row->display.colour=tier==0?REPAIR_CONDITION_HEALTHY_COLOUR:REPAIR_CONDITION_DAMAGED_COLOUR;
@@ -335,7 +336,7 @@ uint16_t MwDrawSelectedMechDetailContinuation(uint16_t entryOffset)
     uint16_t group=0;
     do
     {
-        if (group>=CAMPAIGN_AMMO_GROUPS) abort(); /* Unconverted adjacent reads, not a native zero-count no-op. */
+        if (group>=CAMPAIGN_AMMO_GROUPS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: group>=CAMPAIGN_AMMO_GROUPS"); /* Unconverted adjacent reads, not a native zero-count no-op. */
         uint16_t family=selectedMechAmmoFamilies[group];
         uint16_t quantity=selectedMechAmmoQuantities[group];
         const char *ammoName=ammoFamilyDisplayNames[family];
@@ -382,7 +383,7 @@ void MwDrawMechBodyDamageDiagram(uint16_t unitKind, CampaignUnitDamage *damage)
     mechDiagramUnitKind=unitKind;
     mechDiagramBodyDamage=damage->bodyDamageTiers;
     const MwMechBodyDiagramLayout *layout=mechBodyDiagramLayoutsByKind[unitKind];
-    if (!layout) abort(); /* Native null-directory aliases have not been reconstructed. */
+    if (!layout) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !layout"); /* Native null-directory aliases have not been reconstructed. */
     mechDiagramRectangle=(MwMechDiagramRectangle *)&layout->background;
     EgaFillDrawPageRectangle(layout->background.x,layout->background.y,
         layout->background.width,layout->background.height,MECH_BODY_DIAGRAM_BACKGROUND);
@@ -434,7 +435,7 @@ uint16_t MwOpenOwnedMechList(void)
     do
     {
         while (ownedSlot<CAMPAIGN_OWNED_UNIT_SLOTS && ownedUnitKinds[ownedSlot]==CAMPAIGN_VACANT_UNIT_KIND) ++ownedSlot;
-        if (ownedSlot>=CAMPAIGN_OWNED_UNIT_SLOTS || visibleRow>=CAMPAIGN_OWNED_UNIT_SLOTS) abort(); /* Unconverted native overrun. */
+        if (ownedSlot>=CAMPAIGN_OWNED_UNIT_SLOTS || visibleRow>=CAMPAIGN_OWNED_UNIT_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: ownedSlot>=CAMPAIGN_OWNED_UNIT_SLOTS || visibleRow>=CAMPAIGN_OWNED_UNIT_SLOTS"); /* Unconverted native overrun. */
         ownedListRowUnitByteOffset=ownedSlot*2;
         MwOwnedUnitListRow *row=&ownedUnitListRows[visibleRow];
         memcpy(row->caption.columns.mechName,shopUnitNames[ownedUnitKinds[ownedSlot]],sizeof(row->caption.columns.mechName));
@@ -480,7 +481,7 @@ uint16_t MwSelectOwnedUnitListRowCallback(void)
     uint16_t ownedUnitSlot=0,visibleRow=0;
     for (;;)
     {
-        if (ownedUnitSlot>=CAMPAIGN_OWNED_UNIT_SLOTS) abort();
+        if (ownedUnitSlot>=CAMPAIGN_OWNED_UNIT_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: ownedUnitSlot>=CAMPAIGN_OWNED_UNIT_SLOTS");
         if (ownedUnitKinds[ownedUnitSlot]!=CAMPAIGN_VACANT_UNIT_KIND)
         {
             if (visibleRow==ownedUnitListSelectedRow) break;
@@ -516,7 +517,7 @@ void MwDrawDescriptorTextPanel(const MwPanelDescriptor *textPanel)
     uint16_t line=0;
     do
     {
-        if (line>=sizeof(textPanel->lines)/sizeof(textPanel->lines[0])) abort(); /* Unconverted overrun, not zero lines. */
+        if (line>=sizeof(textPanel->lines)/sizeof(textPanel->lines[0])) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: line>=sizeof(textPanel->lines)/sizeof(textPanel->lines[0])"); /* Unconverted overrun, not zero lines. */
         const MwPanelText *caption=textPanel->lines[line];
         x=textPanel->x+caption->x;
         y=textPanel->y+caption->y;

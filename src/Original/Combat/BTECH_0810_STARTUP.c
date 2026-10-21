@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_startup.h"
 #include "mechwarrior/combat_import.h"
 #include "mechwarrior/combat_runtime.h"
@@ -18,7 +19,7 @@ void BtechInitializeCombatRuntime(void)
     BtechResetCombatState();
     BtechInitializeVideoAndInput();
     hudColourSchemeIndex=combatRendererKind==1;
-    if (hudColourSchemeIndex || combatRendererKind==3) abort(); /* Non-EGA scratch ownership not converted. */
+    if (hudColourSchemeIndex || combatRendererKind==3) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: hudColourSchemeIndex || combatRendererKind==3"); /* Non-EGA scratch ownership not converted. */
     desertPaletteSlot=BtechLoadPaletteSlot("desert.pal",NULL);
     arcticPaletteSlot=BtechLoadPaletteSlot("arctic.pal",NULL);
     tropicalPaletteSlot=BtechLoadPaletteSlot("tropic.pal",NULL);
@@ -42,7 +43,7 @@ void BtechInitializeCombatRuntime(void)
         if ((int16_t)registered->resourceId<(int16_t)surfaceResourceBank.resourceCount
             && (int16_t)registered->resourceId>=0)
         {
-            if (selectedObjectCount>=COMBAT_SELECTED_WORLD_OBJECTS) abort(); /* Next native store aliases7A2E. */
+            if (selectedObjectCount>=COMBAT_SELECTED_WORLD_OBJECTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: selectedObjectCount>=COMBAT_SELECTED_WORLD_OBJECTS"); /* Next native store aliases7A2E. */
             selectedWorldObjects[selectedObjectCount++]=worldObjects[object];
         }
     }
@@ -51,10 +52,10 @@ void BtechInitializeCombatRuntime(void)
     BtechLoadCockpitHudResources();
     BtechInitializeOrderPanelState();
     BtechResetMechInspectionState();
-    if (!playerMechTemplate) abort();
+    if (!playerMechTemplate) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerMechTemplate");
     for (int16_t mount=0;mount<(int16_t)playerMechTemplate->weaponMountCount;++mount)
     {
-        if (mount>=COMBAT_WEAPON_MOUNTS || !playerMechState) abort();
+        if (mount>=COMBAT_WEAPON_MOUNTS || !playerMechState) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mount>=COMBAT_WEAPON_MOUNTS || !playerMechState");
         playerMountFireFlags[mount]=(int8_t)playerMechState->weapons[mount].operational;
     }
     activeUnitControl=&unitControls[0];
@@ -78,7 +79,7 @@ void BtechInitializeVideoAndInput(void)
         case 'c':adapterOverride=1;break;
         case 'e':adapterOverride=2;break;
         case 't':adapterOverride=3;break;
-        default:abort(); /* Unrecovered native stack residue, not an argument. */
+        default:/* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Fatal path under condition: (int16_t)savedArgumentCount>1"); /* Unrecovered native stack residue, not an argument. */
         }
     }
     if (!BtechSelectCombatRenderer((uint8_t)adapterOverride,COMBAT_VIDEO_ALLOWED))
@@ -147,7 +148,7 @@ void BtechResetCombatState(void)
 void BtechInstallDosCriticalErrorHandler(void)
 {
     criticalErrorHandlerInstalled=1;
-    if (!btechHostGetInterruptVector || !btechHostSetInterruptVector) abort();
+    if (!btechHostGetInterruptVector || !btechHostSetInterruptVector) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostGetInterruptVector || !btechHostSetInterruptVector");
     savedCriticalErrorVector=btechHostGetInterruptVector(0x24);
     btechHostSetInterruptVector(0x24,0x0810CEC9);
 }
@@ -156,6 +157,6 @@ void BtechInstallDosCriticalErrorHandler(void)
 void BtechRestoreDosCriticalErrorHandler(void)
 {
     criticalErrorHandlerInstalled=0;
-    if (!btechHostSetInterruptVector) abort();
+    if (!btechHostSetInterruptVector) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostSetInterruptVector");
     btechHostSetInterruptVector(0x24,savedCriticalErrorVector);
 }

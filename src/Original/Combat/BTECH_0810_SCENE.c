@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_cockpit.h"
 #include "mechwarrior/combat_pose.h"
 #include "mechwarrior/combat_startup.h"
@@ -11,10 +12,10 @@
  * HUD retains its documented gates; final text/page handling is native. */
 void BtechRenderCockpitSceneAndHud(void)
 {
-    if (!playerUnitBinding) abort();
+    if (!playerUnitBinding) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerUnitBinding");
     BtechPooledWorldObject *torso=playerUnitBinding->torso;
     BtechPooledWorldObject *positionedBody=playerUnitBinding->positionedLeftLeg;
-    if (!playerPoseCameraContext) abort();
+    if (!playerPoseCameraContext) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerPoseCameraContext");
     if (playerImpactThisTick && playerPoseCameraContext->fillPaletteA!=COMBAT_COCKPIT_IMPACT_COLOUR)
         playerPoseCameraContext->fillPaletteA=COMBAT_COCKPIT_IMPACT_COLOUR;
     else
@@ -22,12 +23,12 @@ void BtechRenderCockpitSceneAndHud(void)
         if (playerCameraFillASuppressed) playerPoseCameraContext->fillPaletteA=0;
         else
         {
-            if (combatLandscapeIndex>=COMBAT_LANDSCAPES || hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES) abort();
+            if (combatLandscapeIndex>=COMBAT_LANDSCAPES || hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: combatLandscapeIndex>=COMBAT_LANDSCAPES || hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES");
             playerPoseCameraContext->fillPaletteA=landscapeCameraColourRows[hudColourSchemeIndex][combatLandscapeIndex].playerFillPaletteA;
         }
     }
     BtechApplyBodyHeadingToMechParts();
-    if (!torso) abort();
+    if (!torso) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !torso");
     BtechUpdatePlayerMechPose(&torso->object.prefix);
     drawPolygonFilled=true;
     cockpitWorldObjectCount=(uint16_t)BtechFilterNearbyWorldObjects(playerPoseCameraContext,worldObjects,
@@ -35,7 +36,7 @@ void BtechRenderCockpitSceneAndHud(void)
     BtechSortFarWorldObjectsForView(playerPoseCameraContext,cockpitWorldObjects,
         (int16_t)cockpitWorldObjectCount,&objectSortOrSelectionScratch);
     BtechOrderMechRenderParts(playerPoseCameraContext,cockpitWorldObjects,(int16_t)cockpitWorldObjectCount);
-    if (!playerMechState) abort();
+    if (!playerMechState) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerMechState");
     uint32_t aimCosine=(int16_t)BtechLookupCosine(playerMechState->aimPitch);
     uint32_t aimSine=(int16_t)BtechLookupSine(playerMechState->aimPitch);
     uint32_t projectedAim=BtechDivideSignedDword(BtechShiftDwordLeft(aimSine,(uint8_t)viewScaleShift),aimCosine);
@@ -47,7 +48,7 @@ void BtechRenderCockpitSceneAndHud(void)
     BtechBeginSelectionPixelProbe(probeX,probeY);
     BtechRenderObjectList(playerPoseCameraContext,cockpitWorldObjects,(int16_t)cockpitWorldObjectCount);
     BtechRemoveBodyHeadingFromMechParts();
-    if (!positionedBody) abort();
+    if (!positionedBody) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !positionedBody");
     BtechDrawCockpitHeadingStrip(positionedBody->object.prefix.orientationC,(int16_t)torso->object.prefix.orientationC);
     BtechRefreshCockpitAndSensorTarget();
     BtechDrawPendingFiringIndicator();
@@ -55,7 +56,7 @@ void BtechRenderCockpitSceneAndHud(void)
     textTransparentBackground=true;
     textForegroundColour=landscapeCameraColourRows[hudColourSchemeIndex][combatLandscapeIndex].hudReticleColour;
     uint16_t zoomX=COCKPIT_RIGHT_LABEL_X,automaticWeaponsX=COCKPIT_LEFT_LABEL_X;
-    if (playerMechState->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
+    if (playerMechState->templateIndex>=COMBAT_MECH_TEMPLATES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: playerMechState->templateIndex>=COMBAT_MECH_TEMPLATES");
     if (mechCockpitLayoutIndices[playerMechState->templateIndex]==2)
     {zoomX=COCKPIT_LEFT_LABEL_X;automaticWeaponsX=COCKPIT_RIGHT_LABEL_X;}
     BtechDrawNearText(zoomLabel,zoomX,COCKPIT_STATUS_TEXT_Y);

@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_tactics.h"
 #include "mechwarrior/combat_import.h"
 #include "mechwarrior/combat_ballistics.h"
@@ -8,7 +9,7 @@
  * reads the TRANSPOSED distance matrix. Failed selection leaves target stale. */
 void BtechScoreAndSelectTacticalTarget(void)
 {
-    if (!activeUnitControl || activeUnitControl->unitSlot>=COMBAT_MECH_SLOTS) abort();
+    if (!activeUnitControl || activeUnitControl->unitSlot>=COMBAT_MECH_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !activeUnitControl || activeUnitControl->unitSlot>=COMBAT_MECH_SLOTS");
     BtechUnitControlState *active=activeUnitControl;
     uint8_t eligible[COMBAT_MECH_SLOTS],anyEligible=0;
     int16_t maximumDistanceLow=0,maximumValueDifference=0,bestScore=0;
@@ -74,7 +75,7 @@ void BtechUpdateSideCompletionFlags(void)
  * Only -1 is skipped. Boundary index is signed negation after WORD add2. */
 uint8_t BtechTestSideEliminationOrExitObjective(uint16_t sideIndex)
 {
-    if (sideIndex>=2) abort();
+    if (sideIndex>=2) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: sideIndex>=2");
     uint8_t noUnitsRemaining=1;
     uint16_t rule=sideObjectiveRules[sideIndex];
     uint8_t allowedBoundaryMask=scenarioSelectors.sideBoundaryMasks[sideIndex];
@@ -86,7 +87,7 @@ uint8_t BtechTestSideEliminationOrExitObjective(uint16_t sideIndex)
         if (boundary<0) noUnitsRemaining=0;
         else
         {
-            if (boundary>=TACTICAL_BOUNDARY_CODES) abort(); /* Adjacent authored0EB6 table alias. */
+            if (boundary>=TACTICAL_BOUNDARY_CODES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: boundary>=TACTICAL_BOUNDARY_CODES"); /* Adjacent authored0EB6 table alias. */
             if ((allowedBoundaryMask&boundaryMaskByCode[boundary]) && rule==OBJECTIVE_WITHDRAW)
             {
                 sideCompletionFlags[sideIndex]=1;

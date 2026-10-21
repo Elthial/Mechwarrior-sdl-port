@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_input.h"
 #include "mechwarrior/combat_ballistics.h"
 #include "mechwarrior/combat_projectiles.h"
@@ -28,7 +29,7 @@ enum { PLAYER_THROTTLE_STEP=4,PLAYER_GROUND_TURN_STEP=0x80,PLAYER_GROUND_TURN_LI
 void BtechProcessPlayerControls(void)
 {
     if (!playerUnitBinding || !playerUnitBinding->torso || !playerUnitBinding->positionedLeftLeg
-        || !playerMechState || !playerMechTemplate) abort();
+        || !playerMechState || !playerMechTemplate) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerUnitBinding || !playerUnitBinding->torso || !playerUnitBinding->positionedLeftLeg || !playerMechState || !playerMechTemplate");
     BtechWorldObjectPrefix *torso=&playerUnitBinding->torso->object.prefix;
     BtechPooledWorldObject *motion=playerUnitBinding->positionedLeftLeg;
     if (!combatTickCounter)
@@ -84,7 +85,7 @@ void BtechProcessPlayerControls(void)
         break;
     case COMBAT_KEY_H:
     {
-        if (combatLandscapeIndex>=COMBAT_LANDSCAPES) abort();
+        if (combatLandscapeIndex>=COMBAT_LANDSCAPES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: combatLandscapeIndex>=COMBAT_LANDSCAPES");
         BtechLandscapeCameraColourRow *colours=&landscapeCameraColourRows[0][combatLandscapeIndex];
         /* Native WORD increment/mask clears the adjacent0017 byte, too. */
         colours->hudReticleColour=(uint8_t)((colours->hudReticleColour+1)&PLAYER_HUD_COLOUR_MASK);
@@ -96,7 +97,7 @@ void BtechProcessPlayerControls(void)
         if (altHeld) BtechCalibrateJoystickAxisPairs();
         else
         {
-            if (playerMechState->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
+            if (playerMechState->templateIndex>=COMBAT_MECH_TEMPLATES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: playerMechState->templateIndex>=COMBAT_MECH_TEMPLATES");
             if (mechTemplates[playerMechState->templateIndex].jumpJetGroupCount && !heatInhibitFlags[0]
                 && unitControls[0].movementMode!=MOVEMENT_MODE_JUMP && (int16_t)playerMechState->jumpCharge>PLAYER_JUMP_CHARGE_THRESHOLD)
             {
@@ -109,7 +110,7 @@ void BtechProcessPlayerControls(void)
     case COMBAT_KEY_Z:
         ++viewScaleShift;
         if ((int16_t)viewScaleShift>PLAYER_ZOOM_MAXIMUM) viewScaleShift=PLAYER_ZOOM_MINIMUM;
-        if (!playerPoseCameraContext) abort();
+        if (!playerPoseCameraContext) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerPoseCameraContext");
         playerPoseCameraContext->projectionShift=(uint8_t)viewScaleShift;
         break;
     case COMBAT_KEY_C:
@@ -143,10 +144,10 @@ void BtechProcessPlayerControls(void)
         else
         {
             int16_t kind=playerMechTemplate->weaponMounts[selectedWeaponMount].weaponKind;
-            if ((uint16_t)kind>=COMBAT_WEAPON_KINDS) abort();
+            if ((uint16_t)kind>=COMBAT_WEAPON_KINDS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (uint16_t)kind>=COMBAT_WEAPON_KINDS");
             BtechWeaponDefinition *definition=&weaponDefinitions[kind];
             int16_t ammoFamily=definition->ammoFamily;
-            if ((uint16_t)ammoFamily!=COMBAT_AMMO_NONE && (uint16_t)ammoFamily>=COMBAT_AMMO_FAMILIES) abort();
+            if ((uint16_t)ammoFamily!=COMBAT_AMMO_NONE && (uint16_t)ammoFamily>=COMBAT_AMMO_FAMILIES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (uint16_t)ammoFamily!=COMBAT_AMMO_NONE && (uint16_t)ammoFamily>=COMBAT_AMMO_FAMILIES");
             /* Empty ammo leaves the cycling latch alone. All other gates above
              * clear it. Reload and heat are written BEFORE shot dispatch. */
             if ((uint16_t)ammoFamily==COMBAT_AMMO_NONE || playerMechState->ammoSalvosRemaining[ammoFamily])
@@ -167,7 +168,7 @@ void BtechProcessPlayerControls(void)
                         sound=PLAYER_MACHINE_GUN_SOUND;
                         BtechFirePlayerDirectWeapon(selectedWeaponMount);
                         /* Reload live globals after firing, as0B19 does. */
-                        if (playerMechState->templateIndex>=COMBAT_MECH_TEMPLATES || selectedWeaponMount>=COMBAT_WEAPON_MOUNTS) abort();
+                        if (playerMechState->templateIndex>=COMBAT_MECH_TEMPLATES || selectedWeaponMount>=COMBAT_WEAPON_MOUNTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: playerMechState->templateIndex>=COMBAT_MECH_TEMPLATES || selectedWeaponMount>=COMBAT_WEAPON_MOUNTS");
                         uint16_t location=mechTemplates[playerMechState->templateIndex].weaponMounts[selectedWeaponMount].bodyLocation;
                         if (location==COMBAT_BODY_LEFT_ARM || location==COMBAT_BODY_LEFT_TORSO) firingIndicatorBank0Pending=1;
                         else firingIndicatorBank1Pending=1;
@@ -226,7 +227,7 @@ dampTurn:
                 (motion->orientationSteps[2]+(motion->orientationSteps[2]<0?PLAYER_GROUND_TURN_STEP:-PLAYER_GROUND_TURN_STEP));
             goto aiming;
         }
-        if (playerMechState->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
+        if (playerMechState->templateIndex>=COMBAT_MECH_TEMPLATES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: playerMechState->templateIndex>=COMBAT_MECH_TEMPLATES");
         int16_t limit=mechTemplates[playerMechState->templateIndex].maximumSpeedScale-heatSpeedPenalties[0];
         int16_t actuator=playerMechState->actuatorCondition[COMBAT_ACTUATOR_LEFT_LEG];
         if (actuator>(int16_t)playerMechState->actuatorCondition[COMBAT_ACTUATOR_RIGHT_LEG]) actuator=(int16_t)playerMechState->actuatorCondition[COMBAT_ACTUATOR_RIGHT_LEG];

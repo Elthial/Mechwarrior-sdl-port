@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/campaign_continuations.h"
 #include "mechwarrior/campaign_startup.h"
 #include "mechwarrior/ega_campaign.h"
@@ -41,7 +42,7 @@ uint8_t MwRunCampaign(const MwCampaignLaunch *launch)
         goto finish;
     }
     MwInstallCampaignInterruptHandlers();
-    if (!mwCampaignPlatform.allocateParagraphs || !mwCampaignPlatform.loadGraphicsOverlay) abort();
+    if (!mwCampaignPlatform.allocateParagraphs || !mwCampaignPlatform.loadGraphicsOverlay) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwCampaignPlatform.allocateParagraphs || !mwCampaignPlatform.loadGraphicsOverlay");
     uint16_t errorIndex,selectorOrError;
     if (mwCampaignPlatform.allocateParagraphs(0x0FFF,&selectorOrError))
     {errorIndex=4;goto allocationFailed;}
@@ -69,7 +70,7 @@ uint8_t MwRunCampaign(const MwCampaignLaunch *launch)
     graphicsOverlaySelector=selectorOrError;
     if (mwCampaignPlatform.loadGraphicsOverlay(tandyGraphicsSelected?"MW_TANDY.EXE":"MW_EGA.EXE",graphicsOverlaySelector))
     {errorIndex=1;goto allocationFailed;}
-    if (tandyGraphicsSelected) abort(); /* Tandy conversion outside this EGA slice. */
+    if (tandyGraphicsSelected) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: tandyGraphicsSelected"); /* Tandy conversion outside this EGA slice. */
     EgaBuildScanlineOffsets();
     if (EgaLoadFonts()) {errorIndex=5;goto allocationFailed;}
     if (MwLoadGeneralPictureBank()) {errorIndex=6;goto allocationFailed;}
@@ -113,7 +114,7 @@ uint8_t MwRunCampaign(const MwCampaignLaunch *launch)
     (void)MwWaitTicksOrInputInterruption(2);
     MwSetIntroTextPaletteColour(tandyGraphicsSelected?TANDY_PALETTE_WHITE:EGA_PALETTE_WHITE);
     if (MwWaitTicksOrInputInterruption(0x0024)) goto initializeCampaign;
-    if (!campaignStartMusic) abort();
+    if (!campaignStartMusic) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !campaignStartMusic");
     campaignStartMusic(campaignMusicBufferSelector,0);
     if (MwWaitTicksOrInputInterruption(0x019E)) goto initializeCampaign;
     MwDrawActivePicture(0,0,EGA_DRAW_PAGE,1);
@@ -137,12 +138,12 @@ resumeCampaign:
     if (continuation==CAMPAIGN_CONTINUE_AFTER_ACTION) goto beginDebrief;
     if (continuation==CAMPAIGN_CONTINUE_VICTORY_EVENT_RETURN) goto finishVictory;
     if (continuation==CAMPAIGN_CONTINUE_CLEANUP) goto campaignExit;
-    abort(); /* Unrepresented nonlocal destination, never a successful RET. */
+    /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Unrepresented nonlocal destination, never a successful RET."); /* Unrepresented nonlocal destination, never a successful RET. */
 beginDebrief:
     /*1CD4 is a shared continuation INSIDE0002, not a callable new method. */
     EgaClearDrawPage(AFTER_ACTION_BACKGROUND);
     EgaFlipPages();
-    if (!mwCampaignInput.keyboardAvailable || !mwCampaignInput.readKeyboard) abort();
+    if (!mwCampaignInput.keyboardAvailable || !mwCampaignInput.readKeyboard) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwCampaignInput.keyboardAvailable || !mwCampaignInput.readKeyboard");
     while (mwCampaignInput.keyboardAvailable()) (void)mwCampaignInput.readKeyboard();
     if (combatTransitionResult==0 && combatScenarioCode==COMBAT_SCENARIO_DARK_WING_BASE)
         goto darkWingVictory;
@@ -162,7 +163,7 @@ beginDebrief:
             uint16_t rosterSlot=0,remaining=pilotRosterCount;
             do
             {
-                if (rosterSlot>=CAMPAIGN_ROSTER_SLOTS) abort(); /* Unmapped adjacent/corrupt roster. */
+                if (rosterSlot>=CAMPAIGN_ROSTER_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: rosterSlot>=CAMPAIGN_ROSTER_SLOTS"); /* Unmapped adjacent/corrupt roster. */
                 statusSum+=rosterStatus[rosterSlot++];
             } while (--remaining!=0);
             if (statusSum==0) picture=AFTER_ACTION_RETREAT_PICTURE;
@@ -179,26 +180,26 @@ beginDebrief:
         uint16_t rosterSlot=0;
         do
         {
-            if (rosterSlot>=CAMPAIGN_ROSTER_SLOTS) abort(); /* Unmapped corrupt roster. */
+            if (rosterSlot>=CAMPAIGN_ROSTER_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: rosterSlot>=CAMPAIGN_ROSTER_SLOTS"); /* Unmapped corrupt roster. */
             const char *pilotName=(const char *)commanderNameBytes;
             if (rosterSlot!=0)
             {
                 uint16_t pilotId=rosterPilotIds[rosterSlot];
-                if (pilotId>=CAMPAIGN_PILOT_ID_COUNT) abort();
+                if (pilotId>=CAMPAIGN_PILOT_ID_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: pilotId>=CAMPAIGN_PILOT_ID_COUNT");
                 pilotName=(const char *)pilotDefinitions[pilotId]->nameBytes;
             }
             afterActionRosterRowOffset=(uint8_t)rosterSlot*AFTER_ACTION_ROW_HEIGHT;
             uint16_t pilotY=afterActionRosterRowOffset+AFTER_ACTION_FIRST_PILOT_Y;
             MwDrawCampaignTextColourOne(AFTER_ACTION_TEXT_X,pilotY,pilotName);
             uint8_t status=rosterStatus[rosterSlot];
-            if (status>=3) abort(); /* Unmapped status-text adjacency, not a clamp. */
+            if (status>=3) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: status>=3"); /* Unmapped status-text adjacency, not a clamp. */
             MwDrawCampaignTextColourOne(AFTER_ACTION_STATUS_X,pilotY,afterActionPilotStatusText[status]);
             uint16_t ownedUnitSlot=rosterMechAssignments[rosterSlot];
             if (ownedUnitSlot!=CAMPAIGN_NO_MECH_ASSIGNMENT)
             {
-                if (ownedUnitSlot>=CAMPAIGN_OWNED_UNIT_SLOTS) abort();
+                if (ownedUnitSlot>=CAMPAIGN_OWNED_UNIT_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: ownedUnitSlot>=CAMPAIGN_OWNED_UNIT_SLOTS");
                 uint16_t unitKind=ownedUnitKinds[ownedUnitSlot];
-                if (unitKind>=CAMPAIGN_UNIT_KIND_COUNT) abort();
+                if (unitKind>=CAMPAIGN_UNIT_KIND_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: unitKind>=CAMPAIGN_UNIT_KIND_COUNT");
                 /* Native1E24/1E29 indexes these BY DOUBLED ROSTER SLOT, not
                  * chassis. Preserve that discrepancy instead of a tidy quote. */
                 uint16_t weaponCount=unitWeaponCounts[rosterSlot*2];
@@ -208,13 +209,13 @@ beginDebrief:
                 uint16_t field=0;
                 do
                 {
-                    if (field>=sizeof(CampaignUnitDamage)) abort(); /* Unsupported adjacent-data spill after partial sum. */
+                    if (field>=sizeof(CampaignUnitDamage)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: field>=sizeof(CampaignUnitDamage)"); /* Unsupported adjacent-data spill after partial sum. */
                     damageSum+=damage[field++];
                 } while (--systemCount!=0);
                 field=offsetof(CampaignUnitDamage,weaponDamageTiers);
                 do
                 {
-                    if (field>=sizeof(CampaignUnitDamage)) abort();
+                    if (field>=sizeof(CampaignUnitDamage)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: field>=sizeof(CampaignUnitDamage)");
                     damageSum+=damage[field++];
                 } while (--weaponCount!=0);
                 for (uint16_t location=0;location<CAMPAIGN_BODY_LOCATION_COUNT;++location)
@@ -222,7 +223,7 @@ beginDebrief:
                 uint16_t divisor=unitConditionScoreDivisors[unitKind];
                 uint16_t remainingScore=divisor-damageSum;
                 uint32_t condition=(uint32_t)remainingScore*PERCENT_DIVISOR;
-                if (!divisor || condition/divisor>UINT16_MAX) abort(); /* Native DIV trap, no clamp. */
+                if (!divisor || condition/divisor>UINT16_MAX) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !divisor || condition/divisor>UINT16_MAX"); /* Native DIV trap, no clamp. */
                 condition/=divisor;
                 MwDrawCampaignTextColourOne(AFTER_ACTION_TEXT_X,
                     afterActionRosterRowOffset+AFTER_ACTION_FIRST_MECH_Y,unitDisplayNames[unitKind]);
@@ -241,7 +242,7 @@ beginDebrief:
     {
         uint16_t deductionRoll=MwRandomUpTo(PERCENT_DIVISOR);
         uint16_t house=currentPlanetHouseIndex;
-        if (house>=CAMPAIGN_HOUSE_COUNT) abort();
+        if (house>=CAMPAIGN_HOUSE_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: house>=CAMPAIGN_HOUSE_COUNT");
         if (deductionRoll<=houseDeductionRollThresholds[house])
             settlementPayoutPercent=houseReducedPayoutPercentages[house];
     }
@@ -260,7 +261,7 @@ beginDebrief:
                 uint16_t valueThousands;
                 if (condition<=SALVAGE_SCRAP_CONDITION_LIMIT)
                 {
-                    if (unitKind>=CAMPAIGN_MECH_KIND_COUNT) abort(); /* Unmapped adjoining pricing words. */
+                    if (unitKind>=CAMPAIGN_MECH_KIND_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: unitKind>=CAMPAIGN_MECH_KIND_COUNT"); /* Unmapped adjoining pricing words. */
                     valueThousands=(uint8_t)campaignMechTonnages[unitKind]*SALVAGE_SCRAP_THOUSANDS_PER_TON;
                 }
                 else
@@ -269,15 +270,15 @@ beginDebrief:
                      * Keep its market-tier result as the SAME accumulator. */
                     uint32_t value=MwCalculateUnitConditionPrice((uint8_t)condition,unitKind,&salvageThousands);
                     value/=CBILLS_PER_THOUSAND;
-                    if (value>UINT16_MAX) abort();
+                    if (value>UINT16_MAX) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: value>UINT16_MAX");
                     valueThousands=(uint16_t)value;
                 }
                 salvageThousands+=valueThousands;
             }
             uint32_t share=(uint32_t)salvageThousands*acceptedContractSalvagePercent/PERCENT_DIVISOR;
-            if (share>UINT16_MAX) abort(); /* First native WORD quotient before second MUL. */
+            if (share>UINT16_MAX) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: share>UINT16_MAX"); /* First native WORD quotient before second MUL. */
             uint32_t paid=share*settlementPayoutPercent/PERCENT_DIVISOR;
-            if (paid>UINT16_MAX) abort();
+            if (paid>UINT16_MAX) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: paid>UINT16_MAX");
             salvagePayment=paid*CBILLS_PER_THOUSAND;
         }
         uint32_t funds=((uint32_t)campaignFundsHigh<<NATIVE_WORD_BITS)|campaignFundsLow;
@@ -290,7 +291,7 @@ beginDebrief:
         if (combatTransitionResult==0)
         {
             uint32_t paymentThousands=(uint32_t)remainingContractPaymentThousands*settlementPayoutPercent/PERCENT_DIVISOR;
-            if (paymentThousands>UINT16_MAX) abort();
+            if (paymentThousands>UINT16_MAX) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: paymentThousands>UINT16_MAX");
             contractPayment=paymentThousands*CBILLS_PER_THOUSAND;
         }
         funds=((uint32_t)campaignFundsHigh<<NATIVE_WORD_BITS)|campaignFundsLow;
@@ -305,19 +306,19 @@ beginDebrief:
     while (pilotRosterCount!=1 && rosterStatus[1]!=0)
     {
         MwStartDeathMusic();
-        (void)MwRemovePilotAndCompactRoster(sizeof(uint16_t));
+        (void)MwRemovePilotAndCompactRoster(FIRST_HIRED_PILOT_SLOT);
     }
     if (pilotRosterCount!=1)
     {
         while (pilotRosterCount!=2 && rosterStatus[2]!=0)
         {
             MwStartDeathMusic();
-            (void)MwRemovePilotAndCompactRoster(2*sizeof(uint16_t));
+            (void)MwRemovePilotAndCompactRoster(2);
         }
         if (pilotRosterCount!=2 && pilotRosterCount!=3 && rosterStatus[3]!=0)
         {
             MwStartDeathMusic();
-            (void)MwRemovePilotAndCompactRoster(3*sizeof(uint16_t));
+            (void)MwRemovePilotAndCompactRoster(LAST_PILOT_CARD_SLOT);
         }
     }
     playerCombatCredit+=returnedDisabledEnemyCount;
@@ -356,18 +357,18 @@ beginDebrief:
             uint16_t travelUnits=(uint16_t)(distance*DEPLOYMENT_TRAVEL_MULTIPLIER)<<1;
             MwAdvanceCampaignTimeAndChargeWages(travelUnits);
             planetIndex=currentPlanetIndex;
-            if (planetIndex>=CAMPAIGN_PLANET_COUNT) abort();
+            if (planetIndex>=CAMPAIGN_PLANET_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: planetIndex>=CAMPAIGN_PLANET_COUNT");
             uint16_t recordOffset=planetRecordOffsets[planetIndex];
-            if (recordOffset<PLANET_RECORDS_START || (uint32_t)recordOffset+sizeof(MwPlanetHeader)>PLANET_RECORDS_END) abort();
+            if (recordOffset<PLANET_RECORDS_START || (uint32_t)recordOffset+sizeof(MwPlanetHeader)>PLANET_RECORDS_END) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: recordOffset<PLANET_RECORDS_START || (uint32_t)recordOffset+sizeof(MwPlanetHeader)>PLANET_RECORDS_END");
             const MwPlanetHeader *planet=(const MwPlanetHeader *)&planetRecordStorage[recordOffset-PLANET_RECORDS_START];
             MwAdvanceCampaignTimeAndChargeWages((uint16_t)(planet->travelTimeWeight<<2));
             planetIndex=(uint16_t)((uint16_t)combatPlanetSelector-1); /* Re-read after the time call. */
-            if (planetIndex>=CAMPAIGN_PLANET_COUNT) abort();
+            if (planetIndex>=CAMPAIGN_PLANET_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: planetIndex>=CAMPAIGN_PLANET_COUNT");
             recordOffset=planetRecordOffsets[planetIndex];
-            if (recordOffset<PLANET_RECORDS_START || (uint32_t)recordOffset+sizeof(MwPlanetHeader)>PLANET_RECORDS_END) abort();
+            if (recordOffset<PLANET_RECORDS_START || (uint32_t)recordOffset+sizeof(MwPlanetHeader)>PLANET_RECORDS_END) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: recordOffset<PLANET_RECORDS_START || (uint32_t)recordOffset+sizeof(MwPlanetHeader)>PLANET_RECORDS_END");
             planet=(const MwPlanetHeader *)&planetRecordStorage[recordOffset-PLANET_RECORDS_START];
             MwAdvanceCampaignTimeAndChargeWages((uint16_t)(planet->travelTimeWeight<<1));
-            if (combatScenarioCode>=DEPLOYMENT_SCENARIO_TIME_COUNT) abort();
+            if (combatScenarioCode>=DEPLOYMENT_SCENARIO_TIME_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: combatScenarioCode>=DEPLOYMENT_SCENARIO_TIME_COUNT");
             elapsedUnits=missionDeploymentUnitsByScenario[combatScenarioCode];
         }
         MwAdvanceCampaignTimeAndChargeWages(elapsedUnits);
@@ -386,7 +387,7 @@ beginDebrief:
             if (acceptedContractTargetHouseIndex<CAMPAIGN_HOUSE_COUNT)
                 houseGrievancePoints[acceptedContractTargetHouseIndex]+=2;
             uint16_t house=currentPlanetHouseIndex;
-            if (house>=CAMPAIGN_HOUSE_COUNT) abort();
+            if (house>=CAMPAIGN_HOUSE_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: house>=CAMPAIGN_HOUSE_COUNT");
             if (deploymentResolvedWithoutCombat!=0)
             {
                 deploymentResolvedWithoutCombat=0;
@@ -400,7 +401,7 @@ beginDebrief:
             }
             else
             {
-                if (!campaignStartMusic) abort();
+                if (!campaignStartMusic) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !campaignStartMusic");
                 campaignStartMusic(campaignMusicBufferSelector,LAUNCH_MUSIC_OFFSET);
                 houseFavorPoints[house]+=2;
                 outcome=afterActionSuccessMessages[house];
@@ -435,7 +436,7 @@ darkWingVictory:
     EgaCopyDrawPageToDisplay(0,0,EGA_COLUMNS,EGA_ROWS);
     (void)MwLoadFPictureBank();
     (void)MwLoadVictoryMusic();
-    if (!campaignStartMusic) abort();
+    if (!campaignStartMusic) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !campaignStartMusic");
     campaignStartMusic(campaignMusicBufferSelector,0);
     MwDrawActivePicture(0,0x003B,EGA_DRAW_PAGE,9);
     MwDrawActivePicture(0x007C,0x002D,EGA_DRAW_PAGE,1);
@@ -481,17 +482,17 @@ campaignExit:
     MwIndexedPictureCloseHook();
     if (launcherExitCode==CAMPAIGN_EXIT_QUIT) MwRestoreSavedVideoMode();
     MwRestoreCampaignInterruptHandlers();
-    if (!mwCampaignInput.keyboardAvailable || !mwCampaignInput.readKeyboard) abort();
+    if (!mwCampaignInput.keyboardAvailable || !mwCampaignInput.readKeyboard) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwCampaignInput.keyboardAvailable || !mwCampaignInput.readKeyboard");
     if (mwCampaignInput.keyboardAvailable()) (void)mwCampaignInput.readKeyboard(); /* ONE pending BIOS key, not a drain. */
     goto finish;
 allocationFailed:
     /* Native does NOT unwind successful allocations or restore IRQs here. */
     MwRestoreSavedVideoMode();
-    if (!mwCampaignPlatform.displayDosString || !mwCampaignInput.readKeyboard) abort();
+    if (!mwCampaignPlatform.displayDosString || !mwCampaignInput.readKeyboard) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwCampaignPlatform.displayDosString || !mwCampaignInput.readKeyboard");
     mwCampaignPlatform.displayDosString(startupErrorMessages[errorIndex]);
     (void)mwCampaignInput.readKeyboard();
 finish:
-    if (!campaignStopMusic) abort();
+    if (!campaignStopMusic) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !campaignStopMusic");
     campaignStopMusic();
     return launcherExitCode;
 }
@@ -501,36 +502,36 @@ finish:
  * do not expose DOS handler addresses as game state or emulate an IVT. */
 void MwInstallCampaignInterruptHandlers(void)
 {
-    if (!mwCampaignPlatform.installInterrupts) abort();
+    if (!mwCampaignPlatform.installInterrupts) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwCampaignPlatform.installInterrupts");
     mwCampaignPlatform.installInterrupts();
 }
 void MwRestoreCampaignInterruptHandlers(void)
 {
-    if (!mwCampaignPlatform.restoreInterrupts) abort();
+    if (!mwCampaignPlatform.restoreInterrupts) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwCampaignPlatform.restoreInterrupts");
     mwCampaignPlatform.restoreInterrupts();
 }
 /* MW_MAIN081B:02E6..02ED /02EE..02F5. */
 void MwSaveCurrentVideoMode(void)
 {
-    if (!mwCampaignPlatform.getVideoMode) abort();
+    if (!mwCampaignPlatform.getVideoMode) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwCampaignPlatform.getVideoMode");
     savedVideoMode=mwCampaignPlatform.getVideoMode();
 }
 void MwRestoreSavedVideoMode(void)
 {
-    if (!mwCampaignPlatform.setVideoMode) abort();
+    if (!mwCampaignPlatform.setVideoMode) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwCampaignPlatform.setVideoMode");
     mwCampaignPlatform.setVideoMode(savedVideoMode);
 }
 /* MW_MAIN081B:245D..2478. The native saves no game arguments: selector and
  * DEATH.MUS offset are loaded here; DS is restored to1090 after FAR0186. */
 void MwStartDeathMusic(void)
 {
-    if (!campaignStartMusic) abort();
+    if (!campaignStartMusic) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !campaignStartMusic");
     campaignStartMusic(campaignMusicBufferSelector,DEATH_MUSIC_OFFSET);
 }
 /* MW_MAIN081B:0C0A..0C16. BIOS CX:DX ticks mix into BOTH native RNG words. */
 void MwMixBiosTicksIntoRandomState(void)
 {
-    if (!mwCampaignPlatform.readBiosTicks) abort();
+    if (!mwCampaignPlatform.readBiosTicks) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwCampaignPlatform.readBiosTicks");
     uint32_t ticks=mwCampaignPlatform.readBiosTicks();
     randomStateWord0^=(uint16_t)(ticks>>16);
     randomStateWord1^=(uint16_t)ticks;
@@ -541,7 +542,7 @@ void MwDetectMouseAndJoystick(void)
 {
     mouseInstalled=0;joystickInstalled=0;
     if (!mwCampaignPlatform.resetMouse || !mwCampaignInput.setInterruptsEnabled
-        || !mwCampaignInput.writeGamePort || !mwCampaignInput.readGamePort) abort();
+        || !mwCampaignInput.writeGamePort || !mwCampaignInput.readGamePort) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwCampaignPlatform.resetMouse || !mwCampaignInput.setInterruptsEnabled || !mwCampaignInput.writeGamePort || !mwCampaignInput.readGamePort");
     uint16_t mouseResult=mwCampaignPlatform.resetMouse();
     if (mouseResult==UINT16_MAX) mouseInstalled=1;
     mwCampaignInput.setInterruptsEnabled(false);
@@ -612,7 +613,7 @@ void MwDrawVictoryTransitionPictureAndWait(void)
     MwDrawIndexedPicture(0,0,VICTORY_TRANSITION_PICTURE);
     while (deadline>campaignTimerTicks)
     {
-        if (!mwCampaignInput.waitForInterrupt) abort();
+        if (!mwCampaignInput.waitForInterrupt) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwCampaignInput.waitForInterrupt");
         mwCampaignInput.waitForInterrupt();
     }
 }
@@ -630,7 +631,7 @@ bool MwWaitTicksOrInputInterruption(uint16_t delayTicks)
 /* MW_MAIN081B:1625..162D. BIOS palette register2, BH supplies its code. */
 void MwSetIntroTextPaletteColour(uint8_t paletteCode)
 {
-    if (!egaSetPaletteRegister) abort();
+    if (!egaSetPaletteRegister) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !egaSetPaletteRegister");
     egaSetPaletteRegister(Campaign_Pal_EGA_White,paletteCode);
 }
 /* MW_MAIN081B:162E..1643. Original record has X/Y then NUL text, no colour. */
@@ -680,11 +681,11 @@ bool MwLoadBarDeathAndLaunchMusic(void)
 uint16_t MwRunCopyProtectionAndInitializeCampaign(uint16_t entryOffset)
 {
     if (entryOffset==CAMPAIGN_CONTINUE_INITIALIZE_COMPANY) goto initializeCompany;
-    if (entryOffset!=CAMPAIGN_CONTINUE_COPY_PROTECTION) abort(); /* Only the two proven shared entries. */
+    if (entryOffset!=CAMPAIGN_CONTINUE_COPY_PROTECTION) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: entryOffset!=CAMPAIGN_CONTINUE_COPY_PROTECTION"); /* Only the two proven shared entries. */
     MwDrawActivePicture(0,0,EGA_DRAW_PAGE,2);
     EgaCopyDrawPageToDisplay(0,0,EGA_COLUMNS,EGA_ROWS);
     (void)MwLoadPrimaryPictureBank();
-    if (!campaignStopMusic) abort();
+    if (!campaignStopMusic) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !campaignStopMusic");
     campaignStopMusic();
     (void)MwLoadBarDeathAndLaunchMusic();
     copyProtectionSelection=MwRandomUpTo(COPY_PROTECTION_MECH_COUNT-1);
@@ -707,13 +708,13 @@ uint16_t MwRunCopyProtectionAndInitializeCampaign(uint16_t entryOffset)
     while (campaignTextInputBuffer[answerIndex]==' ')
     {
         ++answerIndex;
-        if (answerIndex==sizeof(campaignTextInputBuffer)) abort(); /* Unrepresented adjacent-text-input aliases, not native validation. */
+        if (answerIndex==sizeof(campaignTextInputBuffer)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: answerIndex==sizeof(campaignTextInputBuffer)"); /* Unrepresented adjacent-text-input aliases, not native validation. */
     }
     (void)copyProtectionAnswers[question][0]; /*177E read;1781 ignores flags. */
     textPanelYOverride=0x0064;
     MwNativeByteView accepted={(const uint8_t *)copyProtectionAcceptedText,0x2153,sizeof(copyProtectionAcceptedText)};
     MwTextPanelReturn shown=MwShowCompactTextPanel(0x000C,0x000B,0x001C,6,&accepted,0x2153);
-    if (shown.discardReturnWord) abort(); /* Native frame-dependent tail, not ordinary company initialization. */
+    if (shown.discardReturnWord) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: shown.discardReturnWord"); /* Native frame-dependent tail, not ordinary company initialization. */
 initializeCompany:
     /*181A remains a label in this body, not an invented initialization API. */
     campaignEventPlanetSelectors[0]=eventPlanetChoicePool0[MwRandomUpTo(7)];

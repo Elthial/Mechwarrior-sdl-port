@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/campaign_continuations.h"
 #include "mechwarrior/campaign_market.h"
 #include "mechwarrior/ega_campaign.h"
@@ -18,7 +19,7 @@ enum { RESERVE_AMMO_TRADE_LABEL_X=0x89, RESERVE_AMMO_TRADE_LABEL_Y=0x6A,
 uint16_t MwEnterMechServiceMenuContinuation(uint16_t entryOffset)
 {
     if (entryOffset==CAMPAIGN_CONTINUE_MECH_COMPLEX_EVENT_RETURN) goto showServicePanel;
-    if (entryOffset!=CAMPAIGN_CONTINUE_MECH_COMPLEX) abort();
+    if (entryOffset!=CAMPAIGN_CONTINUE_MECH_COMPLEX) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: entryOffset!=CAMPAIGN_CONTINUE_MECH_COMPLEX");
     hubSelectedRecordIndex=MECH_COMPLEX_HUB_ROW;
     ownedUnitListSelectedRow=0;
     mechServiceMenuSelectedRow=0;
@@ -45,7 +46,7 @@ void MwAnimateMechServiceIdle(void)
     if (campaignTimerTicks<mechServiceNextAnimationTick) return;
     mechServiceNextAnimationTick=campaignTimerTicks+1;
     uint16_t frameOffset=mechServiceAnimationByteOffset;
-    if ((frameOffset&1)!=0 || frameOffset/sizeof(uint16_t)>=MECH_COMPLEX_ANIMATION_FRAMES) abort(); /* Unrepresented native adjacent/odd reads. */
+    if ((frameOffset&1)!=0 || frameOffset/sizeof(uint16_t)>=MECH_COMPLEX_ANIMATION_FRAMES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (frameOffset&1)!=0 || frameOffset/sizeof(uint16_t)>=MECH_COMPLEX_ANIMATION_FRAMES"); /* Unrepresented native adjacent/odd reads. */
     uint16_t picture=mechComplexAnimationFrames[frameOffset/sizeof(uint16_t)];
     mechServiceAnimationByteOffset+=sizeof(uint16_t);
     if (picture==0) return;
@@ -196,7 +197,7 @@ uint16_t MwOpenMarketMechComponentInspectionCallback(void)
     damagedComponent=marketUnitDamage[(uint8_t)selectedMarketUnitSlot].weaponDamageTiers;
     do
     {
-        if (mount>=CAMPAIGN_WEAPON_SLOTS) abort(); /* Native LOOP underflow is not a zero-weapon no-op. */
+        if (mount>=CAMPAIGN_WEAPON_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mount>=CAMPAIGN_WEAPON_SLOTS"); /* Native LOOP underflow is not a zero-weapon no-op. */
         uint8_t tier=*damagedComponent++;
         MwComponentConditionTextRow *row=&marketWeaponConditionRows[mount++];
         row->display.colour=tier==0?REPAIR_CONDITION_HEALTHY_COLOUR:REPAIR_CONDITION_DAMAGED_COLOUR;
@@ -276,7 +277,7 @@ marketStatus:
     uint16_t group=0;
     do
     {
-        if (group>=CAMPAIGN_AMMO_GROUPS) abort(); /* Native zero count overruns adjacent storage; not a no-op. */
+        if (group>=CAMPAIGN_AMMO_GROUPS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: group>=CAMPAIGN_AMMO_GROUPS"); /* Native zero count overruns adjacent storage; not a no-op. */
         uint16_t family=selectedMarketAmmoFamilies[group];
         uint16_t quantity=selectedMarketAmmoQuantities[group];
         const char *ammoName=ammoFamilyDisplayNames[family];
@@ -327,7 +328,7 @@ uint16_t MwOpenMarketMechList(void)
     do
     {
         while (marketUnitSlot<CAMPAIGN_MARKET_UNIT_SLOTS && marketUnitKinds[marketUnitSlot]==CAMPAIGN_VACANT_UNIT_KIND) ++marketUnitSlot;
-        if (marketUnitSlot>=CAMPAIGN_MARKET_UNIT_SLOTS || visibleRow>=CAMPAIGN_MARKET_UNIT_SLOTS) abort(); /* Unrepresented native overrun. */
+        if (marketUnitSlot>=CAMPAIGN_MARKET_UNIT_SLOTS || visibleRow>=CAMPAIGN_MARKET_UNIT_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: marketUnitSlot>=CAMPAIGN_MARKET_UNIT_SLOTS || visibleRow>=CAMPAIGN_MARKET_UNIT_SLOTS"); /* Unrepresented native overrun. */
         memcpy(marketUnitListRows[visibleRow].text,shopUnitNames[marketUnitKinds[marketUnitSlot]],DEALER_LIST_NAME_COLUMNS);
         ++marketUnitSlot;++visibleRow;
     } while (visibleRow!=marketUnitCount);
@@ -355,7 +356,7 @@ uint16_t MwSelectMarketUnitListRowCallback(void)
     uint16_t marketUnitSlot=0,visibleRow=0;
     for (;;)
     {
-        if (marketUnitSlot>=CAMPAIGN_MARKET_UNIT_SLOTS) abort();
+        if (marketUnitSlot>=CAMPAIGN_MARKET_UNIT_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: marketUnitSlot>=CAMPAIGN_MARKET_UNIT_SLOTS");
         if (marketUnitKinds[marketUnitSlot]!=CAMPAIGN_VACANT_UNIT_KIND)
         {
             if (visibleRow==marketUnitListSelectedRow) break;
@@ -380,7 +381,7 @@ uint16_t MwSaleContinuation(void)
     uint16_t pilotsRemaining=pilotRosterCount, pilotRosterSlot=0;
     do
     {
-        if (pilotRosterSlot>=CAMPAIGN_ROSTER_SLOTS) abort(); /* Native adjacent roster reads not represented. */
+        if (pilotRosterSlot>=CAMPAIGN_ROSTER_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: pilotRosterSlot>=CAMPAIGN_ROSTER_SLOTS"); /* Native adjacent roster reads not represented. */
         if (rosterMechAssignments[pilotRosterSlot]==selectedOwnedUnitSlot)
         {
             rosterMechAssignments[pilotRosterSlot]=CAMPAIGN_NO_MECH_ASSIGNMENT;
@@ -425,13 +426,13 @@ uint16_t MwCancelOwnedUnitSale(void)
  * Repair-quote subtraction wraps; DIV overflow precedes either price store. */
 void MwCalculateSelectedUnitNetPrice(void)
 {
-    if (currentPlanetMarketTier>=UNIT_PRICE_TIER_COUNT || selectedOwnedUnitKind>=CAMPAIGN_UNIT_KIND_COUNT) abort(); /* Unrepresented adjacent tables. */
+    if (currentPlanetMarketTier>=UNIT_PRICE_TIER_COUNT || selectedOwnedUnitKind>=CAMPAIGN_UNIT_KIND_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: currentPlanetMarketTier>=UNIT_PRICE_TIER_COUNT || selectedOwnedUnitKind>=CAMPAIGN_UNIT_KIND_COUNT"); /* Unrepresented adjacent tables. */
     uint8_t saleMultiplier=unitPriceTierMultipliers[currentPlanetMarketTier];
     --saleMultiplier;
     uint32_t salePrice=(uint32_t)(saleMultiplier*PERCENT_DIVISOR)*unitBasePrices[selectedOwnedUnitKind];
     salePrice-=((uint32_t)unitRepairQuoteHigh<<NATIVE_WORD_BITS)|unitRepairQuoteLow;
     salePrice/=CBILLS_PER_THOUSAND;
-    if (salePrice>UINT16_MAX) abort();
+    if (salePrice>UINT16_MAX) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: salePrice>UINT16_MAX");
     salePrice*=CBILLS_PER_THOUSAND;
     unitTransactionPriceLow=(uint16_t)salePrice;
     unitTransactionPriceHigh=(uint16_t)(salePrice>>NATIVE_WORD_BITS);
@@ -470,7 +471,7 @@ uint16_t MwRearmSelectedMech(void)
     selectedMechRearmQuoteLow=0; /* High WORD is deliberately stale. */
     do
     {
-        if (!profile || quantityIndex>=CAMPAIGN_AMMO_GROUPS*CAMPAIGN_OWNED_UNIT_SLOTS) abort();
+        if (!profile || quantityIndex>=CAMPAIGN_AMMO_GROUPS*CAMPAIGN_OWNED_UNIT_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !profile || quantityIndex>=CAMPAIGN_AMMO_GROUPS*CAMPAIGN_OWNED_UNIT_SLOTS");
         uint16_t ammoFamily=profile->ammoFamily;
         uint16_t purchasesRemaining=profile->quantityMaximum-ownedAmmoQuantitiesByGroup[quantityIndex];
         if (purchasesRemaining!=0)
@@ -518,7 +519,7 @@ uint16_t MwQuoteSelectedMechRearm(void)
     selectedMechRearmQuoteHigh=0;
     do
     {
-        if (!profile || quantityIndex>=CAMPAIGN_AMMO_GROUPS*CAMPAIGN_OWNED_UNIT_SLOTS) abort(); /* Unrepresented adjacent reads. */
+        if (!profile || quantityIndex>=CAMPAIGN_AMMO_GROUPS*CAMPAIGN_OWNED_UNIT_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !profile || quantityIndex>=CAMPAIGN_AMMO_GROUPS*CAMPAIGN_OWNED_UNIT_SLOTS"); /* Unrepresented adjacent reads. */
         uint16_t ammoFamily=profile->ammoFamily;
         uint16_t quantityToBuy=profile->quantityMaximum-ownedAmmoQuantitiesByGroup[quantityIndex];
         uint32_t rearmCost=((uint32_t)selectedMechRearmQuoteHigh<<NATIVE_WORD_BITS)|selectedMechRearmQuoteLow;
@@ -569,7 +570,7 @@ uint16_t MwOpenReserveAmmunitionShop(void)
 /* MW_MAIN081B:47E8..4821. Five digits, blank-padded except the last zero. */
 void MwFormatReserveAmmunitionQuantity(uint16_t family,uint16_t quantity)
 {
-    if (family>=CAMPAIGN_AMMO_FAMILY_COUNT) abort();
+    if (family>=CAMPAIGN_AMMO_FAMILY_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: family>=CAMPAIGN_AMMO_FAMILY_COUNT");
     MwBuildDecimalDigitBuffer(quantity);
     bool leading=true;
     for (uint16_t digit=0;digit<5;++digit)
@@ -600,7 +601,7 @@ void MwBuyReserveAmmunition(void)
 {
     uiSelectionChangedCodeOffset=CAMPAIGN_CALLBACK_REFRESH_RESERVE_AMMO;MwInitializeMechServiceIdle();
     uint16_t family=selectedUiRecordIndex;
-    if (family>=CAMPAIGN_AMMO_FAMILY_COUNT) abort();
+    if (family>=CAMPAIGN_AMMO_FAMILY_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: family>=CAMPAIGN_AMMO_FAMILY_COUNT");
     uint16_t remaining=family==RESERVE_AMMO_MACHINE_GUN_FAMILY?RESERVE_AMMO_MACHINE_GUN_BATCH:1;
     do
     {
@@ -619,7 +620,7 @@ void MwBuyReserveAmmunition(void)
 void MwRefreshReserveAmmunitionSelection(void)
 {
     uint16_t row=selectedUiRecordIndex;
-    if (row>=RESERVE_AMMO_MENU_ROWS) abort();
+    if (row>=RESERVE_AMMO_MENU_ROWS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: row>=RESERVE_AMMO_MENU_ROWS");
     bool selling=row>=CAMPAIGN_AMMO_FAMILY_COUNT && row!=RESERVE_AMMO_DONE_ROW;
     if (row!=RESERVE_AMMO_DONE_ROW && selling!=(reserveAmmoSelling!=0))
     {
@@ -648,7 +649,7 @@ void MwRefreshReserveAmmunitionSelection(void)
 /* MW_MAIN081B:497B..49C7, shared rendering tail of48E6 and49C8. */
 void MwDrawReserveAmmunitionCompatibleMechs(uint16_t family)
 {
-    if (family>=CAMPAIGN_AMMO_FAMILY_COUNT) abort();
+    if (family>=CAMPAIGN_AMMO_FAMILY_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: family>=CAMPAIGN_AMMO_FAMILY_COUNT");
     const char *heading=reserveAmmoCompatibilityHeadings[family].text;
     MwNativeByteView text={(const uint8_t *)heading,0,(uint32_t)strlen(heading)+1};
     EgaDrawTransparentText(RESERVE_AMMO_COMPATIBILITY_TEXT_X,RESERVE_AMMO_COMPATIBILITY_HEADING_Y,TEXT_PANEL_FOREGROUND,&text,0);
@@ -661,12 +662,12 @@ void MwDrawReserveAmmunitionCompatibleMechs(uint16_t family)
         text=(MwNativeByteView){(const uint8_t *)name,0,(uint32_t)strlen(name)+1};
         EgaDrawTransparentText(RESERVE_AMMO_COMPATIBILITY_TEXT_X,y,reserveAmmoMechColours[kind],&text,0);y+=RESERVE_AMMO_COMPATIBILITY_ROW_HEIGHT;
     }
-    abort();
+    /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Reserve ammunition has no supported BattleMech compatibility list.");
 }
 /* MW_MAIN081B:49C8..49D6 jumps back into497B after drawing the frame. */
 void MwShowReserveAmmunitionCompatibility(uint16_t family)
 {
-    if (family>=CAMPAIGN_AMMO_FAMILY_COUNT) abort();
+    if (family>=CAMPAIGN_AMMO_FAMILY_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: family>=CAMPAIGN_AMMO_FAMILY_COUNT");
     reserveAmmoPreviewSelection=family;
     MwDrawDescriptorTextPanel(&reserveAmmoCompatibilityPanels[family]);
     MwDrawReserveAmmunitionCompatibleMechs(family);
@@ -676,7 +677,7 @@ uint16_t MwSellReserveAmmunition(void)
 {
     uiSelectionChangedCodeOffset=CAMPAIGN_CALLBACK_REFRESH_RESERVE_AMMO;MwInitializeMechServiceIdle();
     uint16_t family=selectedUiRecordIndex-CAMPAIGN_AMMO_FAMILY_COUNT;
-    if (family>=CAMPAIGN_AMMO_FAMILY_COUNT) abort();
+    if (family>=CAMPAIGN_AMMO_FAMILY_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: family>=CAMPAIGN_AMMO_FAMILY_COUNT");
     uint16_t remaining=family==RESERVE_AMMO_MACHINE_GUN_FAMILY?RESERVE_AMMO_MACHINE_GUN_BATCH:1;
     do
     {
@@ -699,7 +700,7 @@ void MwMarkOwnedAmmunitionCompatibleMechs(void)
     for (uint16_t slot=0;slot<CAMPAIGN_OWNED_UNIT_SLOTS;++slot)
         if (ownedUnitKinds[slot]!=UINT16_MAX)
         {
-            uint16_t kind=ownedUnitKinds[slot];if (kind>=sizeof(reserveAmmoMechColours)) abort();
+            uint16_t kind=ownedUnitKinds[slot];if (kind>=sizeof(reserveAmmoMechColours)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: kind>=sizeof(reserveAmmoMechColours)");
             reserveAmmoMechColours[kind]=UI_SELECTED_TEXT_COLOUR;
         }
 }

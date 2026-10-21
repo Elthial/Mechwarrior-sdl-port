@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_orders.h"
 #include "mechwarrior/combat_cockpit.h"
 #include "mechwarrior/combat_input.h"
@@ -40,7 +41,7 @@ void BtechRefreshLanceOrderScreen(void)
         BtechUpdateLanceOrderHighlight();
         orderMapPositionMask=BtechBuildOrderMapPositionMask();
     }
-    if (!orderMapCameraObject || !orderMapCameraContext || orderMapScaleIndex>=ORDER_MAP_SCALE_COUNT) abort();
+    if (!orderMapCameraObject || !orderMapCameraContext || orderMapScaleIndex>=ORDER_MAP_SCALE_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !orderMapCameraObject || !orderMapCameraContext || orderMapScaleIndex>=ORDER_MAP_SCALE_COUNT");
     if (orderMapScaleIndex==ORDER_MAP_FULL_SCALE)
     {
         if (previousOrderMapScaleIndex!=ORDER_MAP_FULL_SCALE || orderScreenFullRedrawPending)
@@ -53,11 +54,11 @@ void BtechRefreshLanceOrderScreen(void)
     else
     {
         BtechPosition3D *camera=&orderMapCameraObject->object.prefix.position;
-        if (!playerUnitBinding || !playerUnitBinding->positionedLeftLeg) abort();
+        if (!playerUnitBinding || !playerUnitBinding->positionedLeftLeg) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerUnitBinding || !playerUnitBinding->positionedLeftLeg");
         camera->positionA=playerUnitBinding->positionedLeftLeg->object.prefix.position.positionA&orderMapPositionMask;
         /* Native reloads camera/binding/object after the X write. */
         camera=&orderMapCameraObject->object.prefix.position;
-        if (!playerUnitBinding || !playerUnitBinding->positionedLeftLeg) abort();
+        if (!playerUnitBinding || !playerUnitBinding->positionedLeftLeg) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerUnitBinding || !playerUnitBinding->positionedLeftLeg");
         camera->positionB=playerUnitBinding->positionedLeftLeg->object.prefix.position.positionB&orderMapPositionMask;
         redrawRequired=1;
     }
@@ -87,7 +88,7 @@ void BtechRefreshLanceOrderScreen(void)
     BtechDrawLanceMapUnitMarkers();
     if (lanceOrderControls[0])
     {
-        if (selectedLanceOrderPanel>=ORDER_WINGMATE_PANELS || !lanceOrderControls[selectedLanceOrderPanel]) abort();
+        if (selectedLanceOrderPanel>=ORDER_WINGMATE_PANELS || !lanceOrderControls[selectedLanceOrderPanel]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: selectedLanceOrderPanel>=ORDER_WINGMATE_PANELS || !lanceOrderControls[selectedLanceOrderPanel]");
         const BtechUnitControlState *control=lanceOrderControls[selectedLanceOrderPanel];
         uint16_t unitSlot=control->unitSlot;
         if (control->trackedPosition[2]>=0 && control->combatValueOrBoundaryCode>0)
@@ -98,7 +99,7 @@ void BtechRefreshLanceOrderScreen(void)
             int16_t trackedX,trackedY;
             if (BtechProjectPositionToOrderMap(&trackedPosition,&trackedX,&trackedY))
             {
-                if (hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES || combatLandscapeIndex>=COMBAT_LANDSCAPES || unitSlot>=COMBAT_MECH_SLOTS) abort();
+                if (hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES || combatLandscapeIndex>=COMBAT_LANDSCAPES || unitSlot>=COMBAT_MECH_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES || combatLandscapeIndex>=COMBAT_LANDSCAPES || unitSlot>=COMBAT_MECH_SLOTS");
                 drawFillColour=(uint8_t)landscapeCameraColourRows[hudColourSchemeIndex][combatLandscapeIndex].orderTrackingLineColour;
                 BtechDrawClippedLine(unitOrderMapScreenX[unitSlot],unitOrderMapScreenY[unitSlot],trackedX,trackedY);
                 if ((orderPanelMode==ORDER_PANEL_DESTINATION || orderPanelMode==ORDER_PANEL_TARGET) && (combatTickCounter&ORDER_DESTINATION_BLINK_MASK))
@@ -117,7 +118,7 @@ void BtechRefreshLanceOrderScreen(void)
     {screenPolygonNeedsClip=true;drawPolygonFilled=true;return;}
     BtechDrawUnitOrderPanels();
     while (BtechGetActiveRuntimeDelayFar())
-    {if (!btechHostPollInterrupts) abort();btechHostPollInterrupts();}
+    {if (!btechHostPollInterrupts) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostPollInterrupts");btechHostPollInterrupts();}
     BtechSwapScreenPages(false);
     if (orderScreenFullRedrawPending)
     {

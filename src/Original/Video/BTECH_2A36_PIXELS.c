@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_video.h"
 #include <stdlib.h>
 
@@ -12,7 +13,7 @@ uint16_t BtechEgaPixelByteOffset(uint16_t x,uint16_t y,uint8_t *shift)
 /*2A36:22F1. Ordered latch/controller operations around one mode2 pixel. */
 void BtechEgaWritePixel(uint16_t x,uint16_t y,uint16_t colour)
 {
-    if (!btechHostWritePortWord || !btechHostReadVideoByte || !btechHostWriteVideoByte) abort();
+    if (!btechHostWritePortWord || !btechHostReadVideoByte || !btechHostWriteVideoByte) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostWritePortWord || !btechHostReadVideoByte || !btechHostWriteVideoByte");
     uint16_t page=drawPageSelector;uint8_t shift;
     uint16_t offset=BtechEgaPixelByteOffset(x,y,&shift);
     btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,COMBAT_EGA_BIT_MASK_REGISTER|((uint16_t)(1<<shift)<<8));
@@ -30,7 +31,7 @@ void BtechEgaWritePixel(uint16_t x,uint16_t y,uint16_t colour)
 /*2A36:22A8. Read-map order3..0 forms the colour one bit at a time. */
 uint16_t BtechEgaReadPixel(uint16_t x,uint16_t y)
 {
-    if (!btechHostWritePortWord || !btechHostReadVideoByte) abort();
+    if (!btechHostWritePortWord || !btechHostReadVideoByte) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostWritePortWord || !btechHostReadVideoByte");
     uint16_t page=drawPageSelector;uint8_t shift;
     uint16_t offset=BtechEgaPixelByteOffset(x,y,&shift);uint8_t colour=0;
     for (int16_t plane=COMBAT_EGA_PLANES-1;plane>=0;--plane)
@@ -49,6 +50,6 @@ void BtechEgaSetOverscanColour(uint16_t colour)
 {
     uint8_t hardwareColour=(uint8_t)colour&0x0F;
     if (combatRendererKind==COMBAT_VIDEO_EGA && hardwareColour>=8) hardwareColour+=8;
-    if (!btechHostSetOverscanColour) abort();
+    if (!btechHostSetOverscanColour) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostSetOverscanColour");
     btechHostSetOverscanColour(hardwareColour);
 }

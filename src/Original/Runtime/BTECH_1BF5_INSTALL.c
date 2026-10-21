@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_startup.h"
 #include "mechwarrior/combat_input.h"
 #include "mechwarrior/combat_video.h"
@@ -13,7 +14,7 @@ uint16_t BtechRegisterTimerCallback(BtechTimerCallback callback,uint16_t period)
     schedulerTimings[slot].period=period;
     schedulerTimings[slot].ticksRemaining=period;
     schedulerCallbacks[slot]=callback;
-    if (!btechHostSetInterrupts) abort();
+    if (!btechHostSetInterrupts) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostSetInterrupts");
     btechHostSetInterrupts(0);
     schedulerActiveSlots|=slotMask;
     btechHostSetInterrupts(1);
@@ -26,7 +27,7 @@ uint16_t BtechUnregisterTimerCallback(uint16_t callbackHandle)
 {
     --callbackHandle;
     if ((uint8_t)callbackHandle&COMBAT_SCHEDULER_INVALID_SLOT_BITS) return 0;
-    if (!btechHostSetInterrupts) abort();
+    if (!btechHostSetInterrupts) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostSetInterrupts");
     btechHostSetInterrupts(0);
     schedulerActiveSlots&=(uint16_t)~(1u<<(uint8_t)callbackHandle);
     btechHostSetInterrupts(1);
@@ -47,7 +48,7 @@ void BtechTimerSchedulerInterrupt(void)
         remaining=schedulerTimings[slot].ticksRemaining-1;
         if (!remaining)
         {
-            if (!schedulerCallbacks[slot]) abort(); /* Native NULL FAR fault. */
+            if (!schedulerCallbacks[slot]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !schedulerCallbacks[slot]"); /* Native NULL FAR fault. */
             schedulerCallbacks[slot]();
             remaining=schedulerTimings[slot].period; /* Live AFTER callback. */
         }
@@ -57,13 +58,13 @@ void BtechTimerSchedulerInterrupt(void)
     if (remaining)
     {
         schedulerCountdown=remaining;
-        if (!btechHostWritePort) abort();
+        if (!btechHostWritePort) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostWritePort");
         btechHostWritePort(PIC_COMMAND_PORT,PIC_END_OF_INTERRUPT);
     }
     else
     {
         schedulerCountdown=schedulerPeriod;
-        if (!btechHostChainTimerInterrupt) abort();
+        if (!btechHostChainTimerInterrupt) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostChainTimerInterrupt");
         btechHostChainTimerInterrupt(savedTimerVector); /* Old handler owns EOI. */
     }
 }
@@ -71,7 +72,7 @@ void BtechTimerSchedulerInterrupt(void)
 /*1BF5:3449. Compatibility is latched; a later mismatch does not clear it. */
 int16_t BtechProbePcjrTandyRomSignatures(void)
 {
-    if (!btechHostReadRomByte) abort();
+    if (!btechHostReadRomByte) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostReadRomByte");
     if (btechHostReadRomByte(BIOS_ROM_SELECTOR,BIOS_MODEL_OFFSET)==BIOS_PCJR_MODEL_BYTE && btechHostReadRomByte(BIOS_ROM_SELECTOR,TANDY_ROM_SIGNATURE_OFFSET)==TANDY_ROM_SIGNATURE_BYTE)
         pcjrTandyCompatible=1;
     return (int8_t)pcjrTandyCompatible;
@@ -82,7 +83,7 @@ int16_t BtechProbePcjrTandyRomSignatures(void)
 void BtechInstallKeyboardAndTickHandlers(uint16_t installBiosTick)
 {
     if (!btechHostGetInterruptVector || !btechHostSetInterruptVector
-        || !btechHostReadBiosByte || !btechHostWriteBiosByte) abort();
+        || !btechHostReadBiosByte || !btechHostWriteBiosByte) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostGetInterruptVector || !btechHostSetInterruptVector || !btechHostReadBiosByte || !btechHostWriteBiosByte");
     if (!keyboardHandlersInstalled)
     {
         savedKeyboardVector=btechHostGetInterruptVector(KEYBOARD_INTERRUPT);
@@ -93,7 +94,7 @@ void BtechInstallKeyboardAndTickHandlers(uint16_t installBiosTick)
         int16_t compatibility=BtechProbePcjrTandyRomSignatures();
         if (compatibility)
         {
-            if (!btechHostQueryKeyboardIntercept) abort();
+            if (!btechHostQueryKeyboardIntercept) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostQueryKeyboardIntercept");
             /* NEG AX leavesFFFF when3449 returns1; it is not BIOS C0. */
             if (btechHostQueryKeyboardIntercept((uint16_t)-compatibility)
                 && btechHostReadBiosByte(BIOS_KEYBOARD_COMPATIBILITY_STATE)==KEYBOARD_COMPATIBILITY_INTERCEPT_STATE) keyboardBiosIntercept=1;
@@ -116,7 +117,7 @@ void BtechInstallKeyboardAndTickHandlers(uint16_t installBiosTick)
  * overwrites them even if INT00 already points at this handler. */
 void BtechInstallDivideErrorHandler(void)
 {
-    if (!btechHostGetInterruptVector || !btechHostSetInterruptVector || !btechHostSetInterrupts) abort();
+    if (!btechHostGetInterruptVector || !btechHostSetInterruptVector || !btechHostSetInterrupts) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostGetInterruptVector || !btechHostSetInterruptVector || !btechHostSetInterrupts");
     divideErrorHookMarkedActive=1;
     savedDivideErrorVector=btechHostGetInterruptVector(DIVIDE_ERROR_INTERRUPT);
     btechHostSetInterrupts(0);btechHostSetInterruptVector(DIVIDE_ERROR_INTERRUPT,BTECH_DIVIDE_HANDLER_VECTOR);btechHostSetInterrupts(1);
@@ -130,12 +131,12 @@ void BtechInstallTimerScheduler(uint16_t period)
     if (runtimeDelayActive) return;
     schedulerActiveSlots=0;
     BtechProbePcjrTandyRomSignatures();
-    if (!btechHostGetInterruptVector) abort();
+    if (!btechHostGetInterruptVector) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostGetInterruptVector");
     savedTimerVector=btechHostGetInterruptVector(TIMER_INTERRUPT);
     if ((int16_t)period>COMBAT_SCHEDULER_MAX_POSITIVE_PERIOD || !period) return;
     schedulerPeriod=period;schedulerCountdown=period;
     pitChannel0DivisorShadow=UINT16_MAX/period;
-    if (!btechHostSetInterrupts || !btechHostWritePort || !btechHostSetInterruptVector) abort();
+    if (!btechHostSetInterrupts || !btechHostWritePort || !btechHostSetInterruptVector) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostSetInterrupts || !btechHostWritePort || !btechHostSetInterruptVector");
     btechHostSetInterrupts(0);
     btechHostWritePort(PIT_CONTROL_PORT,PIT_MODE_3_LOW_HIGH);
     btechHostWritePort(PIT_CHANNEL_ZERO_PORT,(uint8_t)pitChannel0DivisorShadow);

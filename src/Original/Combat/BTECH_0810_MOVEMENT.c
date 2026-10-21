@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_movement.h"
 #include "mechwarrior/combat_damage.h"
 #include "mechwarrior/combat_surface.h"
@@ -12,7 +13,7 @@
  * absolute C coordinate, not target-relative. All upper boundaries are strict. */
 uint8_t BtechTestPositionInsideSpecialTarget(const BtechPosition3D *position,uint16_t narrowBounds)
 {
-    if (!specialTargetObject) abort();
+    if (!specialTargetObject) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !specialTargetObject");
     const BtechWorldObjectPrefix *target=&specialTargetObject->object.prefix;
     if (target->renderFlags&COMBAT_WORLD_OBJECT_HIDDEN) return 0;
     uint32_t deltaA=target->position.positionA-position->positionA;
@@ -28,14 +29,14 @@ uint8_t BtechTestPositionInsideSpecialTarget(const BtechPosition3D *position,uin
 uint16_t BtechResolveUnitContactWithSpecialTarget(uint16_t unitSlot)
 {
     if ((int16_t)sideObjectiveRules[0]<=OBJECTIVE_OPPOSE_WITHDRAWAL) return 0;
-    if (unitSlot>=COMBAT_MECH_SLOTS || !unitBindings[unitSlot].positionedLeftLeg) abort();
+    if (unitSlot>=COMBAT_MECH_SLOTS || !unitBindings[unitSlot].positionedLeftLeg) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: unitSlot>=COMBAT_MECH_SLOTS || !unitBindings[unitSlot].positionedLeftLeg");
     const BtechPosition3D *position=&unitBindings[unitSlot].positionedLeftLeg->object.prefix.position;
     if (!BtechTestPositionInsideSpecialTarget(position,unitSlot<1)) return 0;
     BtechMechState *mech=unitBindings[unitSlot].mech;
-    if (!mech || mech->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
+    if (!mech || mech->templateIndex>=COMBAT_MECH_TEMPLATES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mech || mech->templateIndex>=COMBAT_MECH_TEMPLATES");
     const BtechMechTemplate *chassis=&mechTemplates[mech->templateIndex];
     uint16_t side=unitControls[unitSlot].sideIndex;
-    if (side>=2) abort();
+    if (side>=2) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: side>=2");
     if (sideObjectiveRules[side]==OBJECTIVE_SPECIAL_TARGET && specialTargetInteractionBlocked)
         sideCompletionFlags[side]=1;
     else
@@ -53,11 +54,11 @@ uint16_t BtechResolveUnitContactWithSpecialTarget(uint16_t unitSlot)
  * In particular contact speed/side read7750/7752, even in the player caller. */
 uint8_t BtechTestUnitMovementBoundary(uint16_t unitSlot)
 {
-    if (unitSlot>=COMBAT_MECH_SLOTS || !unitBindings[unitSlot].positionedLeftLeg) abort();
+    if (unitSlot>=COMBAT_MECH_SLOTS || !unitBindings[unitSlot].positionedLeftLeg) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: unitSlot>=COMBAT_MECH_SLOTS || !unitBindings[unitSlot].positionedLeftLeg");
     BtechPooledWorldObject *body=unitBindings[unitSlot].positionedLeftLeg;
     if (unitSlot)
     {
-        if (!activeUnitControl) abort();
+        if (!activeUnitControl) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !activeUnitControl");
         if (activeUnitControl->tacticalState!=COMBAT_TACTICAL_RETREATING)
         {
             uint8_t classify=activeUnitControl->commandCode==COMBAT_ORDER_ATTACK_ENEMY;
@@ -78,7 +79,7 @@ uint8_t BtechTestUnitMovementBoundary(uint16_t unitSlot)
     for (uint16_t otherSlot=0;otherSlot<COMBAT_MECH_SLOTS;++otherSlot)
     {
         if (otherSlot==unitSlot || !unitBindings[otherSlot].mech) continue;
-        if (!unitBindings[otherSlot].positionedLeftLeg) abort();
+        if (!unitBindings[otherSlot].positionedLeftLeg) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !unitBindings[otherSlot].positionedLeftLeg");
         const BtechPosition3D *other=&unitBindings[otherSlot].positionedLeftLeg->object.prefix.position;
         const BtechPosition3D *position=&body->object.prefix.position;
         uint32_t differences[3]={other->positionA-position->positionA,other->positionB-position->positionB,other->positionC-position->positionC};
@@ -92,10 +93,10 @@ uint8_t BtechTestUnitMovementBoundary(uint16_t unitSlot)
         }
         if (close)
         {
-            if (!activeUnitPositionedObject) abort(); /* Native null near-owner access is not fabricated. */
+            if (!activeUnitPositionedObject) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !activeUnitPositionedObject"); /* Native null near-owner access is not fabricated. */
             if (activeUnitPositionedObject->forwardStepScale>UNIT_CONTACT_DAMAGE_SPEED_MINIMUM)
             {
-                if (!activeUnitControl) abort();
+                if (!activeUnitControl) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !activeUnitControl");
                 if (unitControls[otherSlot].sideIndex!=activeUnitControl->sideIndex)
                     BtechApplyUnitCollisionDamage(unitSlot,otherSlot);
             }
@@ -109,10 +110,10 @@ uint8_t BtechTestUnitMovementBoundary(uint16_t unitSlot)
  * energy. Preserve SAR floor halves versus later signed division toward zero. */
 void BtechApplyUnitCollisionDamage(uint16_t movingSlot,uint16_t otherSlot)
 {
-    if (movingSlot>=COMBAT_MECH_SLOTS || otherSlot>=COMBAT_MECH_SLOTS) abort();
+    if (movingSlot>=COMBAT_MECH_SLOTS || otherSlot>=COMBAT_MECH_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: movingSlot>=COMBAT_MECH_SLOTS || otherSlot>=COMBAT_MECH_SLOTS");
     BtechUnitBinding *moving=&unitBindings[movingSlot],*other=&unitBindings[otherSlot];
     if (!moving->mech || !other->mech || !moving->positionedLeftLeg || !other->positionedLeftLeg
-        || moving->mech->templateIndex>=COMBAT_MECH_TEMPLATES || other->mech->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
+        || moving->mech->templateIndex>=COMBAT_MECH_TEMPLATES || other->mech->templateIndex>=COMBAT_MECH_TEMPLATES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !moving->mech || !other->mech || !moving->positionedLeftLeg || !other->positionedLeftLeg || moving->mech->templateIndex>=COMBAT_MECH_TEMPLATES || other->mech->templateIndex>=COMBAT_MECH_TEMPLATES");
     int16_t movingMass=mechTemplates[moving->mech->templateIndex].tonnage;
     int16_t otherMass=mechTemplates[other->mech->templateIndex].tonnage;
     int16_t movingSquared=(int32_t)movingMass*movingMass;
@@ -181,7 +182,7 @@ void BtechApplyUnitCollisionDamage(uint16_t movingSlot,uint16_t otherSlot)
  * Do not install player AI context before89F6: native only sets7752 at the end. */
 void BtechUpdatePlayerMechMotion(void)
 {
-    if (!playerUnitBinding || !playerUnitBinding->positionedLeftLeg || !playerMechTemplate || !playerMechState) abort();
+    if (!playerUnitBinding || !playerUnitBinding->positionedLeftLeg || !playerMechTemplate || !playerMechState) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerUnitBinding || !playerUnitBinding->positionedLeftLeg || !playerMechTemplate || !playerMechState");
     BtechPooledWorldObject *body=playerUnitBinding->positionedLeftLeg;
     BtechWorldObjectPrefix *pose=&body->object.prefix;
     BtechPosition3D oldPosition=pose->position;

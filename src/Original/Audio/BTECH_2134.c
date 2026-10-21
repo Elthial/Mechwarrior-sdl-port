@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_sound.h"
 #include <stdlib.h>
 
@@ -16,27 +17,27 @@ void BtechSetToneMusicPriorityAndTranslation(uint16_t priority)
  * proved DI owner it remains a gate, not an invented channel argument. */
 uint16_t BtechDispatchToneMidiMessage(uint16_t statusDisplacement,uint16_t channel,uint16_t packedData)
 {
-    if ((statusDisplacement&1) || statusDisplacement/2>=8) abort();
+    if ((statusDisplacement&1) || statusDisplacement/2>=8) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (statusDisplacement&1) || statusDisplacement/2>=8");
     uint16_t handler=musicHandlerOffsets[statusDisplacement/2];
     if (handler==TONE_MUSIC_NO_OPERATION) return packedData;
-    if (handler==TONE_MUSIC_PITCH_BEND) abort();
-    if (handler!=TONE_MUSIC_NOTE_OFF && handler!=TONE_MUSIC_NOTE_ON) abort();
+    if (handler==TONE_MUSIC_PITCH_BEND) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: handler==TONE_MUSIC_PITCH_BEND");
+    if (handler!=TONE_MUSIC_NOTE_OFF && handler!=TONE_MUSIC_NOTE_ON) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: handler!=TONE_MUSIC_NOTE_OFF && handler!=TONE_MUSIC_NOTE_ON");
     channel=(channel&0xFF00)|(uint8_t)((uint8_t)channel+musicChannelBias);
     if (handler==TONE_MUSIC_NOTE_OFF || !(packedData&0xFF00))
     {
         uint16_t residue=musicPriority;
         if ((int16_t)channel>=COMBAT_TONE_CHANNELS) return residue;
-        if (channel>=COMBAT_TONE_CHANNELS) abort(); /* Signed-negative adjacent-owner alias. */
+        if (channel>=COMBAT_TONE_CHANNELS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: channel>=COMBAT_TONE_CHANNELS"); /* Signed-negative adjacent-owner alias. */
         residue=(residue&0xFF00)|(channelFlags[channel].activityMask&2);
         if (residue&2) channelFlags[channel].activityMask=0;
         return residue;
     }
     if ((int8_t)(uint8_t)channel>=COMBAT_TONE_CHANNELS) return packedData;
-    if (channel>=COMBAT_TONE_CHANNELS) abort();
+    if (channel>=COMBAT_TONE_CHANNELS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: channel>=COMBAT_TONE_CHANNELS");
     if (soundPriorities[channel]>musicPriority) return packedData;
     channelFlags[channel].activityMask=2;
     BtechToneChannelState *state=toneChannelStates[channel];
-    if (!state) abort();
+    if (!state) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !state");
     soundPriorities[channel]=musicPriority;
     state->modulationScale=0;state->periodStep=0;state->bytecodeOffset=0;
     packedData=(packedData&0x00FF)|((packedData&0x7F00)<<1);
@@ -45,7 +46,7 @@ uint16_t BtechDispatchToneMidiMessage(uint16_t statusDisplacement,uint16_t chann
     if (state==&toneChannels[TONE_NOISE_STATE_INDEX]) /* Native state024E, selected by its address, not channel number. */
     {
         state->levelSequenceOffset=TONE_NOISE_ENVELOPES+packedData*TONE_NOISE_ENVELOPE_BYTES;
-        if (musicPriority>=TONE_NOISE_PERIOD_WORDS) abort(); /* Adjacent noise-period/envelope aliases not recovered. */
+        if (musicPriority>=TONE_NOISE_PERIOD_WORDS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: musicPriority>=TONE_NOISE_PERIOD_WORDS"); /* Adjacent noise-period/envelope aliases not recovered. */
         period=noiseMusicPeriods[musicPriority];
     }
     else
@@ -54,7 +55,7 @@ uint16_t BtechDispatchToneMidiMessage(uint16_t statusDisplacement,uint16_t chann
         if ((int8_t)note<0) return packedData; /* Activity/priority/level have already changed. */
         if (musicPitchTableOffset==TONE_SPEAKER_PITCH_TABLE) period=speakerMusicPeriods[note];
         else if (musicPitchTableOffset==TONE_TANDY_PITCH_TABLE) period=tandyMusicPeriods[note];
-        else abort();
+        else /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Tone MIDI message selected an unsupported pitch table.");
     }
     state->basePeriod=period;state->outputPeriod=period;
     return period;
@@ -79,7 +80,7 @@ void BtechParseToneCommands(BtechToneChannelState *state,MwNativeByteView event,
             {
                 if (state->branchRepeatCount && !--state->branchRepeatCount) continue;
             }
-            else abort(); /* Unrecovered modified code-table target. */
+            else /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Tone stream selected an unsupported command handler."); /* Unrecovered modified code-table target. */
             cursor+=relative;continue;
         }
         uint16_t parameter=MwReadNativeViewWord(&event,cursor);cursor+=2;
@@ -166,7 +167,7 @@ void BtechAdvanceToneChannel(BtechToneChannelState *state,MwNativeByteView event
  * ties replace in descending traversal, so lower channel wins. */
 void BtechTickSpeakerToneChannels(void)
 {
-    if (!audioTickCallback) abort();
+    if (!audioTickCallback) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !audioTickCallback");
     audioTickCallback();
     soundOutputEnableMask=soundEffectsEnableMask;
     selectedSpeakerState=NULL;selectedSpeakerPriority=0;
@@ -180,7 +181,7 @@ void BtechTickSpeakerToneChannels(void)
         currentChannelDisplacement=channel*2;
         BtechAdvanceToneChannel(state,toneEventData[channel],channel);
     }
-    if (!btechHostWritePort || !btechHostReadPort) abort();
+    if (!btechHostWritePort || !btechHostReadPort) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostWritePort || !btechHostReadPort");
     uint8_t gateBits=0;
     if (selectedSpeakerState)
     {
@@ -225,7 +226,7 @@ void BtechTickTandyToneChannels(void)
  * Bytecode/fallback views borrow real allocations; no copied segment image. */
 void BtechStartToneInterpreterChannel(MwNativeByteView event,uint16_t eventOffset,uint16_t channel,MwNativeByteView fallback,uint16_t fallbackOffset)
 {
-    if (channel>=COMBAT_TONE_CHANNELS || !toneChannelStates[channel]) abort();
+    if (channel>=COMBAT_TONE_CHANNELS || !toneChannelStates[channel]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: channel>=COMBAT_TONE_CHANNELS || !toneChannelStates[channel]");
     channelFlags[channel].activityMask=1;
     BtechToneChannelState *state=toneChannelStates[channel];
     toneEventData[channel]=event;

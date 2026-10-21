@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/campaign_continuations.h"
 #include "mechwarrior/campaign_options.h"
 #include "mechwarrior/ega_campaign.h"
@@ -10,7 +11,7 @@ enum { OPTIONS_SOUND_X=0x0068,OPTIONS_SOUND_Y=0x006E,OPTIONS_DETAIL_X=0x0070,OPT
 uint16_t MwEnterOptionsMenuContinuation(uint16_t entryOffset)
 {
     if (entryOffset==CAMPAIGN_CONTINUE_OPTIONS_REDRAW) goto publishMenu;
-    if (entryOffset!=CAMPAIGN_CONTINUE_OPTIONS) abort();
+    if (entryOffset!=CAMPAIGN_CONTINUE_OPTIONS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: entryOffset!=CAMPAIGN_CONTINUE_OPTIONS");
     hubSelectedRecordIndex=OPTIONS_HUB_ROW;
     EgaSelectFont(TEXT_PANEL_MONOSPACE_FONT);
     EgaClearDrawPage(Campaign_Pal_EGA_Magenta);
@@ -27,7 +28,7 @@ publishMenu:
 /* MW_MAIN081B:6FDE..6FF9. The NUL is copied; no clearing of the old tail. */
 void MwUpdateAudioOptionLabel(void)
 {
-    if (audioOptionLabelIndex>=AUDIO_OPTION_LABEL_COUNT) abort(); /* Unrepresented out-of-table native alias. */
+    if (audioOptionLabelIndex>=AUDIO_OPTION_LABEL_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: audioOptionLabelIndex>=AUDIO_OPTION_LABEL_COUNT"); /* Unrepresented out-of-table native alias. */
     uint16_t character=0;
     do
     {
@@ -38,7 +39,7 @@ void MwUpdateAudioOptionLabel(void)
 /* MW_MAIN081B:702B..7046. BYTE detail times5, including trailing space/NUL. */
 void MwUpdateTerrainDetailOptionLabel(void)
 {
-    if (campaignTerrainDetailLevel>=TERRAIN_DETAIL_LABEL_COUNT) abort(); /* Unrepresented out-of-table native alias. */
+    if (campaignTerrainDetailLevel>=TERRAIN_DETAIL_LABEL_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: campaignTerrainDetailLevel>=TERRAIN_DETAIL_LABEL_COUNT"); /* Unrepresented out-of-table native alias. */
     uint16_t character=0;
     do
     {

@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_damage.h"
 #include "mechwarrior/combat_effects.h"
 #include "mechwarrior/combat_import.h"
@@ -16,7 +17,7 @@ void BtechRollCriticalLosses(BtechMechState *mech,int16_t bodyLocation)
         if (BtechSelectAndApplyCriticalLoss(mech,bodyLocation)) criticalRollBudget-=COMBAT_CRITICAL_SUCCESS_COST;
         else
         {
-            if ((uint16_t)bodyLocation>=COMBAT_BODY_LOCATIONS) abort();
+            if ((uint16_t)bodyLocation>=COMBAT_BODY_LOCATIONS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (uint16_t)bodyLocation>=COMBAT_BODY_LOCATIONS");
             uint16_t transferBodyLocation=criticalTransferBodyLocations[bodyLocation];
             if (transferBodyLocation==(uint16_t)bodyLocation) return;
             bodyLocation=(int16_t)transferBodyLocation;
@@ -30,7 +31,7 @@ void BtechRollCriticalLosses(BtechMechState *mech,int16_t bodyLocation)
  * Compare the unhalved roll on retry, including head/legs. Preserve that quirk. */
 uint8_t BtechSelectAndApplyCriticalLoss(BtechMechState *mech,int16_t bodyLocation)
 {
-    if (mech->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
+    if (mech->templateIndex>=COMBAT_MECH_TEMPLATES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mech->templateIndex>=COMBAT_MECH_TEMPLATES");
     BtechMechTemplate *chassis=&mechTemplates[mech->templateIndex];
     int16_t mountCount=chassis->weaponMountCount;
     for (;;)
@@ -68,7 +69,7 @@ uint8_t BtechSelectAndApplyCriticalLoss(BtechMechState *mech,int16_t bodyLocatio
         else if (bodyLocation>=COMBAT_BODY_LEFT_ARM && bodyLocation<=COMBAT_BODY_RIGHT_LEG)
         {
             uint16_t actuatorIndex=actuatorIndicesByBodyLocation[bodyLocation];
-            if (actuatorIndex>=COMBAT_ACTUATORS) abort();
+            if (actuatorIndex>=COMBAT_ACTUATORS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: actuatorIndex>=COMBAT_ACTUATORS");
             remainingSelectionWeight-=mech->actuatorCondition[actuatorIndex];
             if (remainingSelectionWeight<=0) {--mech->actuatorCondition[actuatorIndex];return 1;}
         }
@@ -100,10 +101,10 @@ uint8_t BtechSelectAndApplyCriticalLoss(BtechMechState *mech,int16_t bodyLocatio
         }
         for (int16_t mountIndex=0;mountIndex<mountCount;++mountIndex)
         {
-            if (mountIndex>=COMBAT_WEAPON_MOUNTS) abort();
+            if (mountIndex>=COMBAT_WEAPON_MOUNTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mountIndex>=COMBAT_WEAPON_MOUNTS");
             BtechWeaponMount *weaponMount=&chassis->weaponMounts[mountIndex];
             if (!mech->weapons[mountIndex].operational || weaponMount->bodyLocation!=(uint16_t)bodyLocation) continue;
-            if ((uint16_t)weaponMount->weaponKind>=COMBAT_WEAPON_KINDS) abort();
+            if ((uint16_t)weaponMount->weaponKind>=COMBAT_WEAPON_KINDS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (uint16_t)weaponMount->weaponKind>=COMBAT_WEAPON_KINDS");
             remainingSelectionWeight-=weaponDefinitions[weaponMount->weaponKind].criticalSlots;
             if (remainingSelectionWeight<=0) {mech->weapons[mountIndex].operational=0;return 1;}
         }
@@ -134,17 +135,17 @@ void BtechApplyArmorAndInternalDamage(uint16_t unitSlot,int16_t armorLocation,in
         if (playerDamageSuppressed) return;
     }
     else if (unitSlot==COMBAT_SPECIAL_TARGET_SLOT) {BtechApplySpecialTargetDamage(remainingDamage);return;}
-    if (unitSlot>=COMBAT_MECH_SLOTS) abort();
+    if (unitSlot>=COMBAT_MECH_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: unitSlot>=COMBAT_MECH_SLOTS");
     targetDamagePanelDirty[unitSlot]=1;
     BtechMechState *mech=unitBindings[unitSlot].mech;
     while (remainingDamage)
     {
-        if (!mech || (uint16_t)armorLocation>=COMBAT_ARMOR_LOCATIONS) abort();
+        if (!mech || (uint16_t)armorLocation>=COMBAT_ARMOR_LOCATIONS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mech || (uint16_t)armorLocation>=COMBAT_ARMOR_LOCATIONS");
         uint16_t *armorPoints=&mech->currentArmor[armorLocation];
         if ((int16_t)*armorPoints>remainingDamage) {*armorPoints-=(uint16_t)remainingDamage;remainingDamage=0;continue;}
         remainingDamage=(int16_t)((uint16_t)remainingDamage-*armorPoints);*armorPoints=0;
         uint16_t bodyLocation=armorToBodyLocations[armorLocation];
-        if (bodyLocation>=COMBAT_BODY_LOCATIONS) abort();
+        if (bodyLocation>=COMBAT_BODY_LOCATIONS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: bodyLocation>=COMBAT_BODY_LOCATIONS");
         if (!mech->currentInternalStructure[bodyLocation])
         {
             if (bodyLocation==COMBAT_BODY_CENTER_TORSO) remainingDamage=0;
@@ -166,7 +167,7 @@ void BtechApplyArmorAndInternalDamage(uint16_t unitSlot,int16_t armorLocation,in
 /*0810:5FA5. Armour HEAD=8 differs from internal HEAD=7. */
 BtechPooledWorldObject *BtechGetUnitRenderPartByArmorLocation(uint16_t unitSlot,int16_t armorLocation)
 {
-    if (unitSlot>=COMBAT_MECH_SLOTS) abort();
+    if (unitSlot>=COMBAT_MECH_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: unitSlot>=COMBAT_MECH_SLOTS");
     BtechUnitBinding *binding=&unitBindings[unitSlot];
     switch (armorLocation)
     {
@@ -200,7 +201,7 @@ void BtechApplySpecialTargetDamage(int16_t damage)
     specialTargetDamagePanelDirty=1;
     if (damage<(int16_t)specialTargetDamageRemaining) {specialTargetDamageRemaining-=(uint16_t)damage;return;}
     specialTargetDamageRemaining=0;
-    if (!specialTargetObject) abort();
+    if (!specialTargetObject) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !specialTargetObject");
     BtechWorldObjectPrefix *target=&specialTargetObject->object.prefix;
     target->renderFlags|=COMBAT_WORLD_OBJECT_HIDDEN;
     target->renderFlags&=(uint8_t)~WORLD_OBJECT_SPECIAL_TARGET;

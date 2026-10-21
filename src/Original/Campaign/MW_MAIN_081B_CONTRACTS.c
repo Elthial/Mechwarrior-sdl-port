@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/campaign_continuations.h"
 #include "mechwarrior/campaign_contracts.h"
 #include "mechwarrior/campaign_events.h"
@@ -22,7 +23,7 @@ uint16_t MwEnterContractOfficeContinuation(uint16_t entryOffset)
 {
     if (entryOffset==CAMPAIGN_CONTINUE_CONTRACT_OFFICE_MENU) goto officeMenu;
     if (entryOffset==CAMPAIGN_CONTINUE_CONTRACT_OFFICE) MwAdvanceCampaignTimeAndChargeWages(1);
-    else if (entryOffset!=CAMPAIGN_CONTINUE_CONTRACT_OFFICE_REDRAW) abort();
+    else if (entryOffset!=CAMPAIGN_CONTINUE_CONTRACT_OFFICE_REDRAW) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: entryOffset!=CAMPAIGN_CONTINUE_CONTRACT_OFFICE_REDRAW");
     hubSelectedRecordIndex=CONTRACT_OFFICE_HUB_ROW;
     EgaSelectFont(CONTRACT_OFFICE_FONT);
     MwLoadIndexedPicture((uint16_t)(CONTRACT_OFFICE_EMBLEM_BASE+currentPlanetHouseIndex));
@@ -31,7 +32,7 @@ uint16_t MwEnterContractOfficeContinuation(uint16_t entryOffset)
     MwDrawIndexedPicture(CONTRACT_OFFICE_PORTRAIT_X,CONTRACT_OFFICE_PORTRAIT_Y,(uint16_t)(CONTRACT_OFFICE_PORTRAIT_BASE+currentPlanetHouseIndex));
     /* Native MUL BL uses AL only; the resulting picture base survives the scan. */
     uint16_t regionPicture=CONTRACT_OFFICE_REGION_BASE+(uint8_t)currentPlanetHouseIndex*CONTRACT_OFFICE_REGIONS_PER_HOUSE;
-    if (currentPlanetHouseIndex>=CAMPAIGN_HOUSE_COUNT) abort(); /* Unrepresented authored list. */
+    if (currentPlanetHouseIndex>=CAMPAIGN_HOUSE_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: currentPlanetHouseIndex>=CAMPAIGN_HOUSE_COUNT"); /* Unrepresented authored list. */
     const uint8_t *planetGroup=contractOfficePlanetGroups[currentPlanetHouseIndex];
     uint16_t groupIndex=0;
     uint8_t planetSelector=currentPlanetIndex+1;
@@ -68,7 +69,7 @@ void MwInitializeContractRequestDisplay(uint16_t missionOfferSlot)
 /* MW_MAIN081B:4CC8..4D1C. Reload the live offer displacement before each draw. */
 void MwDrawNegotiatingOfferTerms(void)
 {
-    if ((negotiatingMissionOfferByteOffset&1) || negotiatingMissionOfferByteOffset/2>=MISSION_OFFER_SLOTS) abort();
+    if ((negotiatingMissionOfferByteOffset&1) || negotiatingMissionOfferByteOffset/2>=MISSION_OFFER_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (negotiatingMissionOfferByteOffset&1) || negotiatingMissionOfferByteOffset/2>=MISSION_OFFER_SLOTS");
     MwDrawSignedDecimalField(missionPaymentThousands[negotiatingMissionOfferByteOffset/2],
         CONTRACT_PAYMENT_X,0,CONTRACT_PAYMENT_DIGITS,CONTRACT_TERM_COLOUR,CONTRACT_PAGE_BACKGROUND,CONTRACT_PAYMENT_Y);
     MwDrawSignedDecimalField(missionSalvagePercentages[negotiatingMissionOfferByteOffset/2],
@@ -97,20 +98,20 @@ uint16_t MwDrawMissionContractBriefingContinuation(uint16_t missionOfferSlot)
     EgaCopyDrawPageToDisplay(0,0,EGA_COLUMNS,EGA_ROWS);
     MwDrawDescriptorTextPanel(&contractActionsPanel);
     MwDrawContractHeading(CONTRACT_TEXT_X,CONTRACT_NARRATIVE_Y,contractNarrative);
-    if (currentPlanetHouseIndex>=CAMPAIGN_HOUSE_COUNT) abort();
+    if (currentPlanetHouseIndex>=CAMPAIGN_HOUSE_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: currentPlanetHouseIndex>=CAMPAIGN_HOUSE_COUNT");
     const char *employer=houseContractNames[currentPlanetHouseIndex];
     MwDrawContractText(CONTRACT_EMPLOYER_X,CONTRACT_EMPLOYER_Y,employer);
     MwDrawContractText(CONTRACT_TEXT_X,CONTRACT_PAYMENT_Y,employer);
     uint16_t offerSlot=negotiatingMissionOfferByteOffset/2;
-    if ((negotiatingMissionOfferByteOffset&1) || offerSlot>=MISSION_OFFER_SLOTS) abort();
+    if ((negotiatingMissionOfferByteOffset&1) || offerSlot>=MISSION_OFFER_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (negotiatingMissionOfferByteOffset&1) || offerSlot>=MISSION_OFFER_SLOTS");
     uint16_t description=missionDescriptionOffsets[offerSlot];
-    if (description<MISSION_DESCRIPTION_STORAGE_START || (uint32_t)description+2>=MISSION_DESCRIPTION_STORAGE_END) abort();
+    if (description<MISSION_DESCRIPTION_STORAGE_START || (uint32_t)description+2>=MISSION_DESCRIPTION_STORAGE_END) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: description<MISSION_DESCRIPTION_STORAGE_START || (uint32_t)description+2>=MISSION_DESCRIPTION_STORAGE_END");
     MwDrawContractText(CONTRACT_TEXT_X,CONTRACT_OBJECTIVE_Y,(const char *)&missionDescriptionStorage[description+sizeof(CampaignMissionDescriptionHeader)-MISSION_DESCRIPTION_STORAGE_START]);
     offerSlot=negotiatingMissionOfferByteOffset/2;
     uint16_t planetIndex=missionPlanetRecordIndices[offerSlot];
-    if (planetIndex>=sizeof(planetRecordOffsets)/sizeof(planetRecordOffsets[0])) abort();
+    if (planetIndex>=sizeof(planetRecordOffsets)/sizeof(planetRecordOffsets[0])) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: planetIndex>=sizeof(planetRecordOffsets)/sizeof(planetRecordOffsets[0])");
     uint16_t planetOffset=planetRecordOffsets[planetIndex];
-    if (planetOffset<PLANET_RECORDS_START || (uint32_t)planetOffset+sizeof(MwPlanetHeader)>=PLANET_RECORDS_END) abort();
+    if (planetOffset<PLANET_RECORDS_START || (uint32_t)planetOffset+sizeof(MwPlanetHeader)>=PLANET_RECORDS_END) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: planetOffset<PLANET_RECORDS_START || (uint32_t)planetOffset+sizeof(MwPlanetHeader)>=PLANET_RECORDS_END");
     MwDrawContractText(CONTRACT_TEXT_X,CONTRACT_DESTINATION_Y,(const char *)&planetRecordStorage[planetOffset+sizeof(MwPlanetHeader)-PLANET_RECORDS_START]);
     offerSlot=negotiatingMissionOfferByteOffset/2;
     uint16_t house=missionTypeCodes[offerSlot]==MISSION_CATEGORY_DEFENCE || missionTargetHouseIndices[offerSlot]>=CAMPAIGN_HOUSE_COUNT
@@ -120,7 +121,7 @@ uint16_t MwDrawMissionContractBriefingContinuation(uint16_t missionOfferSlot)
     MwDrawSignedDecimalField(missionEnemyMediumCounts[negotiatingMissionOfferByteOffset/2],CONTRACT_MEDIUM_COUNT_X,1,0,CONTRACT_TEXT_COLOUR,CONTRACT_PAGE_BACKGROUND,CONTRACT_FORCE_COUNTS_Y);
     MwDrawSignedDecimalField(missionEnemyLightCounts[negotiatingMissionOfferByteOffset/2],CONTRACT_TEXT_X,1,0,CONTRACT_TEXT_COLOUR,CONTRACT_PAGE_BACKGROUND,CONTRACT_LIGHT_COUNT_Y);
     MwDrawNegotiatingOfferTerms();
-    if (calendarMonthIndex>=CAMPAIGN_MONTH_COUNT) abort();
+    if (calendarMonthIndex>=CAMPAIGN_MONTH_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: calendarMonthIndex>=CAMPAIGN_MONTH_COUNT");
     uint16_t yearX=contractDateYearXOffsets[calendarMonthIndex];
     MwDrawContractText(CONTRACT_MONTH_X,CONTRACT_DATE_Y,(const char *)calendarMonthNames[calendarMonthIndex]);
     MwDrawSignedDecimalField(calendarYear,(uint16_t)(yearX+CONTRACT_YEAR_BASE_X),1,0,CONTRACT_TEXT_COLOUR,CONTRACT_PAGE_BACKGROUND,CONTRACT_DATE_Y);
@@ -131,7 +132,7 @@ uint16_t MwDrawMissionContractBriefingContinuation(uint16_t missionOfferSlot)
 /* MW_MAIN081B:4D35..4DA4. No reset of attempts or requested terms here. */
 uint16_t MwRequestMissionOfferContinuation(void)
 {
-    if (currentPlanetHouseIndex>=CAMPAIGN_HOUSE_COUNT) abort();
+    if (currentPlanetHouseIndex>=CAMPAIGN_HOUSE_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: currentPlanetHouseIndex>=CAMPAIGN_HOUSE_COUNT");
     if (houseGrievancePoints[currentPlanetHouseIndex]>=HOUSE_GRIEVANCE_REFUSAL)
     {
         MwDrawCampaignFramedBackground();
@@ -172,7 +173,7 @@ uint16_t MwNextMissionOfferContinuation(void)
 void MwRedrawRequestedContractTerm(uint16_t termByteOffset)
 {
     uint16_t term=termByteOffset/sizeof(uint16_t);
-    if ((termByteOffset&1) || term>=CONTRACT_TERM_COUNT) abort();
+    if ((termByteOffset&1) || term>=CONTRACT_TERM_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (termByteOffset&1) || term>=CONTRACT_TERM_COUNT");
     uint16_t requestedAmount=term==CONTRACT_PAYMENT_TERM?requestedContractPaymentThousands:
         term==CONTRACT_SALVAGE_TERM?requestedContractSalvagePercent:requestedContractAdvancePercent;
     uint16_t x=requestedTermX[term],y=requestedTermY[term];
@@ -202,18 +203,18 @@ uint16_t MwEditContractRequestContinuation(uint16_t termByteOffset)
         uint16_t key;
         if (!MwPollNavigationKeyFromMouseOrJoystick(&key))
         {
-            if (!mwCampaignInput.keyboardAvailable || !mwCampaignInput.readKeyboard) abort();
+            if (!mwCampaignInput.keyboardAvailable || !mwCampaignInput.readKeyboard) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwCampaignInput.keyboardAvailable || !mwCampaignInput.readKeyboard");
             if (!mwCampaignInput.keyboardAvailable()) continue;
             key=mwCampaignInput.readKeyboard();
         }
         if (key==CAMPAIGN_KEY_ESCAPE)
         {
-            if (!mwCampaignInput.readKeyboardShiftFlags) abort();
+            if (!mwCampaignInput.readKeyboardShiftFlags) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwCampaignInput.readKeyboardShiftFlags");
             if (mwCampaignInput.readKeyboardShiftFlags()&BIOS_SHIFT_CONTROL) return CAMPAIGN_CONTINUE_CLEANUP;
             continue;
         }
         uint16_t term=contractRequestTermByteOffset/sizeof(uint16_t);
-        if ((contractRequestTermByteOffset&1) || term>=CONTRACT_TERM_COUNT) abort();
+        if ((contractRequestTermByteOffset&1) || term>=CONTRACT_TERM_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (contractRequestTermByteOffset&1) || term>=CONTRACT_TERM_COUNT");
         uint16_t *request=term==CONTRACT_PAYMENT_TERM?&requestedContractPaymentThousands:
             term==CONTRACT_SALVAGE_TERM?&requestedContractSalvagePercent:&requestedContractAdvancePercent;
         if (key==CAMPAIGN_KEY_UP)
@@ -252,7 +253,7 @@ uint16_t MwEditContractPaymentRequestContinuation(void)
 {
     if (requestContractPaymentEnabled!=1)
     {
-        if ((negotiatingMissionOfferByteOffset&1) || negotiatingMissionOfferByteOffset/2>=MISSION_OFFER_SLOTS) abort();
+        if ((negotiatingMissionOfferByteOffset&1) || negotiatingMissionOfferByteOffset/2>=MISSION_OFFER_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (negotiatingMissionOfferByteOffset&1) || negotiatingMissionOfferByteOffset/2>=MISSION_OFFER_SLOTS");
         requestedContractPaymentThousands=missionPaymentThousands[negotiatingMissionOfferByteOffset/2];
         requestContractPaymentEnabled=1;
     }
@@ -262,7 +263,7 @@ uint16_t MwEditContractSalvageRequestContinuation(void)
 {
     if (requestContractSalvageEnabled!=1)
     {
-        if ((negotiatingMissionOfferByteOffset&1) || negotiatingMissionOfferByteOffset/2>=MISSION_OFFER_SLOTS) abort();
+        if ((negotiatingMissionOfferByteOffset&1) || negotiatingMissionOfferByteOffset/2>=MISSION_OFFER_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (negotiatingMissionOfferByteOffset&1) || negotiatingMissionOfferByteOffset/2>=MISSION_OFFER_SLOTS");
         requestedContractSalvagePercent=missionSalvagePercentages[negotiatingMissionOfferByteOffset/2];
         requestContractSalvageEnabled=1;
     }
@@ -272,7 +273,7 @@ uint16_t MwEditContractAdvanceRequestContinuation(void)
 {
     if (requestContractAdvanceEnabled!=1)
     {
-        if ((negotiatingMissionOfferByteOffset&1) || negotiatingMissionOfferByteOffset/2>=MISSION_OFFER_SLOTS) abort();
+        if ((negotiatingMissionOfferByteOffset&1) || negotiatingMissionOfferByteOffset/2>=MISSION_OFFER_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (negotiatingMissionOfferByteOffset&1) || negotiatingMissionOfferByteOffset/2>=MISSION_OFFER_SLOTS");
         requestedContractAdvancePercent=missionAdvancePercentages[negotiatingMissionOfferByteOffset/2];
         requestContractAdvanceEnabled=1;
     }
@@ -288,7 +289,7 @@ uint16_t MwNegotiateAndAcceptContractContinuation(void)
         ++contractNegotiationAttempts;
     negotiationRequestsSatisfied=1;
     uint16_t offerSlot=(uint16_t)(negotiatingMissionOfferSlot<<1)/sizeof(uint16_t);
-    if (offerSlot>=MISSION_OFFER_SLOTS) abort();
+    if (offerSlot>=MISSION_OFFER_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: offerSlot>=MISSION_OFFER_SLOTS");
     if (requestContractPaymentEnabled!=0)
     {
         if (requestedContractPaymentThousands>missionPaymentThousands[offerSlot])
@@ -393,13 +394,13 @@ acceptContract:
     planetIndex=(planetIndex&0xFF00)|combatPlanetSelector;
     --planetIndex;
     planetIndex=(uint16_t)(planetIndex<<1)/sizeof(uint16_t);
-    if (planetIndex>=sizeof(planetRecordOffsets)/sizeof(planetRecordOffsets[0])) abort();
+    if (planetIndex>=sizeof(planetRecordOffsets)/sizeof(planetRecordOffsets[0])) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: planetIndex>=sizeof(planetRecordOffsets)/sizeof(planetRecordOffsets[0])");
     uint16_t planetOffset=planetRecordOffsets[planetIndex];
-    if (planetOffset<PLANET_RECORDS_START || (uint32_t)planetOffset+sizeof(MwPlanetHeader)>PLANET_RECORDS_END) abort();
+    if (planetOffset<PLANET_RECORDS_START || (uint32_t)planetOffset+sizeof(MwPlanetHeader)>PLANET_RECORDS_END) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: planetOffset<PLANET_RECORDS_START || (uint32_t)planetOffset+sizeof(MwPlanetHeader)>PLANET_RECORDS_END");
     const MwPlanetHeader *planet=(const MwPlanetHeader *)&planetRecordStorage[planetOffset-PLANET_RECORDS_START];
     /*5590 replaces AL only. Retained scenario AH participates in DIV BL. */
     uint16_t landscapeDividend=(scenario&0xFF00)|(uint8_t)(planet->landscapeAndMarketCode-1);
-    if (landscapeDividend/PLANET_LANDSCAPE_COUNT>UINT8_MAX) abort();
+    if (landscapeDividend/PLANET_LANDSCAPE_COUNT>UINT8_MAX) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: landscapeDividend/PLANET_LANDSCAPE_COUNT>UINT8_MAX");
     deploymentLandscapeIndex=(uint8_t)(landscapeDividend%PLANET_LANDSCAPE_COUNT);
     acceptedContractTargetHouseIndex=missionTargetHouseIndices[offerSlot];
     return CAMPAIGN_CONTINUE_CREDIT_CONTRACT_ADVANCE;
@@ -409,7 +410,7 @@ acceptContract:
 uint16_t MwCreditAcceptedContractAdvanceContinuation(void)
 {
     uint32_t advanceThousands=(uint32_t)acceptedContractAdvancePercent*acceptedContractPaymentThousands/PERCENT_DIVISOR;
-    if (advanceThousands>UINT16_MAX) abort(); /* Native DIV fault before credit. */
+    if (advanceThousands>UINT16_MAX) /* Port emulation of a native CPU fault. */ MW_NATIVE_FAULT("Rejected condition: advanceThousands>UINT16_MAX"); /* Native DIV fault before credit. */
     uint32_t advanceCbills=advanceThousands*CBILLS_PER_THOUSAND;
     acceptedContractAdvanceCbillsLow=(uint16_t)advanceCbills;
     acceptedContractAdvanceCbillsHigh=(uint16_t)(advanceCbills>>16);
@@ -425,7 +426,7 @@ uint16_t MwAdjustAcceptedContractEnemyForceContinuation(void)
 {
     uint16_t employerHouse=(uint16_t)(currentPlanetHouseIndex<<1)/sizeof(uint16_t);
     uint16_t roll=MwRandomUpTo(CONTRACT_PERCENT_MAXIMUM);
-    if (employerHouse>=CAMPAIGN_HOUSE_COUNT) abort();
+    if (employerHouse>=CAMPAIGN_HOUSE_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: employerHouse>=CAMPAIGN_HOUSE_COUNT");
     if (roll<=houseExtraEnemyRollThresholds[employerHouse])
     {
         uint8_t enemies=combatEnemyHeavyCount+combatEnemyMediumCount+combatEnemyLightCount;
@@ -463,18 +464,18 @@ uint16_t MwCheckAssignedMechDeploymentReadiness(void)
             if (deploymentRefusalCount==CONTRACT_REFUSALS_BEFORE_CANCELLATION) return CAMPAIGN_CONTINUE_CANCEL_CONTRACT;
         }
         MwNativeByteView message={(const uint8_t *)commanderNeedsMechText,0,sizeof(commanderNeedsMechText)};
-        if (MwShowMonospaceTextPanel(0x10,0x10,0x24,6,&message,0).discardReturnWord) abort();
+        if (MwShowMonospaceTextPanel(0x10,0x10,0x24,6,&message,0).discardReturnWord) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: MwShowMonospaceTextPanel(0x10,0x10,0x24,6,&message,0).discardReturnWord");
         return 0;
     }
     uint16_t rosterSlot=0;
     do
     {
-        if (rosterSlot>=CAMPAIGN_ROSTER_SLOTS) abort(); /* Unrepresented adjacent roster words, not a zero-count guard. */
+        if (rosterSlot>=CAMPAIGN_ROSTER_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: rosterSlot>=CAMPAIGN_ROSTER_SLOTS"); /* Unrepresented adjacent roster words, not a zero-count guard. */
         uint16_t ownedSlot=rosterMechAssignments[rosterSlot];
         if (ownedSlot!=CAMPAIGN_NO_MECH_ASSIGNMENT)
         {
             ownedSlot=(uint8_t)ownedSlot; /* Native MUL BL consumes AL. */
-            if (ownedSlot>=CAMPAIGN_OWNED_UNIT_SLOTS) abort();
+            if (ownedSlot>=CAMPAIGN_OWNED_UNIT_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: ownedSlot>=CAMPAIGN_OWNED_UNIT_SLOTS");
             const CampaignUnitDamage *damage=&ownedUnitDamage[ownedSlot];
             if (damage->engineHits>MECH_FUNCTIONAL_MAXIMUM_TIER || damage->gyroDamageTier>MECH_FUNCTIONAL_MAXIMUM_TIER
                 || damage->lifeSupportDamageTier>MECH_FUNCTIONAL_MAXIMUM_TIER
@@ -487,7 +488,7 @@ uint16_t MwCheckAssignedMechDeploymentReadiness(void)
                     if (deploymentRefusalCount==CONTRACT_REFUSALS_BEFORE_CANCELLATION) return CAMPAIGN_CONTINUE_CANCEL_CONTRACT;
                 }
                 MwNativeByteView message={(const uint8_t *)assignedMechUnreadyText,0,sizeof(assignedMechUnreadyText)};
-                if (MwShowMonospaceTextPanel(0x10,0x10,0x21,6,&message,0).discardReturnWord) abort();
+                if (MwShowMonospaceTextPanel(0x10,0x10,0x21,6,&message,0).discardReturnWord) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: MwShowMonospaceTextPanel(0x10,0x10,0x21,6,&message,0).discardReturnWord");
                 return 0;
             }
         }
@@ -499,7 +500,7 @@ uint16_t MwCheckAssignedMechDeploymentReadiness(void)
 uint16_t MwCancelContractAfterDeploymentRefusalsContinuation(void)
 {
     MwNativeByteView message={(const uint8_t *)contractCancelledText,0,sizeof(contractCancelledText)};
-    if (MwShowMonospaceTextPanel(0x10,0x10,0x26,7,&message,0).discardReturnWord) abort();
+    if (MwShowMonospaceTextPanel(0x10,0x10,0x26,7,&message,0).discardReturnWord) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: MwShowMonospaceTextPanel(0x10,0x10,0x26,7,&message,0).discardReturnWord");
     acceptedContractActive=0;
     MwRefreshMissionOffers();
     deploymentRefusalCount=0;
@@ -508,7 +509,7 @@ uint16_t MwCancelContractAfterDeploymentRefusalsContinuation(void)
     funds=funds<advance?0:funds-advance;
     campaignFundsLow=(uint16_t)funds;campaignFundsHigh=(uint16_t)(funds>>16);
     uint16_t employerHouse=(uint16_t)(currentPlanetHouseIndex<<1)/sizeof(uint16_t);
-    if (employerHouse>=CAMPAIGN_HOUSE_COUNT) abort();
+    if (employerHouse>=CAMPAIGN_HOUSE_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: employerHouse>=CAMPAIGN_HOUSE_COUNT");
     ++houseGrievancePoints[employerHouse];
     return CAMPAIGN_CONTINUE_PLANET_HUB;
 }

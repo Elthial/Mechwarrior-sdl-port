@@ -47,8 +47,9 @@ static void TraceDiagnosticFrame(void)
 #include <windows.h>
 #include <dbghelp.h>
 
-/* Host diagnostics only: retain the native failure, and identify it in the
- * launcher's stderr log instead of losing the call site when the window closes. */
+/* Host diagnostics only. Port failsafes print their reason before SIGABRT;
+ * add a stack trace to the launcher's runtime.log. PDBs improve frame names,
+ * but explicit reason/function/source diagnostics do not depend on symbols. */
 static void ReportFatalAbort(int signalNumber)
 {
     (void)signalNumber;

@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_video.h"
 #include <stdlib.h>
 
@@ -27,7 +28,7 @@ void BtechEgaPrepareBitmapList(BtechBitmapList *list,BtechResourceAllocation pix
         planeBytes=imageBytes>>2;
         uint16_t maskOffset=pixelOffset+(uint16_t)(planeBytes*COMBAT_EGA_PLANES);
         if (!planeBytes || (uint32_t)pixelOffset+planeBytes*COMBAT_EGA_PLANES>UINT16_MAX
-            || paragraphBase+maskOffset+planeBytes>pixels.byteCount) abort(); // Zero DEC loops / per-image RAM wrap remain unconverted.
+            || paragraphBase+maskOffset+planeBytes>pixels.byteCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !planeBytes || (uint32_t)pixelOffset+planeBytes*COMBAT_EGA_PLANES>UINT16_MAX || paragraphBase+maskOffset+planeBytes>pixels.byteCount"); // Zero DEC loops / per-image RAM wrap remain unconverted.
         bitmap->pixelPlanes=pixels.bytes+paragraphBase+pixelOffset;
         bitmap->preserveMask=pixels.bytes+paragraphBase+maskOffset;
         bitmap->pixelStorageBytes=pixels.byteCount-paragraphBase-pixelOffset;
@@ -46,7 +47,7 @@ void BtechEgaPrepareBitmapList(BtechBitmapList *list,BtechResourceAllocation pix
  * four plane writes. Preserve port sequence and source paragraph carry. */
 void BtechEgaUnpackNibblesToScratchPlanes(BtechResourceAllocation source,uint16_t planeBytes)
 {
-    if (!btechHostWritePortWord || !btechHostWritePort || !btechHostWriteVideoByte) abort();
+    if (!btechHostWritePortWord || !btechHostWritePort || !btechHostWriteVideoByte) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostWritePortWord || !btechHostWritePort || !btechHostWriteVideoByte");
     btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,COMBAT_EGA_WRITE_MODE_TWO);
     btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,COMBAT_EGA_ALL_PIXEL_BITS);
     btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,COMBAT_EGA_WRITE_MODE_ZERO);
@@ -55,7 +56,7 @@ void BtechEgaUnpackNibblesToScratchPlanes(BtechResourceAllocation source,uint16_
     uint32_t sourceParagraph=0;
     do
     {
-        if (sourceParagraph+sourceCursor+4>source.byteCount) abort();
+        if (sourceParagraph+sourceCursor+4>source.byteCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: sourceParagraph+sourceCursor+4>source.byteCount");
         uint16_t firstPixels=source.bytes[sourceParagraph+sourceCursor]|((uint16_t)source.bytes[sourceParagraph+sourceCursor+1]<<8);
         sourceCursor+=2;
         uint16_t secondPixels=source.bytes[sourceParagraph+sourceCursor]|((uint16_t)source.bytes[sourceParagraph+sourceCursor+1]<<8);
@@ -87,7 +88,7 @@ void BtechEgaUnpackNibblesToScratchPlanes(BtechResourceAllocation source,uint16_
 /*2A36:209B. Repeat the same scratch range per plane; zero copies nothing. */
 void BtechEgaCopyScratchPlanes(uint16_t sourceOffset,uint8_t *destination,uint16_t planeBytes)
 {
-    if (!btechHostWritePortWord || !btechHostReadVideoByte) abort();
+    if (!btechHostWritePortWord || !btechHostReadVideoByte) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostWritePortWord || !btechHostReadVideoByte");
     for (uint16_t plane=0;plane<COMBAT_EGA_PLANES;++plane)
     {
         btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,(uint16_t)((plane<<8)|COMBAT_EGA_READ_MAP_REGISTER));
@@ -101,7 +102,7 @@ void BtechEgaCopyScratchPlanes(uint16_t sourceOffset,uint8_t *destination,uint16
  * The original DEC loop and read-map3 residue remain visible. */
 void BtechEgaBuildZeroColourMask(uint16_t sourceOffset,uint8_t *destination,uint16_t planeBytes)
 {
-    if (!btechHostWritePortWord || !btechHostWritePort || !btechHostReadVideoByte) abort();
+    if (!btechHostWritePortWord || !btechHostWritePort || !btechHostReadVideoByte) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostWritePortWord || !btechHostWritePort || !btechHostReadVideoByte");
     btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,COMBAT_EGA_READ_MAP_REGISTER);
     uint16_t sourceCursor=sourceOffset,remaining=planeBytes;
     do

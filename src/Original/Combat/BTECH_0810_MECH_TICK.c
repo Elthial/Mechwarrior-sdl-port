@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_mechs.h"
 #include "mechwarrior/combat_world.h"
 #include "mechwarrior/combat_import.h"
@@ -19,12 +20,12 @@ void BtechAdvanceWeaponReloadTimers(void)
     {
         BtechMechState *mech=unitBindings[slot].mech;
         if (!mech) continue;
-        if (mech->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
+        if (mech->templateIndex>=COMBAT_MECH_TEMPLATES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mech->templateIndex>=COMBAT_MECH_TEMPLATES");
         const BtechMechTemplate *chassis=&mechTemplates[mech->templateIndex];
         int16_t mountCount=chassis->weaponMountCount;
         for (int16_t mount=0;mount<mountCount;++mount)
         {
-            if (mount>=COMBAT_WEAPON_MOUNTS) abort(); /* Native neighbouring-owner overrun. */
+            if (mount>=COMBAT_WEAPON_MOUNTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mount>=COMBAT_WEAPON_MOUNTS"); /* Native neighbouring-owner overrun. */
             if ((uint16_t)chassis->weaponMounts[mount].weaponKind!=COMBAT_WEAPON_NONE
                 && mech->weapons[mount].reloadTicksRemaining)
                 --mech->weapons[mount].reloadTicksRemaining;
@@ -47,7 +48,7 @@ void BtechUpdateUnitHeatEffects(void)
         if (unitControls[slot].movementMode!=MOVEMENT_MODE_JUMP)
         {
             const BtechPooledWorldObject *body=unitBindings[slot].positionedLeftLeg;
-            if (!body) abort();
+            if (!body) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !body");
             int16_t movement=body->forwardStepScale;
             if (movement==INT16_MIN) movement=INT16_MAX;
             else if (movement<0) movement=-movement;
@@ -56,7 +57,7 @@ void BtechUpdateUnitHeatEffects(void)
             else if (movement>movementThreshold/MOVEMENT_HEAT_THRESHOLD_DIVISOR) ++mech->heatUnits;
         }
         mech->heatUnits+=mech->engineHits*COMBAT_ENGINE_HIT_HEAT;
-        if (mech->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
+        if (mech->templateIndex>=COMBAT_MECH_TEMPLATES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mech->templateIndex>=COMBAT_MECH_TEMPLATES");
         uint16_t sinks=mechTemplates[mech->templateIndex].heatSinkCount-mech->destroyedHeatSinks;
         if (mech->doubleCoolingFlag || combatLandscapeIndex==COMBAT_ARCTIC_LANDSCAPE) sinks*=DOUBLE_COOLING_MULTIPLIER;
         int16_t dissipated=sinks*HEAT_SINK_COOLING_NUMERATOR;
@@ -74,7 +75,7 @@ void BtechUpdateUnitHeatEffects(void)
         do
         {
             ++heatEffectTiers[slot];
-            if ((uint16_t)heatEffectTiers[slot]>=COMBAT_HEAT_THRESHOLDS) abort();
+            if ((uint16_t)heatEffectTiers[slot]>=COMBAT_HEAT_THRESHOLDS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (uint16_t)heatEffectTiers[slot]>=COMBAT_HEAT_THRESHOLDS");
         }
         while ((int16_t)heatEffectThresholds[heatEffectTiers[slot]]<=(int16_t)mech->heatUnits);
         heatInhibitFlags[slot]=(int16_t)mech->heatUnits>COMBAT_HEAT_INHIBIT_THRESHOLD;
@@ -89,7 +90,7 @@ void BtechRechargeJumpCharge(void)
     {
         BtechMechState *mech=unitBindings[slot].mech;
         if (!mech) continue;
-        if (mech->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
+        if (mech->templateIndex>=COMBAT_MECH_TEMPLATES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mech->templateIndex>=COMBAT_MECH_TEMPLATES");
         if (!mechTemplates[mech->templateIndex].jumpJetGroupCount
             || (int16_t)mech->jumpCharge>=COMBAT_JUMP_CHARGE_CAPACITY
             || unitControls[slot].movementMode==MOVEMENT_MODE_JUMP) continue;
@@ -103,7 +104,7 @@ void BtechRechargeJumpCharge(void)
  * Second-byte freeze80 is not first-byte hidden80. No host floating point. */
 void BtechAdvancePooledObjectMotion(BtechPooledWorldObject *object)
 {
-    if (!object) abort();
+    if (!object) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !object");
     BtechWorldObjectPrefix *pose=&object->object.prefix;
     if (pose->flags&WORLD_OBJECT_MOTION_FROZEN) return;
     pose->orientationA+=object->orientationSteps[0];

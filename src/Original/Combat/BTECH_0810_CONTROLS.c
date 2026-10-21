@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_world.h"
 #include "mechwarrior/combat_import.h"
 #include "mechwarrior/combat_startup.h"
@@ -22,7 +23,7 @@ uint16_t BtechSampleTerrainOrSurfaceHeight(const BtechPosition3D *position)
         uint16_t row=(int32_t)numerator/TERRAIN_WORLD_CELL_SIZE;
         numerator=COMBAT_BOUNDARY_LIMIT_B-position->positionB;
         uint16_t column=(int32_t)numerator/TERRAIN_WORLD_CELL_SIZE;
-        if (row>=TERRAIN_GRID_ROWS || column>=TERRAIN_GRID_COLUMNS) abort(); /* Adjacent-owner wrapping alias. */
+        if (row>=TERRAIN_GRID_ROWS || column>=TERRAIN_GRID_COLUMNS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: row>=TERRAIN_GRID_ROWS || column>=TERRAIN_GRID_COLUMNS"); /* Adjacent-owner wrapping alias. */
         return (uint16_t)(terrainHeightGrid[row][column]<<TERRAIN_HEIGHT_SHIFT);
     }
     BtechSurfaceQueryResult surfaceQuery={0};
@@ -47,7 +48,7 @@ uint8_t BtechTestTerrainLineOfSight(const BtechPosition3D *start,const BtechPosi
         return 1;
     uint8_t dominantA=(int32_t)deltaA>(int32_t)magnitudeB;
     uint32_t distance=dominantA?deltaA:magnitudeB,numerator;
-    if (!distance) abort(); /* Native division fault. */
+    if (!distance) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !distance"); /* Native division fault. */
     int16_t stepA,stepB;
     if (dominantA)
     {stepA=TERRAIN_WORLD_CELL_SIZE;numerator=deltaB<<TERRAIN_WORLD_CELL_SHIFT;stepB=(int16_t)((int64_t)(int32_t)numerator/(int32_t)distance);}
@@ -118,13 +119,13 @@ void BtechRefreshOpposingUnitVisibility(void)
             if (!unitBindings[target].mech || !unitBindings[observer].mech)
             {unitVisibility[target][observer]=0;unitVisibility[observer][target]=0;continue;}
             if (unitControls[observer].sideIndex || unitControls[target].sideIndex!=1) continue;
-            if (!unitBindings[target].torso) abort();
+            if (!unitBindings[target].torso) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !unitBindings[target].torso");
             uint8_t projection=unitBindings[target].torso->object.prefix.renderFlags&WORLD_OBJECT_PROJECTED;
             uint8_t visible;
             if (!observer && !combatDispatchState && projection) visible=BtechTestPlayerTargetRenderVisibility((int16_t)target);
             else
             {
-                if (!unitBindings[observer].positionedLeftLeg || !unitBindings[target].positionedLeftLeg) abort();
+                if (!unitBindings[observer].positionedLeftLeg || !unitBindings[target].positionedLeftLeg) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !unitBindings[observer].positionedLeftLeg || !unitBindings[target].positionedLeftLeg");
                 visible=BtechTestTerrainLineOfSight(&unitBindings[observer].positionedLeftLeg->object.prefix.position,
                     &unitBindings[target].positionedLeftLeg->object.prefix.position);
             }
@@ -168,7 +169,7 @@ void BtechRecalculateUnitCombatValuesAndBoundaries(void)
         BtechUnitBinding *binding=&unitBindings[slot];
         BtechMechState *mech=binding->mech;
         if (!mech) continue;
-        if (mech->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
+        if (mech->templateIndex>=COMBAT_MECH_TEMPLATES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mech->templateIndex>=COMBAT_MECH_TEMPLATES");
         BtechMechTemplate *chassis=&mechTemplates[mech->templateIndex];
         if (mech->gyroHits!=COMBAT_GYRO_DESTROYED_HITS)
             for (uint16_t location=0;location<COMBAT_ARMOR_LOCATIONS;++location)
@@ -180,7 +181,7 @@ void BtechRecalculateUnitCombatValuesAndBoundaries(void)
                 if (mech->weapons[mount].operational)
                 {
                     int16_t kind=chassis->weaponMounts[mount].weaponKind;
-                    if (kind<0 || kind>=COMBAT_WEAPON_KINDS) abort();
+                    if (kind<0 || kind>=COMBAT_WEAPON_KINDS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: kind<0 || kind>=COMBAT_WEAPON_KINDS");
                     control->combatValueOrBoundaryCode=(int16_t)((uint16_t)control->combatValueOrBoundaryCode
                         +(uint16_t)(weaponDefinitions[kind].damageOrMissileCount<<COMBAT_WEAPON_CONDITION_SCORE_SHIFT));
                 }
@@ -190,17 +191,17 @@ void BtechRecalculateUnitCombatValuesAndBoundaries(void)
         {
             control->combatValueOrBoundaryCode=-(boundary+2);
             control->tacticalState=COMBAT_TACTICAL_UNENGAGED;
-            if (!binding->torso) abort();
+            if (!binding->torso) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !binding->torso");
             binding->torso->object.prefix.renderFlags|=COMBAT_WORLD_OBJECT_HIDDEN;
-            if (!binding->head) abort();
+            if (!binding->head) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !binding->head");
             binding->head->object.prefix.renderFlags|=COMBAT_WORLD_OBJECT_HIDDEN;
-            if (!binding->positionedLeftLeg) abort();
+            if (!binding->positionedLeftLeg) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !binding->positionedLeftLeg");
             binding->positionedLeftLeg->object.prefix.renderFlags|=COMBAT_WORLD_OBJECT_HIDDEN;
-            if (!binding->rightLeg) abort();
+            if (!binding->rightLeg) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !binding->rightLeg");
             binding->rightLeg->object.prefix.renderFlags|=COMBAT_WORLD_OBJECT_HIDDEN;
-            if (!binding->leftArm) abort();
+            if (!binding->leftArm) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !binding->leftArm");
             binding->leftArm->object.prefix.renderFlags|=COMBAT_WORLD_OBJECT_HIDDEN;
-            if (!binding->rightArm) abort();
+            if (!binding->rightArm) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !binding->rightArm");
             binding->rightArm->object.prefix.renderFlags|=COMBAT_WORLD_OBJECT_HIDDEN;
         }
     }

@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_import.h"
 #include "mechwarrior/combat_platform.h"
 #include "mechwarrior/combat_input.h"
@@ -7,7 +8,7 @@
  * quotient truncates BEFORE rounding. Host pointers replace selector:0000. */
 BtechDosAllocation BtechAllocateDosMemoryBlock(uint32_t bytes)
 {
-    if (!btechHostAllocateParagraphs) abort();
+    if (!btechHostAllocateParagraphs) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostAllocateParagraphs");
     uint16_t paragraphs=bytes==UINT32_MAX?UINT16_MAX:(uint16_t)((bytes>>4)+((bytes&0x0F)!=0));
     uint16_t largestFreeParagraphs=0;
     uint8_t *allocation=btechHostAllocateParagraphs(paragraphs,&largestFreeParagraphs);
@@ -20,7 +21,7 @@ BtechDosAllocation BtechAllocateDosMemoryBlock(uint32_t bytes)
  * unobserved address transport, not a one-WORD native signature. */
 void BtechFreeDosMemorySelector(uint8_t *allocation)
 {
-    if (!btechHostFreeDosAllocation) abort();
+    if (!btechHostFreeDosAllocation) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostFreeDosAllocation");
     btechHostFreeDosAllocation(allocation);
 }
 
@@ -28,7 +29,7 @@ void BtechFreeDosMemorySelector(uint8_t *allocation)
  * only AL. Delay loops have no game effects; port read order is retained. */
 uint16_t BtechMeasureJoystickAxisTiming(uint8_t axisMask)
 {
-    if (!btechHostReadPort || !btechHostWritePort || !btechHostSetInterrupts || !btechHostDelayLoops) abort();
+    if (!btechHostReadPort || !btechHostWritePort || !btechHostSetInterrupts || !btechHostDelayLoops) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostReadPort || !btechHostWritePort || !btechHostSetInterrupts || !btechHostDelayLoops");
     uint8_t previousInterrupts=btechHostSetInterrupts(0);
     uint16_t count=JOYSTICK_AXIS_TIMING_LIMIT;
     uint8_t gamePort;
@@ -48,7 +49,7 @@ uint16_t BtechMeasureJoystickAxisTiming(uint8_t axisMask)
  * original; host supplies raw hardware replies, never calibrated game values. */
 void BtechCalibrateJoystickAxisPairs(void)
 {
-    if (!btechHostReadPort || !btechHostWritePort || !btechHostSetInterrupts || !btechHostDelayLoops) abort();
+    if (!btechHostReadPort || !btechHostWritePort || !btechHostSetInterrupts || !btechHostDelayLoops) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostReadPort || !btechHostWritePort || !btechHostSetInterrupts || !btechHostDelayLoops");
     btechHostSetInterrupts(0);btechHostWritePort(PIT_CONTROL_PORT,PIT_CHANNEL_ZERO_LATCH);
     uint16_t firstCounter=btechHostReadPort(PIT_CHANNEL_ZERO_PORT);
     firstCounter|=(uint16_t)btechHostReadPort(PIT_CHANNEL_ZERO_PORT)<<8;
@@ -58,7 +59,7 @@ void BtechCalibrateJoystickAxisPairs(void)
     lastCounter|=(uint16_t)btechHostReadPort(PIT_CHANNEL_ZERO_PORT)<<8;
     btechHostSetInterrupts(1);
     uint16_t elapsed=firstCounter-lastCounter;
-    if (!elapsed) abort(); /* Native DIV fault, after hardware reads. */
+    if (!elapsed) /* Port emulation of a native CPU fault. */ MW_NATIVE_FAULT("Rejected condition: !elapsed"); /* Native DIV fault, after hardware reads. */
     joystickTimingLoopCount=JOYSTICK_LOOP_CALIBRATION_NUMERATOR/elapsed;
     if (!joystickTimingLoopCount) joystickTimingLoopCount=1;
     uint8_t lastOutput=0;
