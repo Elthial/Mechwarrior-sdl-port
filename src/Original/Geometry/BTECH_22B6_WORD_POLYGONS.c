@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_render.h"
 #include <stdlib.h>
 
@@ -5,7 +6,7 @@
  * Native geometry BP is an ES offset, not a stack frame. */
 void BtechCacheTransformedPolygonVertex(uint8_t vectorIndex)
 {
-    if (vectorIndex>=GEOMETRY_CACHE_VERTICES) abort();
+    if (vectorIndex>=GEOMETRY_CACHE_VERTICES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: vectorIndex>=GEOMETRY_CACHE_VERTICES");
     if (vertexNearPlaneState[vectorIndex]) return;
     vertexNearPlaneState[vectorIndex]=GEOMETRY_VERTEX_TRANSFORMED;
     for (uint16_t axis=0;axis<3;++axis) viewVectorCoefficients[axis]=renderGeometry[vectorIndex][axis];
@@ -18,7 +19,7 @@ void BtechCacheTransformedPolygonVertex(uint8_t vectorIndex)
 /*22B6:6AC2. Normals share the vertex cache flags but omit translation. */
 void BtechCacheTransformedPolygonNormal(uint8_t vectorIndex)
 {
-    if (vectorIndex>=GEOMETRY_CACHE_VERTICES) abort();
+    if (vectorIndex>=GEOMETRY_CACHE_VERTICES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: vectorIndex>=GEOMETRY_CACHE_VERTICES");
     if (vertexNearPlaneState[vectorIndex]) return;
     vertexNearPlaneState[vectorIndex]=GEOMETRY_VERTEX_TRANSFORMED;
     for (uint16_t axis=0;axis<3;++axis) viewVectorCoefficients[axis]=renderGeometry[vectorIndex][axis];
@@ -32,7 +33,7 @@ void BtechCacheTransformedPolygonNormal(uint8_t vectorIndex)
  * Return only the HIGH WORD observed by276A; native dot wraps at32 bits. */
 int16_t BtechGetPolygonFacingDotHighWord(uint8_t normalIndex,uint8_t firstVertexIndex)
 {
-    if (normalIndex>=GEOMETRY_CACHE_VERTICES || firstVertexIndex>=GEOMETRY_CACHE_VERTICES) abort();
+    if (normalIndex>=GEOMETRY_CACHE_VERTICES || firstVertexIndex>=GEOMETRY_CACHE_VERTICES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: normalIndex>=GEOMETRY_CACHE_VERTICES || firstVertexIndex>=GEOMETRY_CACHE_VERTICES");
     uint16_t vertex[3],normal[3];
     if (useViewBasisDirectly)
     {
@@ -58,16 +59,16 @@ int16_t BtechGetPolygonFacingDotHighWord(uint8_t normalIndex,uint8_t firstVertex
  * Differences wrap toWORD before signed IMUL and trapping IDIV. */
 void BtechIntersectWordEdgeWithNearPlane(uint16_t outsideVertex,uint16_t insideVertex)
 {
-    if (outsideVertex>=GEOMETRY_CACHE_VERTICES || insideVertex>=GEOMETRY_CACHE_VERTICES) abort();
-    int16_t denominator=(int16_t)(uint16_t)(geometryViewDepth.words[insideVertex]-geometryViewDepth.words[outsideVertex]);
-    int16_t planeDistance=(int16_t)(uint16_t)(nearClipDepth-geometryViewDepth.words[outsideVertex]);
+    if (outsideVertex>=GEOMETRY_CACHE_VERTICES || insideVertex>=GEOMETRY_CACHE_VERTICES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: outsideVertex>=GEOMETRY_CACHE_VERTICES || insideVertex>=GEOMETRY_CACHE_VERTICES");
+    int16_t denominator=geometryViewDepth.words[insideVertex]-geometryViewDepth.words[outsideVertex];
+    int16_t planeDistance=nearClipDepth-geometryViewDepth.words[outsideVertex];
     BtechGeometryCoordinateCache *source[]={&geometryViewX,&geometryViewZ};
     BtechGeometryCoordinateCache *destination[]={&geometryProjectedX,&geometryProjectedY};
     for (uint16_t axis=0;axis<2;++axis)
     {
-        int16_t difference=(int16_t)(uint16_t)(source[axis]->words[insideVertex]-source[axis]->words[outsideVertex]);
-        uint32_t product=(uint32_t)((int32_t)difference*planeDistance);
-        if (!denominator) abort(); /* Native zero-divisor retries forever. */
+        int16_t difference=source[axis]->words[insideVertex]-source[axis]->words[outsideVertex];
+        uint32_t product=(int32_t)difference*planeDistance;
+        if (!denominator) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !denominator"); /* Native zero-divisor retries forever. */
         int64_t quotient=(int64_t)(int32_t)product/denominator;
         while (quotient<INT16_MIN || quotient>INT16_MAX)
         {product=BtechDivideErrorInterrupt(product);quotient=(int64_t)(int32_t)product/denominator;}
@@ -79,12 +80,12 @@ void BtechIntersectWordEdgeWithNearPlane(uint16_t outsideVertex,uint16_t insideV
  * vertices: intersections reuse the outside index. */
 void BtechClipWordPolygonNearPlane(void)
 {
-    if (!polygonVertexCount || polygonVertexCount>POLYGON_VERTEX_INDEX_BYTES) abort(); /* Native empty aliases4616. */
+    if (!polygonVertexCount || polygonVertexCount>POLYGON_VERTEX_INDEX_BYTES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !polygonVertexCount || polygonVertexCount>POLYGON_VERTEX_INDEX_BYTES"); /* Native empty aliases4616. */
     uint16_t previous=polygonVertexIndices[polygonVertexCount-1],output=0,input=0;
     do
     {
         uint16_t current=polygonVertexIndices[input],emit[2],emitted=0;
-        if (previous>=GEOMETRY_CACHE_VERTICES || current>=GEOMETRY_CACHE_VERTICES) abort();
+        if (previous>=GEOMETRY_CACHE_VERTICES || current>=GEOMETRY_CACHE_VERTICES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: previous>=GEOMETRY_CACHE_VERTICES || current>=GEOMETRY_CACHE_VERTICES");
         if (vertexNearPlaneState[current]!=GEOMETRY_VERTEX_BEHIND)
         {
             if (vertexNearPlaneState[previous]==GEOMETRY_VERTEX_BEHIND)
@@ -95,9 +96,9 @@ void BtechClipWordPolygonNearPlane(void)
         {BtechIntersectWordEdgeWithNearPlane(current,previous);emit[emitted++]=current;}
         for (uint16_t index=0;index<emitted;++index)
         {
-            if (output>=COMBAT_POLYGON_VERTEX_WORDS) abort();
-            screenPolygonX[output]=(int16_t)(uint16_t)((uint16_t)screenCentreA+geometryProjectedX.words[emit[index]]);
-            screenPolygonY[output]=(int16_t)(uint16_t)((uint16_t)screenCentreB-geometryProjectedY.words[emit[index]]);
+            if (output>=COMBAT_POLYGON_VERTEX_WORDS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: output>=COMBAT_POLYGON_VERTEX_WORDS");
+            screenPolygonX[output]=(int16_t)((uint16_t)screenCentreA+geometryProjectedX.words[emit[index]]);
+            screenPolygonY[output]=(int16_t)((uint16_t)screenCentreB-geometryProjectedY.words[emit[index]]);
             ++output;
         }
         previous=current;++input;
@@ -136,10 +137,10 @@ void BtechDrawPolygonPayload(const BtechRenderPolygonPayload *payload)
                 {
                     BtechGeometryCoordinateCache *source[]={&geometryViewX,&geometryViewZ};
                     BtechGeometryCoordinateCache *destination[]={&geometryProjectedX,&geometryProjectedY};
-                    int16_t depth=(int16_t)geometryViewDepth.words[vertex];
+                    int16_t depth=geometryViewDepth.words[vertex];
                     for (uint16_t axis=0;axis<2;++axis)
                     {
-                        uint32_t numerator=(uint32_t)(int32_t)(int16_t)source[axis]->words[vertex];
+                        uint32_t numerator=(int16_t)source[axis]->words[vertex];
                         uint16_t shifts=combatProjectionShift;
                         if ((int8_t)(uint8_t)shifts>=8)
                         {
@@ -148,7 +149,7 @@ void BtechDrawPolygonPayload(const BtechRenderPolygonPayload *payload)
                         }
                         do {numerator<<=1;} while (--shifts);
 divideCoordinate:
-                        if (!depth) abort(); /* Native division fault cannot progress on zero. */
+                        if (!depth) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !depth"); /* Native division fault cannot progress on zero. */
                         int64_t quotient=(int64_t)(int32_t)numerator/depth;
                         while (quotient<INT16_MIN || quotient>INT16_MAX)
                         {numerator=BtechDivideErrorInterrupt(numerator);quotient=(int64_t)(int32_t)numerator/depth;}
@@ -157,7 +158,7 @@ divideCoordinate:
                     vertexNearPlaneState[vertex]=GEOMETRY_VERTEX_PROJECTED;
                 }
             }
-            if (polygonVertexCount>=POLYGON_VERTEX_INDEX_BYTES) abort();
+            if (polygonVertexCount>=POLYGON_VERTEX_INDEX_BYTES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: polygonVertexCount>=POLYGON_VERTEX_INDEX_BYTES");
             polygonVertexIndices[polygonVertexCount++]=vertex;
         }
         if (wordPolygonHasNearOutsideVertex) BtechClipWordPolygonNearPlane();
@@ -166,10 +167,10 @@ divideCoordinate:
             if (!polygonVertexCount) continue;
             for (uint16_t index=0;index<polygonVertexCount;++index)
             {
-                if (index>=COMBAT_POLYGON_VERTEX_WORDS) abort();
+                if (index>=COMBAT_POLYGON_VERTEX_WORDS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: index>=COMBAT_POLYGON_VERTEX_WORDS");
                 uint8_t vertex=polygonVertexIndices[index];
-                screenPolygonX[index]=(int16_t)(uint16_t)((uint16_t)screenCentreA+geometryProjectedX.words[vertex]);
-                screenPolygonY[index]=(int16_t)(uint16_t)((uint16_t)screenCentreB-geometryProjectedY.words[vertex]);
+                screenPolygonX[index]=(int16_t)((uint16_t)screenCentreA+geometryProjectedX.words[vertex]);
+                screenPolygonY[index]=(int16_t)((uint16_t)screenCentreB-geometryProjectedY.words[vertex]);
             }
         }
         screenPolygonNeedsClip=objectNeedsScreenClip;

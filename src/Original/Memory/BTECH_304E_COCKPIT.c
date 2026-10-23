@@ -185,7 +185,7 @@ bool BtechImportCockpitInitialData(const uint8_t *data,size_t bytes)
         targetDiagramAnchors[chassis]=(BtechHudGaugeAnchor){(int16_t)MwReadNativeWord(data,0x1AD8+chassis*4),(int16_t)MwReadNativeWord(data,0x1ADA+chassis*4)};
         for (uint16_t armor=0;armor<COMBAT_ARMOR_LOCATIONS;++armor)
         {
-            uint16_t offset=(uint16_t)(0x1AF8+chassis*0x48+armor*8);
+            uint16_t offset=0x1AF8+chassis*0x48+armor*8;
             targetDiagramRegions[chassis][armor]=(BtechScreenRectangle){(int16_t)MwReadNativeWord(data,offset),(int16_t)MwReadNativeWord(data,offset+2),
                 (int16_t)MwReadNativeWord(data,offset+4),(int16_t)MwReadNativeWord(data,offset+6)};
         }

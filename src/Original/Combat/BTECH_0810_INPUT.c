@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_input.h"
 #include "mechwarrior/combat_runtime.h"
 #include <stdlib.h>
@@ -56,9 +57,9 @@ void BtechPollCombatCommandInput(void)
     {
         if (scanCode|button1|button0|combatInputReplayCancelLatched)
         {scanCode=COMBAT_KEY_ESCAPE;combatInputReplayCancelLatched=1;}
-        else abort(); /* Native replay IO/short-read stack residue is not converted. */
+        else /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Native replay IO/short-read stack residue is not converted."); /* Native replay IO/short-read stack residue is not converted. */
     }
-    else if (combatInputReplayMode==COMBAT_INPUT_RECORD) abort(); /* Native append-stream writer dependency. */
+    else if (combatInputReplayMode==COMBAT_INPUT_RECORD) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: combatInputReplayMode==COMBAT_INPUT_RECORD"); /* Native append-stream writer dependency. */
     combatInputScanCode=scanCode;
     combatInputDirectionMask=direction;
     combatInputButton1State=button1;

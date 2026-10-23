@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_video.h"
 #include <stdlib.h>
 
@@ -7,14 +8,14 @@
  * ordinary RAM payload owners only; no invented shifted-blit helper. */
 void BtechEgaDrawBitmap(const BtechBitmap *bitmap,uint16_t x,uint16_t y)
 {
-    if (!bitmap) abort();
+    if (!bitmap) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !bitmap");
     const BtechBitmap image=*bitmap;
     uint16_t page=drawPageSelector,rows=image.heightPixels;
     uint16_t rowStart,sourceSkip=0;
     uint8_t rowBytes;
     if (!screenPolygonNeedsClip)
     {
-        if (y>=COMBAT_SCREEN_HEIGHT) abort();
+        if (y>=COMBAT_SCREEN_HEIGHT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: y>=COMBAT_SCREEN_HEIGHT");
         rowStart=(uint16_t)(graphicsRowOffsets[y]+(x>>3));
         egaBitmapShiftPhase=x&7;
         rowBytes=(uint8_t)(image.widthPixels>>3);
@@ -29,7 +30,7 @@ void BtechEgaDrawBitmap(const BtechBitmap *bitmap,uint16_t x,uint16_t y)
         uint16_t rowY=y;
         if ((int16_t)rowY<clipMinimumY)
         {
-            uint16_t skippedRows=(uint16_t)(clipMinimumY-rowY);
+            uint16_t skippedRows=clipMinimumY-rowY;
             if ((int16_t)rows<=(int16_t)skippedRows) return;
             rows-=skippedRows;sourceSkip=(uint16_t)((uint8_t)skippedRows*(uint8_t)packedWidth);
             rowY=(uint16_t)clipMinimumY;
@@ -39,13 +40,13 @@ void BtechEgaDrawBitmap(const BtechBitmap *bitmap,uint16_t x,uint16_t y)
             rows=(uint16_t)(clipMaximumY-rowY+1);
             if (!rows || rows>0x8000) return; /* INC/JLE admits8000. */
         }
-        if (rowY>=COMBAT_SCREEN_HEIGHT) abort();
+        if (rowY>=COMBAT_SCREEN_HEIGHT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: rowY>=COMBAT_SCREEN_HEIGHT");
         rowStart=graphicsRowOffsets[rowY];
         uint16_t clippedWidth=(uint16_t)(packedWidth<<3),leftX=x;
         uint16_t minimumX=(uint16_t)clipMinimumX&0xFFF8;
         if ((int16_t)leftX<(int16_t)minimumX)
         {
-            uint16_t skippedPixels=(uint16_t)(minimumX-leftX);
+            uint16_t skippedPixels=minimumX-leftX;
             if ((int16_t)clippedWidth<=(int16_t)skippedPixels) return;
             clippedWidth-=skippedPixels;egaBitmapShiftPhase=clippedWidth&7;
             sourceSkip+=(uint16_t)((uint16_t)((clippedWidth&7)+skippedPixels)>>3);
@@ -65,10 +66,10 @@ void BtechEgaDrawBitmap(const BtechBitmap *bitmap,uint16_t x,uint16_t y)
         egaBitmapSourceRowSkip=(originalRowBytes&0xFF00)|(uint8_t)((uint8_t)originalRowBytes-rowBytes);
         egaBitmapDestinationRowSkip=(uint8_t)(COMBAT_SCREEN_ROW_BYTES-rowBytes);
     }
-    uint8_t phase=(uint8_t)egaBitmapShiftPhase;
+    uint8_t phase=egaBitmapShiftPhase;
     uint16_t maskCursor=sourceSkip,destination=rowStart;
-    uint8_t rowsRemaining=(uint8_t)rows;
-    if (!btechHostWritePortWord || !btechHostReadVideoByte || !btechHostWriteVideoByte) abort();
+    uint8_t rowsRemaining=rows;
+    if (!btechHostWritePortWord || !btechHostReadVideoByte || !btechHostWriteVideoByte) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostWritePortWord || !btechHostReadVideoByte || !btechHostWriteVideoByte");
     do
     {
         uint8_t bytesRemaining=rowBytes;
@@ -76,7 +77,7 @@ void BtechEgaDrawBitmap(const BtechBitmap *bitmap,uint16_t x,uint16_t y)
         {
             do
             {
-                if (maskCursor>=image.maskStorageBytes) abort();
+                if (maskCursor>=image.maskStorageBytes) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: maskCursor>=image.maskStorageBytes");
                 uint8_t preserve=image.preserveMask[maskCursor++];
                 btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,COMBAT_EGA_BIT_MASK_REGISTER|((uint16_t)(uint8_t)~preserve<<8));
                 (void)btechHostReadVideoByte(page,destination);btechHostWriteVideoByte(page,destination++,0);
@@ -87,22 +88,22 @@ void BtechEgaDrawBitmap(const BtechBitmap *bitmap,uint16_t x,uint16_t y)
             uint8_t previous=0xFF;
             if (egaBitmapClipSides&1)
             {
-                uint16_t prior=(uint16_t)(maskCursor-1);if (prior>=image.maskStorageBytes) abort();
+                uint16_t prior=maskCursor-1;if (prior>=image.maskStorageBytes) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: prior>=image.maskStorageBytes");
                 previous=image.preserveMask[prior];
             }
             while ((int8_t)bytesRemaining>0)
             {
                 --bytesRemaining;
-                if (maskCursor>=image.maskStorageBytes) abort();
+                if (maskCursor>=image.maskStorageBytes) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: maskCursor>=image.maskStorageBytes");
                 uint8_t current=image.preserveMask[maskCursor++];
-                uint8_t preserve=(uint8_t)((previous<<(8-phase))|(current>>phase));previous=current;
+                uint8_t preserve=(previous<<(8-phase))|(current>>phase);previous=current;
                 btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,COMBAT_EGA_BIT_MASK_REGISTER|((uint16_t)(uint8_t)~preserve<<8));
                 (void)btechHostReadVideoByte(page,destination);btechHostWriteVideoByte(page,destination++,0);
             }
             uint8_t current=0xFF;
             if (egaBitmapClipSides&2)
-            {if (maskCursor>=image.maskStorageBytes) abort();current=image.preserveMask[maskCursor];}
-            uint8_t preserve=(uint8_t)((previous<<(8-phase))|(current>>phase));
+            {if (maskCursor>=image.maskStorageBytes) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: maskCursor>=image.maskStorageBytes");current=image.preserveMask[maskCursor];}
+            uint8_t preserve=(previous<<(8-phase))|(current>>phase);
             btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,COMBAT_EGA_BIT_MASK_REGISTER|((uint16_t)(uint8_t)~preserve<<8));
             (void)btechHostReadVideoByte(page,destination);btechHostWriteVideoByte(page,destination,0);
         }
@@ -125,13 +126,13 @@ void BtechEgaDrawBitmap(const BtechBitmap *bitmap,uint16_t x,uint16_t y)
             uint8_t previous=0;
             if (phase && (clipSides&1))
             {
-                uint16_t prior=(uint16_t)(cursor-1);if (prior>=image.pixelStorageBytes) abort();
+                uint16_t prior=cursor-1;if (prior>=image.pixelStorageBytes) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: prior>=image.pixelStorageBytes");
                 previous=image.pixelPlanes[prior];
             }
             uint16_t count=!phase?(rowBytes?rowBytes:0x100):((int8_t)rowBytes>0?rowBytes:0);
             while (count--)
             {
-                if (cursor>=image.pixelStorageBytes) abort();
+                if (cursor>=image.pixelStorageBytes) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: cursor>=image.pixelStorageBytes");
                 uint8_t pixels=image.pixelPlanes[cursor++];
                 uint8_t ink=phase?(uint8_t)((previous<<(8-phase))|(pixels>>phase)):pixels;previous=pixels;
                 uint8_t background=btechHostReadVideoByte(page,destination);
@@ -140,7 +141,7 @@ void BtechEgaDrawBitmap(const BtechBitmap *bitmap,uint16_t x,uint16_t y)
             if (phase)
             {
                 uint8_t pixels=0;
-                if (clipSides&2) {if (cursor>=image.pixelStorageBytes) abort();pixels=image.pixelPlanes[cursor];}
+                if (clipSides&2) {if (cursor>=image.pixelStorageBytes) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: cursor>=image.pixelStorageBytes");pixels=image.pixelPlanes[cursor];}
                 uint8_t background=btechHostReadVideoByte(page,destination);
                 btechHostWriteVideoByte(page,destination,(uint8_t)(background|(previous<<(8-phase))|(pixels>>phase)));
             }

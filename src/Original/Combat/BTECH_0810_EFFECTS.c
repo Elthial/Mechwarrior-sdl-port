@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_effects.h"
 #include "mechwarrior/combat_resources.h"
 #include "mechwarrior/combat_damage.h"
@@ -9,6 +10,10 @@
 /*0810:5B08. First free effect; anchor only A/B, retain height on world object. */
 void BtechSpawnBodyDamageEffect(const BtechPosition3D *position)
 {
+    uint16_t freeObject=0;
+    while (freeObject<COMBAT_POOLED_OBJECTS && pooledWorldObjects[freeObject].occupied) ++freeObject;
+    if (freeObject==COMBAT_POOLED_OBJECTS || worldObjectCount>=COMBAT_WORLD_OBJECTS
+        || cockpitWorldObjectCount>=COMBAT_WORLD_OBJECTS) return;
     for (uint16_t slot=0;slot<COMBAT_BODY_EFFECT_SLOTS;++slot)
     {
         BtechBodyDamageEffect *effect=&bodyDamageEffects[slot];
@@ -38,7 +43,7 @@ void BtechUpdateBodyDestructionEffects(void)
     {
         BtechBodyDestructionEmitter *emitter=&bodyDestructionEmitters[slot];
         if (!emitter->ticksRemaining) continue;
-        if (emitter->unitSlot>=COMBAT_MECH_SLOTS) abort();
+        if (emitter->unitSlot>=COMBAT_MECH_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: emitter->unitSlot>=COMBAT_MECH_SLOTS");
         uint16_t mode=unitControls[emitter->unitSlot].movementMode;
         if (mode!=MOVEMENT_MODE_GROUNDED && mode!=BODY_EMITTER_ACCEPTED_MODE2 && mode!=BODY_EMITTER_ACCEPTED_MODE7)
         {emitter->ticksRemaining=0;continue;}
@@ -46,8 +51,8 @@ void BtechUpdateBodyDestructionEffects(void)
         if ((int16_t)emitter->ticksRemaining>=BODY_EMITTER_FIRST_TICK) continue;
         if ((int16_t)emitter->ticksRemaining<=BODY_EMITTER_RANDOM_TICKS && !BtechRandomBelowBound(BODY_EMITTER_RANDOM_BOUND)) continue;
         BtechPosition3D *position=BtechGetUnitBodyReferencePosition(emitter->unitSlot,emitter->armorLocation);
-        int16_t rise=(int16_t)(uint16_t)((COMBAT_DESTRUCTION_EMITTER_TICKS-emitter->ticksRemaining)*2);
-        position->positionC+=(uint32_t)(int32_t)rise;
+        int16_t rise=(COMBAT_DESTRUCTION_EMITTER_TICKS-emitter->ticksRemaining)*2;
+        position->positionC+=(uint32_t)rise;
         BtechSpawnBodyDamageEffect(position);
     }
     for (uint16_t slot=0;slot<COMBAT_BODY_EFFECT_SLOTS;++slot)
@@ -61,19 +66,19 @@ void BtechUpdateBodyDestructionEffects(void)
             continue; /* Already-unoccupied object deliberately leaves stale handle. */
         }
         --effect->animationTicksRemaining;
-        if (effect->animationTicksRemaining>=COMBAT_BODY_EFFECT_FRAMES) abort(); /* Adjacent-owner alias unsupported. */
+        if (effect->animationTicksRemaining>=COMBAT_BODY_EFFECT_FRAMES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: effect->animationTicksRemaining>=COMBAT_BODY_EFFECT_FRAMES"); /* Adjacent-owner alias unsupported. */
         BtechWorldObjectPrefix *pose=&object->object.prefix;
         pose->resourceId=otherShapeResourceBase+bodyDamageEffectResourceDeltas[effect->animationTicksRemaining];
         uint32_t extent=BtechGetResourceScaledValue(pose->resourceId);
         pose->resourceScaledValue=(pose->resourceScaledValue&0xFFFF0000)|(extent&0xFFFF);
         pose->resourceScaledValue=(pose->resourceScaledValue&0xFFFF)|(extent&0xFFFF0000);
-        int16_t heightStep=(int16_t)(uint16_t)extent;
-        int16_t spread=(int16_t)(uint16_t)BtechShiftSignedDwordRight((uint32_t)(int32_t)heightStep,2);
+        int16_t heightStep=extent;
+        int16_t spread=(int16_t)BtechShiftSignedDwordRight((uint32_t)heightStep,2);
         int16_t offsetA=(int16_t)BtechRandomSignedSpread(spread);
-        pose->position.positionA=effect->anchorPositionA+(uint32_t)(int32_t)offsetA;
+        pose->position.positionA=effect->anchorPositionA+(uint32_t)offsetA;
         int16_t offsetB=(int16_t)BtechRandomSignedSpread(spread);
-        pose->position.positionB=effect->anchorPositionB+(uint32_t)(int32_t)offsetB;
-        pose->position.positionC+=(uint32_t)(int32_t)heightStep;
+        pose->position.positionB=effect->anchorPositionB+(uint32_t)offsetB;
+        pose->position.positionC+=(uint32_t)heightStep;
     }
 }
 
@@ -87,7 +92,7 @@ void BtechAdvanceEffectResourceSequences(void)
         uint16_t sequence=effect->sequenceIndex;
         /* Native unchecked reads outside the two recovered arrays remain unsupported. */
         if (sequence>COMBAT_MACHINE_GUN_EFFECT_SEQUENCE
-            || effect->frameIndex>=(sequence==COMBAT_IMPACT_EFFECT_SEQUENCE?7:3)) abort();
+            || effect->frameIndex>=(sequence==COMBAT_IMPACT_EFFECT_SEQUENCE?7:3)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: sequence>COMBAT_MACHINE_GUN_EFFECT_SEQUENCE || effect->frameIndex>=(sequence==COMBAT_IMPACT_EFFECT_SEQUENCE?7:3)");
         uint16_t resourceDelta=effectResourceSequences[sequence][effect->frameIndex];
         if (resourceDelta==COMBAT_EFFECT_SEQUENCE_END)
         {
@@ -112,11 +117,15 @@ void BtechSpawnSequencedWorldEffect(const BtechPosition3D *position,uint16_t seq
 {
     uint16_t slot=0;
     while (slot<COMBAT_EFFECT_SLOTS && effectSequences[slot].worldObject) ++slot;
-    if (slot==COMBAT_EFFECT_SLOTS) abort(); /* Native overruns the unaliased sequence owner. */
+    if (slot==COMBAT_EFFECT_SLOTS) return; /* Drop a cosmetic effect when all slots are busy. */
+    uint16_t freeObject=0;
+    while (freeObject<COMBAT_POOLED_OBJECTS && pooledWorldObjects[freeObject].occupied) ++freeObject;
+    if (freeObject==COMBAT_POOLED_OBJECTS || worldObjectCount>=COMBAT_WORLD_OBJECTS
+        || cockpitWorldObjectCount>=COMBAT_WORLD_OBJECTS) return;
     BtechEffectSequenceState *effect=&effectSequences[slot];
     effect->worldObject=BtechAllocatePooledWorldObject(0,position);
     BtechWorldObjectPrefix *object=&effect->worldObject->object.prefix;
-    if (!unitBindings[0].positionedLeftLeg || !unitBindings[0].torso) abort();
+    if (!unitBindings[0].positionedLeftLeg || !unitBindings[0].torso) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !unitBindings[0].positionedLeftLeg || !unitBindings[0].torso");
     const BtechWorldObjectPrefix *player=&unitBindings[0].positionedLeftLeg->object.prefix;
     object->orientationA=player->orientationA;
     object->orientationB=player->orientationB;

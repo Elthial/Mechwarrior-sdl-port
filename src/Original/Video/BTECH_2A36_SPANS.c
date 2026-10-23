@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_video.h"
 #include <stdlib.h>
 
@@ -6,8 +7,8 @@
 void BtechEgaFillSolidSpan(uint16_t pattern,uint16_t x,int16_t count,uint16_t rowOffset,uint16_t page)
 {
     if (count<=0) return;
-    if (!btechHostWritePortWord || !btechHostReadVideoByte || !btechHostWriteVideoByte) abort();
-    uint16_t cursor=(uint16_t)(rowOffset+(x>>3));
+    if (!btechHostWritePortWord || !btechHostReadVideoByte || !btechHostWriteVideoByte) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostWritePortWord || !btechHostReadVideoByte || !btechHostWriteVideoByte");
+    uint16_t cursor=rowOffset+(x>>3);
     uint16_t firstPixel=x&7,endPixel=(uint16_t)(firstPixel+(uint16_t)count);
     uint8_t mask=egaSpanLeadingMasks[firstPixel];
     if ((int16_t)endPixel<8)
@@ -18,7 +19,7 @@ void BtechEgaFillSolidSpan(uint16_t pattern,uint16_t x,int16_t count,uint16_t ro
         btechHostWriteVideoByte(page,cursor,(uint8_t)pattern);
         return;
     }
-    uint16_t remaining=(uint16_t)((uint16_t)count-(8-firstPixel));
+    uint16_t remaining=(uint16_t)count-(8-firstPixel);
     btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,COMBAT_EGA_BIT_MASK_REGISTER|((uint16_t)mask<<8));
     (void)btechHostReadVideoByte(page,cursor);
     btechHostWriteVideoByte(page,cursor++,(uint8_t)pattern);
@@ -45,12 +46,12 @@ void BtechEgaFillAlternatingSpan(uint16_t primary,uint16_t x,int16_t count,uint1
     spanAlternationState^=1;
     uint16_t pattern=spanAlternationState?alternate:primary;
     if (count<=0) return;
-    if (!btechHostWritePortWord || !btechHostReadVideoByte || !btechHostWriteVideoByte) abort();
+    if (!btechHostWritePortWord || !btechHostReadVideoByte || !btechHostWriteVideoByte) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostWritePortWord || !btechHostReadVideoByte || !btechHostWriteVideoByte");
     egaSpanPrimaryColour=(uint8_t)(pattern>>8);
     egaSpanSecondaryColour=(uint8_t)pattern;
     uint16_t firstPixel=x&7,endPixel=(uint16_t)(firstPixel+(uint16_t)count);
     uint8_t leading=egaSpanLeadingMasks[firstPixel];
-    uint16_t firstByte=(uint16_t)(rowOffset+(x>>3));
+    uint16_t firstByte=rowOffset+(x>>3);
     for (uint16_t phase=0;phase<2;++phase)
     {
         uint8_t columns=phase?0x55:0xAA;
@@ -64,7 +65,7 @@ void BtechEgaFillAlternatingSpan(uint16_t primary,uint16_t x,int16_t count,uint1
             btechHostWriteVideoByte(page,cursor,colour);
             continue;
         }
-        uint16_t remaining=(uint16_t)((uint16_t)count-(8-firstPixel));
+        uint16_t remaining=(uint16_t)count-(8-firstPixel);
         btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,COMBAT_EGA_BIT_MASK_REGISTER|((uint16_t)(leading&columns)<<8));
         (void)btechHostReadVideoByte(page,cursor);
         btechHostWriteVideoByte(page,cursor++,colour);

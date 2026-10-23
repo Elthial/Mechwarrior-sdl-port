@@ -19,7 +19,6 @@ enum { TACTICAL_AVOIDING=1,TACTICAL_TARGET_VALUE_FLOOR=-100,
 enum { OBJECTIVE_CANDIDATE_DISTANCE_LIMIT=0xFFFF,OBJECTIVE_DEFENDER_RADIUS=0x7080,
     AI_RECOVERY_TICK_MASK=7,AI_RECOVERY_ROLL_LIMIT=2,AI_LEFT_LEG_ACTUATOR=2,AI_RIGHT_LEG_ACTUATOR=3 };
 /* These actual numeric cursor values become the reused native heading WORD. */
-enum { TACTICAL_NATIVE_CONTROL_SIDE_START=0xD344,TACTICAL_NATIVE_CONTROL_STRIDE=0x55 };
 extern uint8_t boundaryMaskByCode[TACTICAL_BOUNDARY_CODES];
 extern const uint16_t *activeSideRule;
 extern uint16_t tacticalThreatUnitSlots[COMBAT_MECH_SLOTS],tacticalThreatHeadings[COMBAT_MECH_SLOTS];
@@ -28,12 +27,12 @@ extern uint16_t opposingSideFirstUnitSlots[2];
 void BtechUpdateAiMechUnits(void);
 void BtechCoordinateSpecialObjectiveUnits(void);
 void BtechUpdateTacticalNavigation(void);
-/* Optional host-only transport of reused BP-0E, not native source arguments. */
-void BtechSelectUnitTacticalState(const uint16_t *inheritedHeading);
-void BtechSteerActiveUnitHeading(uint16_t desiredHeading);
+/* Choose engagement tactics from lance orders, visible threats and mission goals. */
+void BtechSelectUnitTacticalState(void);
+void BtechApplyActiveUnitTacticalSteering(uint16_t desiredHeading);
 void BtechSelectActiveUnitContext(uint16_t unitSlot);
 uint16_t BtechShouldDisengageForWeaponsOrStructure(void);
-uint8_t BtechHasNearbyVisibleThreat(uint16_t *controlSideCursorResidue);
+uint8_t BtechHasNearbyVisibleThreat(void);
 void BtechRefreshTargetAndNavigate(void);
 void BtechUpdateUnitWeaponRangeThresholds(void);
 void BtechScoreAndSelectTacticalTarget(void);

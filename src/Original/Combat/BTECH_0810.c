@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_mechs.h"
 #include <stdlib.h>
 
@@ -24,7 +25,7 @@ void BtechIncreaseTemplateLegIntegrity(void)
  * no movementReferenceScale copy, and unmounted/reload fields remain stale. */
 void BtechInitializeMechConditionFromTemplate(BtechMechState *mech,uint16_t templateIndex)
 {
-    if (!mech || templateIndex>=COMBAT_MECH_TEMPLATES) abort(); /* Unrepresented adjacent data, not a native guard. */
+    if (!mech || templateIndex>=COMBAT_MECH_TEMPLATES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mech || templateIndex>=COMBAT_MECH_TEMPLATES"); /* Unrepresented adjacent data, not a native guard. */
     const BtechMechTemplate *chassis=&mechTemplates[templateIndex];
     mech->templateIndex=templateIndex;
     for (uint16_t location=0;location<COMBAT_BODY_LOCATIONS;++location)
@@ -37,7 +38,7 @@ void BtechInitializeMechConditionFromTemplate(BtechMechState *mech,uint16_t temp
     }
     for (uint16_t mount=0;chassis->weaponMountCount<0x8000 && mount<chassis->weaponMountCount;++mount)
     {
-        if (mount>=COMBAT_WEAPON_MOUNTS) abort();
+        if (mount>=COMBAT_WEAPON_MOUNTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mount>=COMBAT_WEAPON_MOUNTS");
         mech->weapons[mount].operational=1;
     }
     for (uint16_t actuator=0;actuator<COMBAT_ACTUATORS;++actuator)
@@ -50,7 +51,7 @@ void BtechInitializeMechConditionFromTemplate(BtechMechState *mech,uint16_t temp
         mech->ammoSalvosRemaining[family]=chassis->initialAmmoSalvos[family];
     for (uint16_t group=0;chassis->jumpJetGroupCount<0x8000 && group<chassis->jumpJetGroupCount;++group)
     {
-        if (group>=COMBAT_JET_GROUPS) abort();
+        if (group>=COMBAT_JET_GROUPS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: group>=COMBAT_JET_GROUPS");
         mech->jumpJetGroupOperational[group]=1;
     }
     if (chassis->jumpJetGroupCount) mech->jumpCharge=COMBAT_JUMP_CHARGE_CAPACITY;
@@ -75,7 +76,7 @@ BtechMechState *BtechClaimFreeMechStateSlot(uint16_t friendlySlots)
 /* BTECH0810:4163..4175. Other body references and the condition remain live. */
 void BtechClearUnitStateBinding(uint16_t unitSlot)
 {
-    if (unitSlot>=COMBAT_MECH_SLOTS) abort(); /* Numeric wrap into unrelated native objects is not represented. */
+    if (unitSlot>=COMBAT_MECH_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: unitSlot>=COMBAT_MECH_SLOTS"); /* Numeric wrap into unrelated native objects is not represented. */
     unitBindings[unitSlot].mech=NULL;
 }
 
@@ -92,12 +93,12 @@ uint16_t BtechRandomBelowBound(uint16_t bound)
     uint16_t divisor=bound+1,remainder;
     do
     {
-        if (randomWriteIndex>=COMBAT_RANDOM_WORDS || randomAddendIndex>=COMBAT_RANDOM_WORDS) abort();
+        if (randomWriteIndex>=COMBAT_RANDOM_WORDS || randomAddendIndex>=COMBAT_RANDOM_WORDS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: randomWriteIndex>=COMBAT_RANDOM_WORDS || randomAddendIndex>=COMBAT_RANDOM_WORDS");
         randomStateWords[randomWriteIndex]+=randomStateWords[randomAddendIndex];
         uint16_t value=randomStateWords[randomWriteIndex];
         randomWriteIndex=(randomWriteIndex+1)&COMBAT_RANDOM_INDEX_MASK;
         randomAddendIndex=(randomAddendIndex+1)&COMBAT_RANDOM_INDEX_MASK;
-        if (!divisor) abort();
+        if (!divisor) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !divisor");
         remainder=(value&0x7FFF)%divisor;
     } while (!remainder);
     return remainder-1;

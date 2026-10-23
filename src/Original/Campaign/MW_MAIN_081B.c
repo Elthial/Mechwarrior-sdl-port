@@ -6,15 +6,15 @@
  * by wrapping (maximum+1). Carry participates in both rotations. */
 uint16_t MwRandomUpTo(uint16_t maximum)
 {
-    uint16_t rotatedWord1 = (uint16_t)((randomStateWord1 >> RANDOM_WORD1_SHIFT)
-        | ((randomStateWord1 & 1) != 0 ? NATIVE_WORD_HIGH_BIT : 0));
-    uint16_t carryIntoWord0 = (uint16_t)((randomStateWord1 >> 1) & 1);
+    uint16_t rotatedWord1 = (randomStateWord1 >> RANDOM_WORD1_SHIFT)
+        | ((randomStateWord1 & 1) != 0 ? NATIVE_WORD_HIGH_BIT : 0);
+    uint16_t carryIntoWord0 = (randomStateWord1 >> 1) & 1;
     randomStateWord0 = (uint16_t)(((uint32_t)randomStateWord0 << RANDOM_WORD0_ROTATE)
         | (carryIntoWord0 << RANDOM_CARRY_INSERT_SHIFT)
         | (randomStateWord0 >> RANDOM_ROTATE_REINSERT_SHIFT));
 
     randomStateWord1 = rotatedWord1 ^ randomStateWord0;
-    uint16_t rangeSize = (uint16_t)(maximum + 1);
+    uint16_t rangeSize = maximum + 1;
     return (uint16_t)(((uint32_t)randomStateWord1 * rangeSize) >> NATIVE_WORD_BITS);
 }
 
@@ -42,7 +42,7 @@ void MwDecodePictureBank(uint16_t compressedByteCount, uint16_t outputSelector)
         uint8_t repeatedNibble;
         if (MwReadPictureNibble(&repeatCountMinusOne))
             return;
-        uint16_t repeatCount = (uint16_t)(repeatCountMinusOne + 1);
+        uint16_t repeatCount = repeatCountMinusOne + 1;
         if (MwReadPictureNibble(&repeatedNibble))
             return;
         do

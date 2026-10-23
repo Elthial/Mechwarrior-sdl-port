@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/campaign_continuations.h"
 #include "mechwarrior/campaign_options.h"
 #include "mechwarrior/campaign_contracts.h"
@@ -6,13 +7,13 @@
 
 enum { NEWS_COMPANY_ROW=1,NEWS_PREVIOUS_ROW=0,NEWS_NEXT_ROW=1,
     NEWS_ARTICLE_TOP=0x17,NEWS_ARTICLE_HEIGHT=0x9A,NEWS_TEXT_X=0x1D,
-    NEWS_TEXT_WIDTH=0x106,NEWS_BACKGROUND_COLOUR=1,NEWS_MESSAGE_COLOUR=0x0C,
+    NEWS_TEXT_WIDTH=0x106,NEWS_BACKGROUND_COLOUR=Campaign_Pal_EGA_Black,NEWS_MESSAGE_COLOUR=Campaign_Pal_EGA_Green,
     NEWS_MESSAGE_X=0x0038,NEWS_MESSAGE_Y=0x0061 };
 
 /* MW_MAIN081B:6314..6324. Stored directory references, not new indexes. */
 void MwInitializeNewsArticleCursor(void)
 {
-    if (eventDirectoryIndex>=CAMPAIGN_EVENT_LIST_COUNT || !eventLists[eventDirectoryIndex]) abort();
+    if (eventDirectoryIndex>=CAMPAIGN_EVENT_LIST_COUNT || !eventLists[eventDirectoryIndex]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: eventDirectoryIndex>=CAMPAIGN_EVENT_LIST_COUNT || !eventLists[eventDirectoryIndex]");
     newsArticleCursor=eventLists[eventDirectoryIndex];
     newsArticleListStart=newsArticleCursor;
 }
@@ -31,7 +32,7 @@ bool MwFindNextNewsArticle(uint16_t *articleId)
         currentEventId=event->eventId;
         bool carry;
         uint16_t transfer=MwInterpretCampaignEvent(event,&carry);
-        if (transfer) abort(); /* No class3 installation script contains a choice/nonlocal transfer. */
+        if (transfer) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: transfer"); /* No class3 installation script contains a choice/nonlocal transfer. */
         if (!carry) continue;
         newsArticleCursor=cursor;
         *articleId=currentEventId;
@@ -49,12 +50,12 @@ bool MwFindPreviousNewsArticle(uint16_t *articleId)
     while (cursor!=newsArticleListStart)
     {
         const MwCampaignEvent *event=*--cursor;
-        if (!event) abort(); /* Unrepresented corrupted list reference, not exhaustion. */
+        if (!event) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !event"); /* Unrepresented corrupted list reference, not exhaustion. */
         if (event->classCode!=EVENT_CLASS_REPEATABLE) continue;
         currentEventId=event->eventId;
         bool carry;
         uint16_t transfer=MwInterpretCampaignEvent(event,&carry);
-        if (transfer) abort(); /* Shipped class3 scripts return normally. */
+        if (transfer) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: transfer"); /* Shipped class3 scripts return normally. */
         if (!carry) continue;
         newsArticleCursor=cursor;
         *articleId=currentEventId;

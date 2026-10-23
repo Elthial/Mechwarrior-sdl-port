@@ -22,7 +22,10 @@ extern void (*btechHostFreeDosSelector)(uint16_t selector);
 extern uint16_t (*btechHostDosAllocationSelector)(const uint8_t *allocation);
 /* Physical foreign-memory edge of the signed, wrapping BA56 directory read.
  * Returns a real recovered byte owner, never a synthetic surface/priority. */
-extern const uint8_t *(*btechHostResolveWrappedResourcePriority)(const uint8_t *directory,int16_t resourceId);
+struct BtechPosition3D;
+/* Initial visibility-query cache aliases the preceding signed divider's saved
+ * BX/SI. A nonzero physical priority proves that D5CE discards that cache.
+ * Missing/zero bytes are unresolved, not permission to invent an empty cache. */
 typedef struct BtechDosAllocation {uint8_t *bytes;uint32_t availableBytes;} BtechDosAllocation;
 extern uint8_t runtimeDelayActive;
 extern uint16_t runtimeDelayRemaining,joystickTimingLoopCount;

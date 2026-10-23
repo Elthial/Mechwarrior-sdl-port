@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_video.h"
 #include <stdlib.h>
 
@@ -8,14 +9,14 @@ enum { EGA_CLEAR_SET_RESET_COLOUR=0x0000 };
  * Converted callers supply paragraph-aligned storage and clear DF. */
 void BtechEgaCaptureScreenRectangle(BtechResourceAllocation buffer,uint16_t x,uint16_t y,uint16_t width,uint16_t height)
 {
-    if (!btechHostWritePortWord || !btechHostReadVideoByte) abort();
+    if (!btechHostWritePortWord || !btechHostReadVideoByte) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostWritePortWord || !btechHostReadVideoByte");
     btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,COMBAT_EGA_WRITE_MODE_ZERO);
     btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,COMBAT_EGA_ALL_PIXEL_BITS);
     btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,EGA_CLEAR_SET_RESET_COLOUR);
     uint16_t leftByte=x>>3;
-    uint16_t coveredBytes=(uint16_t)(((uint16_t)(x+width)>>3)-leftByte+1);
+    uint16_t coveredBytes=((uint16_t)(x+width)>>3)-leftByte+1;
     uint16_t wordsPerRow=(coveredBytes>>1)+(coveredBytes&1);
-    if (y>=COMBAT_SCREEN_HEIGHT) abort(); /* Adjacent row-owner aliases not represented. */
+    if (y>=COMBAT_SCREEN_HEIGHT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: y>=COMBAT_SCREEN_HEIGHT"); /* Adjacent row-owner aliases not represented. */
     uint16_t screenStart=graphicsRowOffsets[y]+leftByte;
     uint16_t page=copySourcePageSelector,bufferCursor=0;
     for (int16_t plane=COMBAT_EGA_PLANES-1;plane>=0;--plane)
@@ -27,7 +28,7 @@ void BtechEgaCaptureScreenRectangle(BtechResourceAllocation buffer,uint16_t x,ui
             uint16_t rowStart=screenCursor;
             for (uint16_t wordsRemaining=wordsPerRow;wordsRemaining;--wordsRemaining)
             {
-                if (!buffer.bytes || (uint32_t)bufferCursor+2>buffer.byteCount) abort();
+                if (!buffer.bytes || (uint32_t)bufferCursor+2>buffer.byteCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !buffer.bytes || (uint32_t)bufferCursor+2>buffer.byteCount");
                 /* A native WORD startingFFFF crosses the segment physically;
                  * only the later SI increment wraps. It is not two LODSBs. */
                 uint8_t low=btechHostReadVideoByte(page,screenCursor);
@@ -45,14 +46,14 @@ void BtechEgaCaptureScreenRectangle(BtechResourceAllocation buffer,uint16_t x,ui
  * enables and native live latches. No clipping, pixel-mask helper or repaint. */
 void BtechEgaRestoreScreenRectangle(BtechResourceAllocation buffer,uint16_t x,uint16_t y,uint16_t width,uint16_t height)
 {
-    if (!btechHostWritePortWord || !btechHostWriteVideoByte) abort();
+    if (!btechHostWritePortWord || !btechHostWriteVideoByte) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostWritePortWord || !btechHostWriteVideoByte");
     btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,COMBAT_EGA_WRITE_MODE_ZERO);
     btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,COMBAT_EGA_ALL_PIXEL_BITS);
     btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,EGA_CLEAR_SET_RESET_COLOUR);
     uint16_t leftByte=x>>3;
-    uint16_t coveredBytes=(uint16_t)(((uint16_t)(x+width)>>3)-leftByte+1);
+    uint16_t coveredBytes=((uint16_t)(x+width)>>3)-leftByte+1;
     uint16_t wordsPerRow=(coveredBytes>>1)+(coveredBytes&1);
-    if (y>=COMBAT_SCREEN_HEIGHT) abort();
+    if (y>=COMBAT_SCREEN_HEIGHT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: y>=COMBAT_SCREEN_HEIGHT");
     uint16_t screenStart=graphicsRowOffsets[y]+leftByte;
     uint16_t page=drawPageSelector,bufferCursor=0;
     for (int16_t plane=COMBAT_EGA_PLANES-1;plane>=0;--plane)
@@ -64,7 +65,7 @@ void BtechEgaRestoreScreenRectangle(BtechResourceAllocation buffer,uint16_t x,ui
             uint16_t rowStart=screenCursor;
             for (uint16_t wordsRemaining=wordsPerRow;wordsRemaining;--wordsRemaining)
             {
-                if (!buffer.bytes || (uint32_t)bufferCursor+2>buffer.byteCount) abort();
+                if (!buffer.bytes || (uint32_t)bufferCursor+2>buffer.byteCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !buffer.bytes || (uint32_t)bufferCursor+2>buffer.byteCount");
                 uint8_t low=buffer.bytes[bufferCursor],high=buffer.bytes[bufferCursor+1];
                 btechHostWriteVideoByte(page,screenCursor,low);
                 btechHostWriteVideoByte((uint16_t)(page+(screenCursor==UINT16_MAX?0x1000:0)),(uint16_t)(screenCursor+1),high);

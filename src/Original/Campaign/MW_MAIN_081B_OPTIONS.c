@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/campaign_continuations.h"
 #include "mechwarrior/campaign_options.h"
 #include "mechwarrior/ega_campaign.h"
@@ -10,10 +11,10 @@ enum { OPTIONS_SOUND_X=0x0068,OPTIONS_SOUND_Y=0x006E,OPTIONS_DETAIL_X=0x0070,OPT
 uint16_t MwEnterOptionsMenuContinuation(uint16_t entryOffset)
 {
     if (entryOffset==CAMPAIGN_CONTINUE_OPTIONS_REDRAW) goto publishMenu;
-    if (entryOffset!=CAMPAIGN_CONTINUE_OPTIONS) abort();
+    if (entryOffset!=CAMPAIGN_CONTINUE_OPTIONS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: entryOffset!=CAMPAIGN_CONTINUE_OPTIONS");
     hubSelectedRecordIndex=OPTIONS_HUB_ROW;
     EgaSelectFont(TEXT_PANEL_MONOSPACE_FONT);
-    EgaClearDrawPage(0);
+    EgaClearDrawPage(Campaign_Pal_EGA_Magenta);
     MwDrawIndexedPicture(0,0,(uint16_t)(currentPlanetLandscapeIndex+OPTIONS_LANDSCAPE_PICTURE_BASE));
 publishMenu:
     EgaCopyDrawPageToDisplay(0,0,EGA_COLUMNS,EGA_ROWS);
@@ -27,7 +28,7 @@ publishMenu:
 /* MW_MAIN081B:6FDE..6FF9. The NUL is copied; no clearing of the old tail. */
 void MwUpdateAudioOptionLabel(void)
 {
-    if (audioOptionLabelIndex>=AUDIO_OPTION_LABEL_COUNT) abort(); /* Unrepresented out-of-table native alias. */
+    if (audioOptionLabelIndex>=AUDIO_OPTION_LABEL_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: audioOptionLabelIndex>=AUDIO_OPTION_LABEL_COUNT"); /* Unrepresented out-of-table native alias. */
     uint16_t character=0;
     do
     {
@@ -38,7 +39,7 @@ void MwUpdateAudioOptionLabel(void)
 /* MW_MAIN081B:702B..7046. BYTE detail times5, including trailing space/NUL. */
 void MwUpdateTerrainDetailOptionLabel(void)
 {
-    if (campaignTerrainDetailLevel>=TERRAIN_DETAIL_LABEL_COUNT) abort(); /* Unrepresented out-of-table native alias. */
+    if (campaignTerrainDetailLevel>=TERRAIN_DETAIL_LABEL_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: campaignTerrainDetailLevel>=TERRAIN_DETAIL_LABEL_COUNT"); /* Unrepresented out-of-table native alias. */
     uint16_t character=0;
     do
     {
@@ -55,7 +56,7 @@ void MwToggleAudioOption(void)
     MwUpdateAudioOptionLabel();
     MwNativeByteView text={(const uint8_t *)optionsLabels[OPTION_SOUND].text,0x9D97,sizeof(optionsLabels[OPTION_SOUND].text)};
     uint16_t y=OPTIONS_SOUND_Y,offset=0x9D97;
-    EgaDrawString(OPTIONS_SOUND_X,&y,(OPTIONS_VALUE_BACKGROUND<<8)|OPTIONS_VALUE_FOREGROUND,&text,&offset);
+    EgaDrawString(OPTIONS_SOUND_X,&y,(Campaign_Pal_EGA_DarkGrey<<EGA_BYTE_BITS)|Campaign_Pal_EGA_Yellow,&text,&offset);
 }
 
 /* MW_MAIN081B:6FFA..702A. Native JL compares the incremented BYTE signed. */
@@ -67,7 +68,7 @@ void MwCycleTerrainDetailOption(void)
     MwUpdateTerrainDetailOptionLabel();
     MwNativeByteView text={(const uint8_t *)optionsLabels[OPTION_DETAIL].text,0x9DAB,sizeof(optionsLabels[OPTION_DETAIL].text)};
     uint16_t y=OPTIONS_DETAIL_Y,offset=0x9DAB;
-    EgaDrawString(OPTIONS_DETAIL_X,&y,(OPTIONS_VALUE_BACKGROUND<<8)|OPTIONS_VALUE_FOREGROUND,&text,&offset);
+    EgaDrawString(OPTIONS_DETAIL_X,&y,(Campaign_Pal_EGA_DarkGrey<<EGA_BYTE_BITS)|Campaign_Pal_EGA_Yellow,&text,&offset);
 }
 
 /* MW_MAIN081B:7047..707E. Mutate the SAME heading and YES-record owner

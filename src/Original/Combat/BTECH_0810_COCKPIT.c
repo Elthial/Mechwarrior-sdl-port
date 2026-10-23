@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_video.h"
 #include "mechwarrior/combat_import.h"
 #include "mechwarrior/combat_world.h"
@@ -7,12 +8,12 @@
 /*0810:2678. Asymmetric native bounds: Y includes y+height, X subtracts1. */
 void BtechSetCockpitCameraViewport(BtechCameraContext *camera)
 {
-    if (activeCockpitLayoutIndex>=COMBAT_COCKPIT_LAYOUTS || !camera) abort();
+    if (activeCockpitLayoutIndex>=COMBAT_COCKPIT_LAYOUTS || !camera) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: activeCockpitLayoutIndex>=COMBAT_COCKPIT_LAYOUTS || !camera");
     const BtechCockpitLayout *layout=&cockpitLayouts[activeCockpitLayoutIndex];
     camera->clipMinimumB=layout->viewport.y;
-    camera->clipMaximumB=(int16_t)(uint16_t)((uint16_t)layout->viewport.y+(uint16_t)layout->viewport.height);
+    camera->clipMaximumB=(int16_t)((uint16_t)layout->viewport.y+(uint16_t)layout->viewport.height);
     camera->clipMinimumA=layout->viewport.x;
-    camera->clipMaximumA=(int16_t)(uint16_t)((uint16_t)layout->viewport.width+(uint16_t)layout->viewport.x-1);
+    camera->clipMaximumA=(int16_t)((uint16_t)layout->viewport.width+(uint16_t)layout->viewport.x-1);
 }
 
 /*0810:6094. The third cache WORD has no proved consumer/meaning yet. */
@@ -28,11 +29,11 @@ void BtechResetHudGaugeCaches(void)
 void BtechRefreshCockpitViewportAndGauges(void)
 {
     uint8_t savedClipping=screenPolygonNeedsClip;
-    if (!playerMechState || playerMechState->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
+    if (!playerMechState || playerMechState->templateIndex>=COMBAT_MECH_TEMPLATES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerMechState || playerMechState->templateIndex>=COMBAT_MECH_TEMPLATES");
     activeCockpitLayoutIndex=mechCockpitLayoutIndices[playerMechState->templateIndex];
-    screenPolygonNeedsClip=0;
+    screenPolygonNeedsClip=false;
     drawPageSelector=backPageSelector;
-    if (activeCockpitLayoutIndex>=COMBAT_COCKPIT_LAYOUTS) abort();
+    if (activeCockpitLayoutIndex>=COMBAT_COCKPIT_LAYOUTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: activeCockpitLayoutIndex>=COMBAT_COCKPIT_LAYOUTS");
     BtechLoadScreenImage(cockpitScreenFilenames[activeCockpitLayoutIndex],NULL);
     screenPolygonNeedsClip=savedClipping;
     BtechResetHudGaugeCaches();
@@ -58,12 +59,11 @@ void BtechResetMechInspectionState(void)
 void BtechApplyLandscapeCameraColours(void)
 {
     if (combatLandscapeIndex>=COMBAT_LANDSCAPES || hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES
-        || !playerPoseCameraContext || !orderMapCameraContext) abort(); /* Unrecovered unrelated-owner aliases. */
+        || !playerPoseCameraContext || !orderMapCameraContext) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: combatLandscapeIndex>=COMBAT_LANDSCAPES || hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES || !playerPoseCameraContext || !orderMapCameraContext"); /* Unrecovered unrelated-owner aliases. */
     playerPoseCameraContext->fillPaletteA=playerCameraFillASuppressed?0:
         landscapeCameraColourRows[hudColourSchemeIndex][combatLandscapeIndex].playerFillPaletteA;
-    uint8_t sharedPalette=landscapeCameraColourRows[hudColourSchemeIndex][combatLandscapeIndex].sharedFillPaletteB;
-    orderMapCameraContext->fillPaletteB=sharedPalette;
-    playerPoseCameraContext->fillPaletteB=sharedPalette;
+    playerPoseCameraContext->fillPaletteB=orderMapCameraContext->fillPaletteB=
+        landscapeCameraColourRows[hudColourSchemeIndex][combatLandscapeIndex].sharedFillPaletteB;
     BtechSelectPaletteSlot(landscapePaletteSlots[combatLandscapeIndex]);
 }
 

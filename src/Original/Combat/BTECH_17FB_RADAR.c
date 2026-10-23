@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_cockpit.h"
 #include "mechwarrior/combat_startup.h"
 #include "mechwarrior/combat_import.h"
@@ -13,22 +14,22 @@ void BtechDrawTerrainRadar(void)
     radarPreviousTick=combatTickCounter;
     radarCachePage=hudColourSchemeIndex?0:combatTickCounter&1;
     drawPageSelector=backPageSelector;
-    if (!playerUnitBinding) abort();
+    if (!playerUnitBinding) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerUnitBinding");
     radarPlayerObject=playerUnitBinding->positionedLeftLeg;
-    if (activeCockpitLayoutIndex>=COMBAT_COCKPIT_LAYOUTS) abort();
+    if (activeCockpitLayoutIndex>=COMBAT_COCKPIT_LAYOUTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: activeCockpitLayoutIndex>=COMBAT_COCKPIT_LAYOUTS");
     radarRectangle=&cockpitLayouts[activeCockpitLayoutIndex].radarPanel;
-    int16_t halfWidth=(int16_t)((radarRectangle->width-(radarRectangle->width<0))/2);
-    int16_t halfHeight=(int16_t)((radarRectangle->height-(radarRectangle->height<0))/2);
+    int16_t halfWidth=(radarRectangle->width-(radarRectangle->width<0))/2;
+    int16_t halfHeight=(radarRectangle->height-(radarRectangle->height<0))/2;
     radarCentreX=(uint16_t)(radarRectangle->x+halfWidth-1);
     radarCentreY=(uint16_t)(radarRectangle->y+halfHeight-1);
-    if (!radarPlayerObject) abort();
+    if (!radarPlayerObject) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !radarPlayerObject");
     const BtechPosition3D *player=&radarPlayerObject->object.prefix.position;
-    uint16_t mapX=(uint16_t)(BtechShiftSignedDwordRightLow(player->positionA,TERRAIN_WORLD_CELL_SHIFT)-halfWidth+TERRAIN_TILE_ROWS);
-    uint16_t mapY=(uint16_t)(TERRAIN_TILE_COLUMNS-halfHeight-BtechShiftSignedDwordRightLow(player->positionB,TERRAIN_WORLD_CELL_SHIFT));
+    uint16_t mapX=BtechShiftSignedDwordRightLow(player->positionA,TERRAIN_WORLD_CELL_SHIFT)-halfWidth+TERRAIN_TILE_ROWS;
+    uint16_t mapY=TERRAIN_TILE_COLUMNS-halfHeight-BtechShiftSignedDwordRightLow(player->positionB,TERRAIN_WORLD_CELL_SHIFT);
     if (mapX!=radarMapOriginX || mapY!=radarMapOriginY || cockpitFullRedrawPending || tickDiscontinuity)
     {
-        radarMapOriginX=mapX;radarMapOriginY=mapY;drawPolygonFilled=1;
-        if (hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES) abort();
+        radarMapOriginX=mapX;radarMapOriginY=mapY;drawPolygonFilled=true;
+        if (hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES");
         drawLineColour=(uint8_t)hudColourSchemes[hudColourSchemeIndex].radarBackground;
         drawFillColour=drawLineColour;
         BtechDrawStyledRectangle(radarRectangle->x,radarRectangle->y,radarRectangle->width,radarRectangle->height);
@@ -41,8 +42,8 @@ void BtechDrawTerrainRadar(void)
                 uint16_t height=terrainHeightGrid[mapX][terrainY];
                 if (!height) continue;
                 uint16_t band=height>>5;if (band>3) band=3;
-                BtechWriteClippedPixel((int16_t)(uint16_t)(radarRectangle->x+panelX),
-                    (int16_t)(uint16_t)(radarRectangle->y+panelY),hudColourSchemes[hudColourSchemeIndex].radarTerrainBands[band]);
+                BtechWriteClippedPixel((int16_t)(radarRectangle->x+panelX),
+                    (int16_t)(radarRectangle->y+panelY),hudColourSchemes[hudColourSchemeIndex].radarTerrainBands[band]);
             }
         }
         backdropChanged=1;
@@ -51,28 +52,28 @@ void BtechDrawTerrainRadar(void)
     {
         for (uint16_t marker=0;(int16_t)marker<(int16_t)radarMarkerCounts[radarCachePage];++marker)
         {
-            if (marker>=COMBAT_RADAR_MARKERS) abort(); /* Native next-owner alias. */
+            if (marker>=COMBAT_RADAR_MARKERS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: marker>=COMBAT_RADAR_MARKERS"); /* Native next-owner alias. */
             BtechWriteClippedPixel((int16_t)radarMarkerX[marker][radarCachePage],
                 (int16_t)radarMarkerY[marker][radarCachePage],radarMarkerBackground[marker][radarCachePage]);
         }
     }
     radarMarkerCounts[radarCachePage]=0;
-    if (hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES) abort();
+    if (hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES");
     uint16_t paletteIndex=hudColourSchemes[hudColourSchemeIndex].radarFriendly;
     for (uint16_t slot=1;slot<COMBAT_MECH_SLOTS;++slot)
     {
-        if (!unitBindings[slot].mech || unitControls[slot].combatValueOrBoundaryCode<=-2) continue;
+        if (!unitBindings[slot].mech || unitControls[slot].conditionScoreOrExitCode<=COMBAT_EXIT_CODE_THRESHOLD) continue;
         if (slot>=COMBAT_FRIENDLY_SLOTS)
         {
             if (!unitVisibility[0][slot]) continue;
             paletteIndex=hudColourSchemes[hudColourSchemeIndex].radarOpposing;
         }
-        if (!unitBindings[slot].torso) abort();
+        if (!unitBindings[slot].torso) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !unitBindings[slot].torso");
         BtechDrawRadarPositionMarker(&unitBindings[slot].torso->object.prefix.position,paletteIndex);
     }
     if (sideObjectiveRules[0]==OBJECTIVE_SPECIAL_TARGET || sideObjectiveRules[0]==OBJECTIVE_DEFEND_SPECIAL_TARGET)
     {
-        if (!specialTargetObject) abort();
+        if (!specialTargetObject) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !specialTargetObject");
         BtechDrawRadarPositionMarker(&specialTargetObject->object.prefix.position,hudColourSchemes[hudColourSchemeIndex].radarSpecialTarget);
     }
     BtechDrawRadarPositionMarker(player,hudColourSchemes[hudColourSchemeIndex].radarPlayer);
@@ -86,7 +87,7 @@ void BtechDrawTerrainRadar(void)
             uint16_t count=radarMarkerCounts[radarCachePage];
             for (uint16_t marker=0;(int16_t)marker<(int16_t)count;++marker)
             {
-                if (marker>=COMBAT_RADAR_MARKERS) abort();
+                if (marker>=COMBAT_RADAR_MARKERS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: marker>=COMBAT_RADAR_MARKERS");
                 radarMarkerX[marker][otherPage]=radarMarkerX[marker][radarCachePage];
                 radarMarkerY[marker][otherPage]=radarMarkerY[marker][radarCachePage];
                 radarMarkerBackground[marker][otherPage]=radarMarkerBackground[marker][radarCachePage];
@@ -100,23 +101,23 @@ void BtechDrawTerrainRadar(void)
  * background even when2127 returnsFFFF for a clipped pixel. */
 void BtechDrawRadarPositionMarker(const BtechPosition3D *position,uint16_t paletteIndex)
 {
-    if (!radarPlayerObject || !position) abort();
+    if (!radarPlayerObject || !position) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !radarPlayerObject || !position");
     const BtechPosition3D *player=&radarPlayerObject->object.prefix.position;
     uint16_t playerX=BtechShiftSignedDwordRightLow(player->positionA,TERRAIN_WORLD_CELL_SHIFT);
-    int16_t relativeX=(int16_t)(uint16_t)(BtechShiftSignedDwordRightLow(position->positionA,TERRAIN_WORLD_CELL_SHIFT)-playerX);
+    int16_t relativeX=BtechShiftSignedDwordRightLow(position->positionA,TERRAIN_WORLD_CELL_SHIFT)-playerX;
     uint16_t playerY=BtechShiftSignedDwordRightLow(player->positionB,TERRAIN_WORLD_CELL_SHIFT);
-    int16_t relativeY=(int16_t)(uint16_t)(BtechShiftSignedDwordRightLow(position->positionB,TERRAIN_WORLD_CELL_SHIFT)-playerY);
-    if (!radarRectangle) abort();
-    int16_t halfWidth=(int16_t)((radarRectangle->width-(radarRectangle->width<0))/2);
-    int16_t halfHeight=(int16_t)((radarRectangle->height-(radarRectangle->height<0))/2);
+    int16_t relativeY=BtechShiftSignedDwordRightLow(position->positionB,TERRAIN_WORLD_CELL_SHIFT)-playerY;
+    if (!radarRectangle) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !radarRectangle");
+    int16_t halfWidth=(radarRectangle->width-(radarRectangle->width<0))/2;
+    int16_t halfHeight=(radarRectangle->height-(radarRectangle->height<0))/2;
     int32_t absoluteX=relativeX==INT16_MIN?INT16_MAX:relativeX<0?-(int32_t)relativeX:relativeX;
     if (absoluteX>=halfWidth) return;
     int32_t absoluteY=relativeY==INT16_MIN?INT16_MAX:relativeY<0?-(int32_t)relativeY:relativeY;
     if (absoluteY>=halfHeight) return;
     uint16_t x=(uint16_t)(radarCentreX+relativeX),y=(uint16_t)(radarCentreY-relativeY);
-    if (radarCachePage>=COMBAT_RADAR_CACHE_PAGES) abort();
+    if (radarCachePage>=COMBAT_RADAR_CACHE_PAGES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: radarCachePage>=COMBAT_RADAR_CACHE_PAGES");
     uint16_t marker=radarMarkerCounts[radarCachePage]++;
-    if (marker>=COMBAT_RADAR_MARKERS) abort(); /* Counter is already incremented. */
+    if (marker>=COMBAT_RADAR_MARKERS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: marker>=COMBAT_RADAR_MARKERS"); /* Counter is already incremented. */
     radarMarkerX[marker][radarCachePage]=x;radarMarkerY[marker][radarCachePage]=y;
     radarMarkerBackground[marker][radarCachePage]=BtechReadClippedPixel((int16_t)x,(int16_t)y);
     BtechWriteClippedPixel((int16_t)x,(int16_t)y,paletteIndex);

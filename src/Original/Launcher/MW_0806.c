@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/launcher.h"
 #include <stdlib.h>
 
@@ -14,7 +15,7 @@ uint8_t MwLauncherMain(const MwLauncherCommandLine *commandLine)
         || !mwLauncherSystem.freeMemory || !mwLauncherSystem.detectDisplayAdapter
         || !mwLauncherSystem.clearTextScreen || !mwLauncherSystem.executeChild
         || !mwLauncherSystem.displayDosString || !mwLauncherSystem.writeConsoleChar
-        || !mwCampaignInput.readKeyboard || !mwCampaignInput.currentDefaultDrive) abort();
+        || !mwCampaignInput.readKeyboard || !mwCampaignInput.currentDefaultDrive) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwLauncherSystem.resizeResident || !mwLauncherSystem.allocateMemory || !mwLauncherSystem.freeMemory || !mwLauncherSystem.detectDisplayAdapter || !mwLauncherSystem.clearTextScreen || !mwLauncherSystem.executeChild || !mwLauncherSystem.displayDosString || !mwLauncherSystem.writeConsoleChar || !mwCampaignInput.readKeyboard || !mwCampaignInput.currentDefaultDrive");
     if (mwLauncherSystem.resizeResident(LAUNCHER_RESIDENT_PARAGRAPHS))
     {
         mwLauncherSystem.displayDosString(launcherReleaseError);

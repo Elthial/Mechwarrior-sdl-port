@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_cockpit.h"
 #include "mechwarrior/combat_input.h"
 #include <stdlib.h>
@@ -5,8 +6,8 @@
 
 enum { DIALOG_LEFT=0x6B,DIALOG_TOP=0x57,DIALOG_WIDTH=0x6B,DIALOG_HEIGHT=0x1B,
     DIALOG_CENTRE_X=0xA0,DIALOG_FIRST_TEXT_Y=0x5E,DIALOG_SECOND_TEXT_Y=0x66,
-    DIALOG_HALF_CHARACTER_WIDTH=3,DIALOG_DELAY=0x18,DIALOG_TEXT_COLOUR=7,
-    DIALOG_MONOCHROME_TEXT_COLOUR=15,DIALOG_Y_SCAN_CODE=0x15 };
+    DIALOG_HALF_CHARACTER_WIDTH=3,DIALOG_DELAY=0x18,DIALOG_TEXT_COLOUR=Combat_Pal_EGA_LightGrey,
+    DIALOG_MONOCHROME_TEXT_COLOUR=Combat_Pal_EGA_White,DIALOG_Y_SCAN_CODE=0x15 };
 
 /*0810:137D. Original four-byte local is two near text references. */
 void BtechShowSimulationPausedDialog(void)
@@ -40,15 +41,15 @@ uint16_t BtechShowCapturedTwoLineDialog(const BtechDialogMessagePair *message)
     {
         drawPageSelector=frontPageSelector;copySourcePageSelector=frontPageSelector;
         BtechCaptureScreenRectangle(capture,DIALOG_LEFT,DIALOG_TOP,DIALOG_WIDTH,DIALOG_HEIGHT);
-        screenPolygonNeedsClip=0;drawPolygonFilled=1;textTransparentBackground=1;
+        screenPolygonNeedsClip=false;drawPolygonFilled=true;textTransparentBackground=true;
         textForegroundColour=hudColourSchemeIndex?DIALOG_MONOCHROME_TEXT_COLOUR:DIALOG_TEXT_COLOUR;
-        if (!promptBitmaps || !promptBitmaps->images || !promptBitmaps->imageCount) abort();
+        if (!promptBitmaps || !promptBitmaps->images || !promptBitmaps->imageCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !promptBitmaps || !promptBitmaps->images || !promptBitmaps->imageCount");
         BtechDrawBitmap(&promptBitmaps->images[0],DIALOG_LEFT,DIALOG_TOP);
-        uint16_t textHalfWidth=(uint16_t)(strlen(message->firstText)*DIALOG_HALF_CHARACTER_WIDTH);
-        BtechDrawNearText(message->firstText,(int16_t)(uint16_t)(DIALOG_CENTRE_X-textHalfWidth),DIALOG_FIRST_TEXT_Y);
+        uint16_t textHalfWidth=strlen(message->firstText)*DIALOG_HALF_CHARACTER_WIDTH;
+        BtechDrawNearText(message->firstText,(int16_t)(DIALOG_CENTRE_X-textHalfWidth),DIALOG_FIRST_TEXT_Y);
         textHalfWidth=(uint16_t)(strlen(message->secondText)*DIALOG_HALF_CHARACTER_WIDTH);
-        BtechDrawNearText(message->secondText,(int16_t)(uint16_t)(DIALOG_CENTRE_X-textHalfWidth),DIALOG_SECOND_TEXT_Y);
-        textTransparentBackground=0;
+        BtechDrawNearText(message->secondText,(int16_t)(DIALOG_CENTRE_X-textHalfWidth),DIALOG_SECOND_TEXT_Y);
+        textTransparentBackground=false;
     }
     BtechWaitForCombatInputReleaseThenPress();
     uint16_t scanCode=combatInputScanCode;
@@ -63,12 +64,12 @@ uint16_t BtechShowCapturedTwoLineDialog(const BtechDialogMessagePair *message)
  * are NOT saved by the original. Keep these independent native owners. */
 void BtechSaveDrawingState(void)
 {
-    savedPolygonFilled=(uint16_t)(int16_t)(int8_t)drawPolygonFilled;
-    savedPolygonClip=(uint16_t)(int16_t)(int8_t)screenPolygonNeedsClip;
-    savedTextBackground=(uint16_t)(int16_t)(int8_t)textBackgroundColour;
-    savedTextForeground=(uint16_t)(int16_t)(int8_t)textForegroundColour;
-    savedFillColour=(uint16_t)(int16_t)(int8_t)drawFillColour;
-    savedLineColour=(uint16_t)(int16_t)(int8_t)drawLineColour;
+    savedPolygonFilled=(int8_t)drawPolygonFilled;
+    savedPolygonClip=(int8_t)screenPolygonNeedsClip;
+    savedTextBackground=(int8_t)textBackgroundColour;
+    savedTextForeground=(int8_t)textForegroundColour;
+    savedFillColour=(int8_t)drawFillColour;
+    savedLineColour=(int8_t)drawLineColour;
     savedCopySourcePage=copySourcePageSelector;savedDrawPage=drawPageSelector;
 }
 

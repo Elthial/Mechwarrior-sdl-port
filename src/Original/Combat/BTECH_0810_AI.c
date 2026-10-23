@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_tactics.h"
 #include "mechwarrior/combat_movement.h"
 #include "mechwarrior/combat_pose.h"
@@ -7,20 +8,13 @@
 #include "mechwarrior/combat_render.h"
 #include <stdlib.h>
 
-/* Specific reused native stack bytes, not a new game global or stack emulator.
- * Last9C06 -> A05F ->1E28 ->0714 saves SI/DI exactly where739C's unwritten
- * formation height will lie. DI is00C4's retained dispatch-end cursor. */
-static uint32_t formationHeightStackResidue;
-static uint8_t formationHeightStackResidueKnown;
-
 /*0810:71ED. The actual non-player update chain, not a replacement AI tick.
  * Global control finishes one-past the eight records unless739C rebinds it. */
 void BtechUpdateAiMechUnits(void)
 {
-    formationHeightStackResidueKnown=0;
     for (uint16_t slot=0;slot<COMBAT_MECH_SLOTS;++slot) unitControls[slot].targetSelectionCount=0;
     BtechRefreshLastVisibleUnitPositions();
-    BtechRecalculateUnitCombatValuesAndBoundaries();
+    BtechRecalculateUnitConditionScoresAndExitCodes();
     BtechUpdateUnitWeaponRangeThresholds();
     BtechUpdateSideCompletionFlags();
     activeUnitControl=&unitControls[1];
@@ -28,17 +22,17 @@ void BtechUpdateAiMechUnits(void)
     {
         activeMechState=unitBindings[slot].mech;
         if (!activeMechState) continue;
-        if (activeUnitControl->sideIndex>=2) abort();
+        if (activeUnitControl->sideIndex>=2) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: activeUnitControl->sideIndex>=2");
         activeSideRule=&sideObjectiveRules[activeUnitControl->sideIndex];
         activeUnitPositionedObject=unitBindings[slot].positionedLeftLeg;
-        if (activeMechState->templateIndex>=COMBAT_MECH_TEMPLATES) abort();
+        if (activeMechState->templateIndex>=COMBAT_MECH_TEMPLATES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: activeMechState->templateIndex>=COMBAT_MECH_TEMPLATES");
         activeMechTemplate=&mechTemplates[activeMechState->templateIndex];
         activeUnitTorsoObject=unitBindings[slot].torso;
-        if (activeUnitControl->combatValueOrBoundaryCode<-1) continue;
-        if (!activeUnitPositionedObject) abort();
+        if (activeUnitControl->conditionScoreOrExitCode<COMBAT_MECH_DISABLED_VALUE) continue;
+        if (!activeUnitPositionedObject) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !activeUnitPositionedObject");
         if (activeUnitControl->movementMode==MOVEMENT_MODE_JUMP)
         {
-            if (activeUnitControl->combatValueOrBoundaryCode!=-1
+            if (activeUnitControl->conditionScoreOrExitCode!=COMBAT_MECH_DISABLED_VALUE
                 && activeMechState->currentInternalStructure[COMBAT_BODY_RIGHT_LEG]
                 && activeMechState->currentInternalStructure[COMBAT_BODY_LEFT_LEG]) goto tacticalUpdate;
             BtechSetActiveUnitGroundOrJumpMotion(activeUnitPositionedObject->object.prefix.orientationC,MOTION_DIRECTION_STOP);
@@ -51,7 +45,7 @@ void BtechUpdateAiMechUnits(void)
             activeUnitControl->biasedHeadingSnapshot=activeUnitPositionedObject->object.prefix.orientationC+AVOIDANCE_HALF_TURN;
         }
 tacticalUpdate:
-        if (activeUnitControl->combatValueOrBoundaryCode!=-1)
+        if (activeUnitControl->conditionScoreOrExitCode!=COMBAT_MECH_DISABLED_VALUE)
         {
             uint16_t mode=activeUnitControl->movementMode;
             if (mode!=MOVEMENT_MODE_FALLEN_POSE && mode!=MOVEMENT_MODE_FALLING && mode!=MOVEMENT_MODE_RECOVERING)
@@ -70,7 +64,7 @@ tacticalUpdate:
                     && activeMechState->actuatorCondition[AI_LEFT_LEG_ACTUATOR] && activeMechState->actuatorCondition[AI_RIGHT_LEG_ACTUATOR]
                     && !((uint8_t)combatTickCounter&AI_RECOVERY_TICK_MASK))
                 {
-                    if (activeUnitControl->unitSlot>=COMBAT_MECH_SLOTS) abort();
+                    if (activeUnitControl->unitSlot>=COMBAT_MECH_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: activeUnitControl->unitSlot>=COMBAT_MECH_SLOTS");
                     int16_t roll=(int16_t)BtechRandomBelowBound(pilotingRecoveryBounds[activeUnitControl->unitSlot]);
                     activeUnitControl->animationRequestFlags=roll<AI_RECOVERY_ROLL_LIMIT?ANIMATION_REQUEST_RECOVER:ANIMATION_REQUEST_FAILED_RECOVERY;
                 }
@@ -78,9 +72,7 @@ tacticalUpdate:
         }
 animate:
         {
-            uint16_t animationLookupIndex=BtechAdvanceUnitAnimationAndMovementMode();
-            formationHeightStackResidue=((uint32_t)COMBAT_NATIVE_GRAPHICS_DISPATCH_END<<16)|animationLookupIndex;
-            formationHeightStackResidueKnown=combatRendererKind==COMBAT_VIDEO_EGA;
+            BtechAdvanceUnitAnimationAndMovementMode();
             BtechSynchronizeMechRenderParts();
         }
     }
@@ -88,17 +80,16 @@ animate:
 }
 
 /*0810:739C. Side ZERO's signed rule gates the whole routine. Worklist targets
- * are consumed even when reassignment fails. Formation height aliases the
- * preceding animation resource lookup's saved registers, not terrain height. */
+ * are consumed even when reassignment fails. Formation waypoints use terrain height. */
 void BtechCoordinateSpecialObjectiveUnits(void)
 {
     if ((int16_t)sideObjectiveRules[0]<=OBJECTIVE_OPPOSE_WITHDRAWAL) return;
-    if (!specialTargetObject) abort();
+    if (!specialTargetObject) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !specialTargetObject");
     BtechPosition3D *objective=&specialTargetObject->object.prefix.position;
     for (uint16_t slot=0;slot<COMBAT_MECH_SLOTS;++slot)
     {
         if (!unitBindings[slot].mech) {unitDistancesToSpecialTarget[slot]=0;continue;}
-        if (!unitBindings[slot].positionedLeftLeg) abort();
+        if (!unitBindings[slot].positionedLeftLeg) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !unitBindings[slot].positionedLeftLeg");
         unitDistancesToSpecialTarget[slot]=(int32_t)BtechApproximatePlanarDistance(&unitBindings[slot].positionedLeftLeg->object.prefix.position,objective);
     }
     for (uint16_t side=0;side<2;++side)
@@ -109,22 +100,22 @@ void BtechCoordinateSpecialObjectiveUnits(void)
         {
             int32_t nearestTarget=OBJECTIVE_CANDIDATE_DISTANCE_LIMIT;
             uint16_t threat=0,firstTarget=opposingSideFirstUnitSlots[side];
-            if (firstTarget>COMBAT_MECH_SLOTS-COMBAT_LANCE_SLOTS) abort();
+            if (firstTarget>COMBAT_MECH_SLOTS-COMBAT_LANCE_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: firstTarget>COMBAT_MECH_SLOTS-COMBAT_LANCE_SLOTS");
             for (uint16_t slot=firstTarget;slot<firstTarget+COMBAT_LANCE_SLOTS;++slot)
-                if (unitDistancesToSpecialTarget[slot] && unitControls[slot].combatValueOrBoundaryCode>0 && unitDistancesToSpecialTarget[slot]<nearestTarget)
+                if (unitDistancesToSpecialTarget[slot] && unitControls[slot].conditionScoreOrExitCode>COMBAT_CONDITION_SCORE_MINIMUM && unitDistancesToSpecialTarget[slot]<nearestTarget)
                 {nearestTarget=unitDistancesToSpecialTarget[slot];threat=slot;}
             if (nearestTarget==OBJECTIVE_CANDIDATE_DISTANCE_LIMIT) {noTargetsRemaining=true;continue;}
             int32_t nearestDefender=OBJECTIVE_CANDIDATE_DISTANCE_LIMIT;
             uint16_t defender=0,firstDefender=opposingSideFirstUnitSlots[1-side];
             bool alreadyCovered=false;
-            if (firstDefender>COMBAT_MECH_SLOTS-COMBAT_LANCE_SLOTS) abort();
+            if (firstDefender>COMBAT_MECH_SLOTS-COMBAT_LANCE_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: firstDefender>COMBAT_MECH_SLOTS-COMBAT_LANCE_SLOTS");
             int32_t incomingDistance=unitDistancesToSpecialTarget[threat];
             for (uint16_t slot=firstDefender;slot<firstDefender+COMBAT_LANCE_SLOTS;++slot)
             {
                 int32_t objectiveDistance=unitDistancesToSpecialTarget[slot],targetDistance=(int32_t)unitDistances[slot][threat];
                 BtechUnitControlState *control=&unitControls[slot];
-                if (!objectiveDistance || targetDistance<=0 || objectiveDistance>=OBJECTIVE_DEFENDER_RADIUS || control->combatValueOrBoundaryCode<=0 || targetDistance>=nearestDefender) continue;
-                if (control->controlState!=TACTICAL_DEFENDING)
+                if (!objectiveDistance || targetDistance<=0 || objectiveDistance>=OBJECTIVE_DEFENDER_RADIUS || control->conditionScoreOrExitCode<=COMBAT_CONDITION_SCORE_MINIMUM || targetDistance>=nearestDefender) continue;
+                if (control->tacticalState!=TACTICAL_DEFENDING)
                 {
                     if (control->targetUnitSlot==threat && objectiveDistance<incomingDistance) {alreadyCovered=true;break;}
                 }
@@ -132,16 +123,16 @@ void BtechCoordinateSpecialObjectiveUnits(void)
             }
             if (!alreadyCovered && nearestDefender!=OBJECTIVE_CANDIDATE_DISTANCE_LIMIT)
             {
-                int32_t doubledDistance=(int32_t)((uint32_t)unitDistancesToSpecialTarget[defender]<<1);
+                int32_t doubledDistance=(uint32_t)unitDistancesToSpecialTarget[defender]<<1;
                 if (unitDistancesToSpecialTarget[threat]<doubledDistance)
                 {
-                    unitControls[defender].targetUnitSlot=threat;unitControls[defender].controlState=TACTICAL_CHARGING;
+                    unitControls[defender].targetUnitSlot=threat;unitControls[defender].tacticalState=TACTICAL_CHARGING;
                     unitDistancesToSpecialTarget[defender]=0;
                     BtechSelectActiveUnitContext(defender);
-                    if (!unitBindings[threat].positionedLeftLeg || !activeUnitPositionedObject) abort();
+                    if (!unitBindings[threat].positionedLeftLeg || !activeUnitPositionedObject) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !unitBindings[threat].positionedLeftLeg || !activeUnitPositionedObject");
                     BtechPosition3D *target=&unitBindings[threat].positionedLeftLeg->object.prefix.position;
                     BtechPosition3D *root=&activeUnitPositionedObject->object.prefix.position;
-                    BtechSteerActiveUnitHeading(BtechCalculateVectorHeading(target->positionA-root->positionA,target->positionB-root->positionB));
+                    BtechApplyActiveUnitTacticalSteering(BtechCalculateVectorHeading(target->positionA-root->positionA,target->positionB-root->positionB));
                 }
             }
             unitDistancesToSpecialTarget[threat]=0;
@@ -150,15 +141,14 @@ void BtechCoordinateSpecialObjectiveUnits(void)
     for (uint16_t slot=0;slot<COMBAT_MECH_SLOTS;++slot)
     {
         activeMechState=unitBindings[slot].mech;
-        if (!activeMechState || unitControls[slot].controlState!=TACTICAL_DEFENDING) continue;
+        if (!activeMechState || unitControls[slot].tacticalState!=TACTICAL_DEFENDING) continue;
         BtechSelectActiveUnitContext(slot);
-        BtechPosition3D destination;
+        BtechPosition3D destination={0};
         if (activeUnitControl->commandCode==COMBAT_ORDER_ACT_ON_OWN)
         {
-            if (!formationHeightStackResidueKnown) abort(); /* No preceding native producer is represented. */
             destination.positionA=unitFormationPositions[slot].positionA;
             destination.positionB=unitFormationPositions[slot].positionB;
-            destination.positionC=formationHeightStackResidue;
+            destination.positionC=(int16_t)BtechSampleTerrainOrSurfaceHeight(&destination);
         }
         else
         {

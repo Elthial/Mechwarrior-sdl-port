@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/campaign_continuations.h"
 #include "mechwarrior/campaign_events.h"
 #include "mechwarrior/campaign_economy.h"
@@ -15,9 +16,9 @@ uint16_t campaignEventDispatchReturnContinuation;
 uint16_t MwDispatchCampaignEvents(uint16_t eventClass,uint16_t entryOffset)
 {
     if (entryOffset==CAMPAIGN_CONTINUE_NEXT_EVENT) {campaignEventReturnContinuation=0;goto nextEvent;}
-    if (entryOffset!=CAMPAIGN_CALL_DISPATCH_EVENTS) abort();
+    if (entryOffset!=CAMPAIGN_CALL_DISPATCH_EVENTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: entryOffset!=CAMPAIGN_CALL_DISPATCH_EVENTS");
     campaignEventClass=eventClass;
-    if (eventDirectoryIndex>=CAMPAIGN_EVENT_LIST_COUNT || !eventLists[eventDirectoryIndex]) abort(); /* Unrepresented native list/DS0000 mapping, not a null-list success. */
+    if (eventDirectoryIndex>=CAMPAIGN_EVENT_LIST_COUNT || !eventLists[eventDirectoryIndex]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: eventDirectoryIndex>=CAMPAIGN_EVENT_LIST_COUNT || !eventLists[eventDirectoryIndex]"); /* Unrepresented native list/DS0000 mapping, not a null-list success. */
     dispatchListCursor=eventLists[eventDirectoryIndex];
     dispatchedEventCount=0;
     for (;;)
@@ -30,7 +31,7 @@ uint16_t MwDispatchCampaignEvents(uint16_t eventClass,uint16_t entryOffset)
             bool evaluate=campaignEventClass==EVENT_CLASS_REPEATABLE;
             if (!evaluate)
             {
-                if (currentEventId>=CAMPAIGN_EVENT_SEEN_FLAGS) abort();
+                if (currentEventId>=CAMPAIGN_EVENT_SEEN_FLAGS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: currentEventId>=CAMPAIGN_EVENT_SEEN_FLAGS");
                 evaluate=eventSeenFlags[currentEventId]!=1;
             }
             if (evaluate)
@@ -47,7 +48,7 @@ nextEvent:
     }
     if (campaignEventClass==2 && dispatchedEventCount==0)
     {
-        if (campaignEventClass>=7 || !eventClassHandlers[campaignEventClass]) abort();
+        if (campaignEventClass>=7 || !eventClassHandlers[campaignEventClass]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: campaignEventClass>=7 || !eventClassHandlers[campaignEventClass]");
         eventClassHandlers[campaignEventClass](0x0071);
     }
     return 0;
@@ -58,7 +59,7 @@ nextEvent:
 uint16_t MwDispatchFixedCampaignEvent(void)
 {
     currentEventId=EVENT_CONTINUE_OR_QUIT;
-    if (!fixedCampaignEvent) abort();
+    if (!fixedCampaignEvent) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !fixedCampaignEvent");
     campaignEventReturnContinuation=CAMPAIGN_CONTINUE_VICTORY_EVENT_RETURN;
     bool carry;
     uint16_t continuation=MwInterpretCampaignEvent(fixedCampaignEvent,&carry);
@@ -88,18 +89,18 @@ uint16_t MwInterpretCampaignEvent(const MwCampaignEvent *event,bool *carry)
         case EVENT_CONDITION_HOUSE_STANDING:MwEventTestControllingHouseStanding(command);break;
         case EVENT_CONDITION_DIFFERENT_PLANET:MwEventTestDifferentPlanet(command);break;
         case EVENT_CONDITION_UNCHANGED:eventOperandCursor=command->next;break; /* Native6561 RET. */
-        case EVENT_CONDITION_UNRESOLVED_TARGET:abort(); /* Native table target0000 is NOT a no-op. */
+        case EVENT_CONDITION_UNRESOLVED_TARGET:/* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Native table target0000 is NOT a no-op."); /* Native table target0000 is NOT a no-op. */
         case EVENT_CONDITION_PLAYER_COMBAT_LOSS:eventOperandCursor=command->next;MwEventTestPlayerCombatLoss();break;
         case EVENT_CONDITION_CHOICES:
             if (eventConditionResult==1)
             {
                 eventOperandCursor=command;
-                if (!campaignEventChoice) abort();
+                if (!campaignEventChoice) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !campaignEventChoice");
                 return campaignEventChoice(command);
             }
             eventOperandCursor=command->next;
             break; /* Decoded count*4+1 false-path operand skip. */
-        default:abort(); /* Unrepresented out-of-table target. */
+        default:/* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Unrepresented out-of-table target."); /* Unrepresented out-of-table target. */
         }
         if (!eventOperandCursor) break;
         command=eventOperandCursor;
@@ -114,7 +115,7 @@ uint16_t MwInterpretCampaignEvent(const MwCampaignEvent *event,bool *carry)
         case EVENT_ACTION_SUBSTITUTE_PLANET:
             if (eventConditionResult==1)
             {
-                if (!campaignEventPlanetSubstitution) abort();
+                if (!campaignEventPlanetSubstitution) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !campaignEventPlanetSubstitution");
                 campaignEventPlanetSubstitution(command);
             }
             eventOperandCursor=command->next;
@@ -123,12 +124,12 @@ uint16_t MwInterpretCampaignEvent(const MwCampaignEvent *event,bool *carry)
             if (eventConditionResult==1)
             {
                 eventOperandCursor=command;
-                if (!campaignEventChoice) abort();
+                if (!campaignEventChoice) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !campaignEventChoice");
                 return campaignEventChoice(command);
             }
             eventOperandCursor=command->next;
             break;
-        default:abort();
+        default:/* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Campaign event has an unsupported action opcode.");
         }
     }
     if (eventConditionResult!=1) return 0;
@@ -139,10 +140,10 @@ uint16_t MwInterpretCampaignEvent(const MwCampaignEvent *event,bool *carry)
     }
     else
     {
-        if (currentEventId>=CAMPAIGN_EVENT_SEEN_FLAGS) abort();
+        if (currentEventId>=CAMPAIGN_EVENT_SEEN_FLAGS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: currentEventId>=CAMPAIGN_EVENT_SEEN_FLAGS");
         eventSeenFlags[currentEventId]=1;
     }
-    if (campaignEventClass>=7 || !eventClassHandlers[campaignEventClass]) abort();
+    if (campaignEventClass>=7 || !eventClassHandlers[campaignEventClass]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: campaignEventClass>=7 || !eventClassHandlers[campaignEventClass]");
     eventClassHandlers[campaignEventClass](currentEventId);
     ++dispatchedEventCount;
     *carry=true;
@@ -196,7 +197,7 @@ void MwEventTestCurrentPlanet(const MwEventCommand *command)
     else
     {
         uint16_t reference=(uint16_t)selector^UINT16_MAX;
-        if (reference>=6) abort(); /* Unrepresented adjacent reference aliases. */
+        if (reference>=6) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: reference>=6"); /* Unrepresented adjacent reference aliases. */
         planet=campaignEventPlanetSelectors[reference]-1;
     }
     MwCombineEventCondition(planet==currentPlanetIndex);
@@ -210,7 +211,7 @@ void MwEventTestDifferentPlanet(const MwEventCommand *command)
     else
     {
         uint16_t reference=(uint16_t)selector^UINT16_MAX;
-        if (reference>=6) abort();
+        if (reference>=6) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: reference>=6");
         planet=campaignEventPlanetSelectors[reference]-1;
     }
     MwCombineEventCondition(planet!=currentPlanetIndex);
@@ -220,7 +221,7 @@ void MwEventTestSeenEvent(const MwEventCommand *command)
 {
     uint8_t eventId=command->operand.seenEventId;
     eventOperandCursor=command->next;
-    if (eventId>=CAMPAIGN_EVENT_SEEN_FLAGS) abort();
+    if (eventId>=CAMPAIGN_EVENT_SEEN_FLAGS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: eventId>=CAMPAIGN_EVENT_SEEN_FLAGS");
     MwCombineEventCondition(eventSeenFlags[eventId]!=0);
 }
 /* MW_MAIN081B:6503..652E. Great House standing is signed LOW WORD only. */
@@ -233,8 +234,8 @@ void MwEventTestControllingHouseStanding(const MwEventCommand *command)
     bool matches=false;
     if (house==currentPlanetHouseIndex)
     {
-        if (house>=CAMPAIGN_HOUSE_COUNT) abort();
-        int16_t standing=(int16_t)(uint16_t)(houseFavorPoints[house]-houseGrievancePoints[house]);
+        if (house>=CAMPAIGN_HOUSE_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: house>=CAMPAIGN_HOUSE_COUNT");
+        int16_t standing=houseFavorPoints[house]-houseGrievancePoints[house];
         matches=standing<threshold;
     }
     MwCombineEventCondition(matches);
@@ -249,7 +250,7 @@ void MwEventQueueCampaignRestart(void)
 {
     if (eventConditionResult!=1) return;
     campaignRestartPending=1;
-    if (!campaignStartMusic) abort();
+    if (!campaignStartMusic) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !campaignStartMusic");
     campaignStartMusic(campaignMusicBufferSelector,0x2328);
 }
 /* MW_MAIN081B:65B1..662B. Later end month STILL tests submonth, as shipped. */

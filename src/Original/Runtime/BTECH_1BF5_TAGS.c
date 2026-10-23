@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_sound.h"
 #include "mechwarrior/combat_runtime.h"
 #include "mechwarrior/native_address.h"
@@ -44,7 +45,7 @@ BtechRuntimeStream *BtechOpenTaggedResourceStream(const char *filename)
     if (!taggedStream) return NULL;
     BtechRuntimeStream *stream=BtechRuntimeStreamOpen(filename,"rb");
     taggedStream->stream=stream;
-    if (!stream) abort(); /* Native CC6F would enter its unconverted disk prompt. */
+    if (!stream) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !stream"); /* Native CC6F would enter its unconverted disk prompt. */
     fseek(stream->file,0,SEEK_END);
     taggedStream->branchEnds[0]=(uint32_t)ftell(stream->file)|0x80000000;
     BtechResetTaggedStreamAndRewind(taggedStream);
@@ -68,7 +69,7 @@ uint32_t BtechFindResourceTagPosition(BtechRuntimeStream *stream,const char *tag
     if (!taggedStream) return UINT32_MAX;
     uint16_t tagLength=(uint16_t)strlen(tag),resultOrdinal;
     if (!tagLength || (tagLength&3)) return UINT32_MAX;
-    if (tagLength>=COMBAT_TAG_PATH_BYTES) abort(); /* Native path spill is not host memory. */
+    if (tagLength>=COMBAT_TAG_PATH_BYTES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: tagLength>=COMBAT_TAG_PATH_BYTES"); /* Native path spill is not host memory. */
     taggedStreamBackup=*taggedStream;
     if (!BtechEqualNearStringsBounded(tag,taggedStream->tagPath,0x19))
     {

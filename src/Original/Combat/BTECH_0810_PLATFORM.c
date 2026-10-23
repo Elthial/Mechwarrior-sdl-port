@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_runtime.h"
 #include "mechwarrior/combat_import.h"
 #include "mechwarrior/combat_platform.h"
@@ -9,7 +10,7 @@
 FILE *BtechOpenStreamWithRetry(const char *filename,const char *mode)
 {
     BtechRuntimeStream *stream=BtechRuntimeStreamOpen(filename,mode);
-    if (!stream) abort();
+    if (!stream) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !stream");
     return stream->file;
 }
 
@@ -19,7 +20,7 @@ void BtechWaitScaledRuntimeDelay(uint16_t delayUnits)
     runtimeDelayRemaining=(uint16_t)(delayUnits<<2);
     while (BtechGetActiveRuntimeDelayFar())
     {
-        if (!btechHostPollInterrupts) abort();
+        if (!btechHostPollInterrupts) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostPollInterrupts");
         btechHostPollInterrupts();
     }
 }
@@ -42,6 +43,6 @@ void BtechConfigureCombatInputReplay(uint16_t requestedMode,const char *filename
 uint16_t BtechLowercaseCharacterByClassTable(uint16_t character)
 {
     uint16_t index=character+0x80;
-    if (index>=sizeof(characterClassStorage.bytes)) abort();
+    if (index>=sizeof(characterClassStorage.bytes)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: index>=sizeof(characterClassStorage.bytes)");
     return characterClassStorage.bytes[index]&1?character+0x20:character;
 }

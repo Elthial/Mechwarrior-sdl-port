@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_heap.h"
 #include "mechwarrior/combat_sound.h"
 #include "mechwarrior/combat_world.h"
@@ -34,7 +35,7 @@ static uint32_t TransferScalar(NearAliasTransfer *transfer,uint16_t offset,uint3
  * access in the same record. */
 static void TransferReference(NearAliasTransfer *transfer,uint16_t offset,uint16_t identity)
 {
-    if (TransferScalar(transfer,offset,identity,2)!=identity) abort();
+    if (TransferScalar(transfer,offset,identity,2)!=identity) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: TransferScalar(transfer,offset,identity,2)!=identity");
 }
 
 static bool TransferTouches(const NearAliasTransfer *transfer,uint16_t offset,size_t bytes)
@@ -76,7 +77,7 @@ static void TransferWorldObject(BtechHeapWorldObject *object,NearAliasTransfer *
 
 static void TransferOwner(void *owner,BtechNearOwner kind,NearAliasTransfer *transfer)
 {
-    if ((uint32_t)transfer->start+transfer->count>BtechNearAllocationBytes(owner)) abort();
+    if ((uint32_t)transfer->start+transfer->count>BtechNearAllocationBytes(owner)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (uint32_t)transfer->start+transfer->count>BtechNearAllocationBytes(owner)");
     if (kind==BTECH_NEAR_ARCHIVE) TransferArchive(owner,transfer);
     else if (kind==BTECH_NEAR_WORLD_OBJECT) TransferWorldObject(owner,transfer);
     else if (kind==BTECH_NEAR_BYTES && BtechNearAllocationBytesDefined(owner))
@@ -116,7 +117,7 @@ static void TransferOwner(void *owner,BtechNearOwner kind,NearAliasTransfer *tra
             FIELD(image*BTECH_NEAR_BITMAP_ENTRY_BYTES+8,images[image].heightPixels);
         }
     }
-    if (transfer->covered!=(1u<<transfer->count)-1) abort();
+    if (transfer->covered!=(1u<<transfer->count)-1) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: transfer->covered!=(1u<<transfer->count)-1");
 }
 #undef FIELD
 

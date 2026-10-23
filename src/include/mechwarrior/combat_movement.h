@@ -4,6 +4,7 @@
 enum { COMBAT_TACTICAL_RETREATING=8,COMBAT_ORDER_ATTACK_ENEMY=3,
     UNIT_CONTACT_PLANAR_LIMIT=0x154,UNIT_CONTACT_VERTICAL_LIMIT=0x320,
     UNIT_CONTACT_DAMAGE_SPEED_MINIMUM=5,CONTACT_DAMAGE_PRODUCT_SHIFT=9,
+    CONTACT_LIMB_DAMAGE_DIVISOR=2,CONTACT_SELF_DAMAGE_SHIFT=1,
     CONTACT_WEIGHT_SHIFT=15,CONTACT_HEAD_ON_ANGLE=0x5FFA,CONTACT_FOLLOWING_ANGLE=0x1FFE,
     CONTACT_FALL_THRESHOLD=20,CONTACT_DISABLED_FALL_THRESHOLD=5,
     SPECIAL_TARGET_CONTACT_HALF_WIDTH=0xC80,SPECIAL_TARGET_NARROW_HALF_DEPTH=0x578,
@@ -11,21 +12,21 @@ enum { COMBAT_TACTICAL_RETREATING=8,COMBAT_ORDER_ATTACK_ENEMY=3,
     PLAYER_HARD_LANDING_STEP=-100,PLAYER_LANDING_DAMAGE_BOUND=4,PLAYER_LANDING_DAMAGE_BASE=3,
     MOVEMENT_IMPACT_SOUND=6,MOVEMENT_IMPACT_SOUND_PRIORITY=0x32,
     SURFACE_DOUBLE_COOLING=1,SURFACE_BLOCKS_GROUND_MOVEMENT=2 };
-uint8_t BtechTestPositionInsideSpecialTarget(const BtechPosition3D *position,uint16_t narrowBounds);
+uint8_t BtechTestPositionInsideSpecialTarget(const BtechPosition3D *contactPosition,uint16_t useNarrowContactBounds);
 uint16_t BtechResolveUnitContactWithSpecialTarget(uint16_t unitSlot);
-uint8_t BtechTestUnitMovementBoundary(uint16_t unitSlot);
-void BtechApplyUnitCollisionDamage(uint16_t movingSlot,uint16_t otherSlot);
+uint8_t BtechTestUnitMovementObstruction(uint16_t unitSlot);
+void BtechApplyUnitCollisionDamage(uint16_t movingUnitSlot,uint16_t contactedUnitSlot);
 void BtechUpdatePlayerMechMotion(void);
 enum { MOTION_DIRECTION_FORWARD=0,MOTION_DIRECTION_REVERSE_HALF=1,MOTION_DIRECTION_STOP=2,
     AI_GROUND_ACCELERATION_MAXIMUM=5,AI_GROUND_TURN_LIMIT=0x222,AI_JUMP_TURN_LIMIT=0x16C,
-    AI_JUMP_CHARGE_HEIGHT_SHIFT=5,AI_JUMP_CHARGE_RESERVE=100,AI_JUMP_FORWARD_STEP=2,
+    AI_JUMP_DESCENT_SPEED_SHIFT=4,AI_JUMP_CHARGE_HEIGHT_SHIFT=5,AI_JUMP_CHARGE_RESERVE=100,AI_JUMP_FORWARD_STEP=2,
     AI_JUMP_CHARGE_COST=2,AI_JUMP_FORWARD_HEAT=8,AI_JUMP_VERTICAL_HEAT=12,
     AI_JUMP_CEILING=4000,AI_JUMP_LANDING_HEIGHT_LIMIT=1500,AI_JUMP_PITCH_SCALE=0xB6,
     AI_BLOCKED_HEADING_STEP=4*0xB6 };
 extern uint32_t jumpGroundHeight;
-extern uint16_t unitMovementBoundaryHistory[COMBAT_MECH_SLOTS];
-int16_t BtechClampSignedDifferenceStep(uint16_t desired,uint16_t current,int16_t maximumStep);
-void BtechSetActiveUnitGroundOrJumpMotion(uint16_t desiredHeading,uint16_t direction);
-void BtechApplyJumpMotion(uint16_t desiredHeading,uint16_t direction);
+extern uint16_t unitMovementObstructionHistory[COMBAT_MECH_SLOTS];
+int16_t BtechClampSignedDifferenceStep(uint16_t desiredHeading,uint16_t currentHeading,int16_t maximumStep);
+void BtechSetActiveUnitGroundOrJumpMotion(uint16_t desiredHeading,uint16_t movementDirection);
+void BtechApplyJumpMotion(uint16_t desiredHeading,uint16_t movementDirection);
 void BtechAdvanceActiveAiUnitMotion(void);
 #endif

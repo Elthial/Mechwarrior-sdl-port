@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_world.h"
 #include <stdlib.h>
 
@@ -15,10 +16,10 @@ void BtechBuildTemplateMaximumCombatScores(void)
             templateMaximumCombatScores[templateIndex]+=mech->maximumInternalStructure[location];
         for (int16_t mount=0;mount<(int16_t)mech->weaponMountCount;++mount)
         {
-            if (mount>=COMBAT_WEAPON_MOUNTS) abort(); /* Native adjacent-template alias. */
+            if (mount>=COMBAT_WEAPON_MOUNTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mount>=COMBAT_WEAPON_MOUNTS"); /* Native adjacent-template alias. */
             int16_t kind=mech->weaponMounts[mount].weaponKind;
-            if (kind<0 || kind>=COMBAT_WEAPON_KINDS) abort(); /* Native adjacent-definition alias. */
-            templateMaximumCombatScores[templateIndex]+=(uint16_t)(weaponDefinitions[kind].damageOrMissileCount<<1);
+            if (kind<0 || kind>=COMBAT_WEAPON_KINDS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: kind<0 || kind>=COMBAT_WEAPON_KINDS"); /* Native adjacent-definition alias. */
+            templateMaximumCombatScores[templateIndex]+=(uint16_t)(weaponDefinitions[kind].damageOrMissileCount<<COMBAT_WEAPON_CONDITION_SCORE_SHIFT);
         }
     }
 }
@@ -27,7 +28,7 @@ void BtechBuildTemplateMaximumCombatScores(void)
  * Signed comparison leaves wrapped INT32_MIN inside. B wins at corners. */
 uint8_t BtechClassifyUnitWorldBoundary(uint16_t unitSlot)
 {
-    if (unitSlot>=COMBAT_MECH_SLOTS || !unitBindings[unitSlot].positionedLeftLeg) abort();
+    if (unitSlot>=COMBAT_MECH_SLOTS || !unitBindings[unitSlot].positionedLeftLeg) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: unitSlot>=COMBAT_MECH_SLOTS || !unitBindings[unitSlot].positionedLeftLeg");
     const BtechPosition3D *position=&unitBindings[unitSlot].positionedLeftLeg->object.prefix.position;
     uint8_t boundary=COMBAT_BOUNDARY_INSIDE;
     uint32_t magnitude=position->positionA;
@@ -61,7 +62,7 @@ void BtechRefreshLastVisibleUnitPositions(void)
                     && unitVisibility[observer][target])
                 {
                     control->positionKnowledgeCode=COMBAT_POSITION_VISIBLE;
-                    if (!unitBindings[target].positionedLeftLeg) abort();
+                    if (!unitBindings[target].positionedLeftLeg) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !unitBindings[target].positionedLeftLeg");
                     const BtechPosition3D *position=&unitBindings[target].positionedLeftLeg->object.prefix.position;
                     control->lastVisiblePosition[0]=(int32_t)position->positionA;
                     control->lastVisiblePosition[1]=(int32_t)position->positionB;

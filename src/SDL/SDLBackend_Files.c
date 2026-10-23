@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/dos_files.h"
 #include "mechwarrior/original_data.h"
 #include "mechwarrior/ega_campaign.h"
@@ -74,7 +75,7 @@ static bool HostReadFile(uint8_t *buffer, uint16_t byteCount, uint16_t fileHandl
     { *bytesReadOrError = DOS_ERROR_INVALID_HANDLE; return true; }
     clearerr(fileStreams[fileHandle]);
     uint8_t *readBuffer=byteCount?malloc(byteCount):NULL;
-    if (byteCount && !readBuffer) abort();
+    if (byteCount && !readBuffer) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: byteCount && !readBuffer");
     size_t bytesRead = fread(readBuffer, 1, byteCount, fileStreams[fileHandle]);
     if (bytesRead)
     {

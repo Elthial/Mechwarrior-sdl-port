@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_render.h"
 #include "mechwarrior/combat_scene.h"
 #include "mechwarrior/combat_startup.h"
@@ -17,7 +18,7 @@ void BtechRenderObjectList(BtechCameraContext *camera,BtechWorldObjectPrefix *co
     BtechPrepareCameraContext(camera);
     if (beforeObjectListCallbackOffset)
     {
-        if (beforeObjectListCallbackOffset!=WORLD_LIST_BEFORE_CALLBACK) abort();
+        if (beforeObjectListCallbackOffset!=WORLD_LIST_BEFORE_CALLBACK) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: beforeObjectListCallbackOffset!=WORLD_LIST_BEFORE_CALLBACK");
         BtechPrepareSelectionPixels(objects,count);
     }
     for (int16_t ordinal=0;ordinal<count;++ordinal)
@@ -32,7 +33,7 @@ void BtechRenderObjectList(BtechCameraContext *camera,BtechWorldObjectPrefix *co
         resourceScaledExtent=object->prefix.resourceScaledValue;
         projectionRatio.ratio.numerator=resourceScaledExtent;
         projectionRatio.ratio.denominator=transformedViewPosition.positionB-resourceScaledExtent;
-        uint32_t nearDepth=(uint32_t)(int32_t)(int16_t)nearClipDepth;
+        uint32_t nearDepth=(int16_t)nearClipDepth;
         if ((int32_t)nearDepth>(int32_t)projectionRatio.ratio.denominator)
             projectionRatio.ratio.denominator=nearDepth;
         BtechProjectValueDepthRatio(&projectionRatio,&projectionVectorScratch.positionA);
@@ -63,19 +64,19 @@ void BtechRenderObjectList(BtechCameraContext *camera,BtechWorldObjectPrefix *co
         }
         if (object->prefix.updateCallbackOffset && (object->prefix.renderFlags&OBJECT_CALLBACK_BEFORE_RENDER))
         {
-            if (object->prefix.updateCallbackOffset!=WORLD_OBJECT_SELECTION_PIXEL_CALLBACK) abort();
+            if (object->prefix.updateCallbackOffset!=WORLD_OBJECT_SELECTION_PIXEL_CALLBACK) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: object->prefix.updateCallbackOffset!=WORLD_OBJECT_SELECTION_PIXEL_CALLBACK");
             BtechUpdateObjectSelectionPixels(object,(uint16_t)ordinal);
         }
         BtechCullAndRenderWorldObject(object);
         if (object->prefix.updateCallbackOffset && !(object->prefix.renderFlags&OBJECT_CALLBACK_BEFORE_RENDER))
         {
-            if (object->prefix.updateCallbackOffset!=WORLD_OBJECT_SELECTION_PIXEL_CALLBACK) abort();
+            if (object->prefix.updateCallbackOffset!=WORLD_OBJECT_SELECTION_PIXEL_CALLBACK) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: object->prefix.updateCallbackOffset!=WORLD_OBJECT_SELECTION_PIXEL_CALLBACK");
             BtechUpdateObjectSelectionPixels(object,(uint16_t)ordinal);
         }
     }
     if (afterObjectListCallbackOffset)
     {
-        if (afterObjectListCallbackOffset!=WORLD_LIST_AFTER_CALLBACK) abort();
+        if (afterObjectListCallbackOffset!=WORLD_LIST_AFTER_CALLBACK) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: afterObjectListCallbackOffset!=WORLD_LIST_AFTER_CALLBACK");
         BtechRestoreSelectionPixels(objects);
     }
 }
@@ -98,9 +99,9 @@ void BtechRestoreSelectionPixels(BtechWorldObjectPrefix *const *objects)
 {
     for (int16_t index=0;index<(int16_t)selectionCount;++index)
     {
-        if (index>=SELECTION_LIST_PREFIX) abort();
+        if (index>=SELECTION_LIST_PREFIX) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: index>=SELECTION_LIST_PREFIX");
         uint16_t ordinal=selectionObjectListIndices[index];
-        if (ordinal>=COMBAT_WORLD_OBJECTS || !objects[ordinal]) abort();
+        if (ordinal>=COMBAT_WORLD_OBJECTS || !objects[ordinal]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: ordinal>=COMBAT_WORLD_OBJECTS || !objects[ordinal]");
         BtechHeapWorldObject *object=(BtechHeapWorldObject *)objects[ordinal];
         BtechWriteSelectionPixels(object->projectedScreenA,object->projectedScreenB,&objectSortOrSelectionScratch.distances[ordinal]);
     }
@@ -113,7 +114,7 @@ void BtechRestoreSelectionPixels(BtechWorldObjectPrefix *const *objects)
 
 void BtechUpdateObjectSelectionPixels(BtechHeapWorldObject *object,uint16_t ordinal)
 {
-    int16_t resourceDelta=(int16_t)(uint16_t)(object->prefix.resourceId-otherShapeResourceBase);
+    int16_t resourceDelta=object->prefix.resourceId-otherShapeResourceBase;
     uint8_t retainCoveredEntry=(resourceDelta>=2 && resourceDelta<=7)
         || (resourceDelta>=10 && resourceDelta<=13) || (resourceDelta>=15 && resourceDelta<=22);
     if (targetSelectionProbeActive)
@@ -128,16 +129,16 @@ void BtechUpdateObjectSelectionPixels(BtechHeapWorldObject *object,uint16_t ordi
     }
     for (int16_t index=0;index<(int16_t)selectionCount;++index)
     {
-        if (index>=SELECTION_LIST_PREFIX) abort();
+        if (index>=SELECTION_LIST_PREFIX) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: index>=SELECTION_LIST_PREFIX");
         uint16_t selectedOrdinal=selectionObjectListIndices[index];
-        if (selectedOrdinal>=COMBAT_WORLD_OBJECTS || !cockpitWorldObjects[selectedOrdinal]) abort();
+        if (selectedOrdinal>=COMBAT_WORLD_OBJECTS || !cockpitWorldObjects[selectedOrdinal]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: selectedOrdinal>=COMBAT_WORLD_OBJECTS || !cockpitWorldObjects[selectedOrdinal]");
         BtechHeapWorldObject *selected=(BtechHeapWorldObject *)cockpitWorldObjects[selectedOrdinal];
         selectionCapturedPixels=BtechCaptureSelectionPixels(selected->projectedScreenA,selected->projectedScreenB);
         if (!BtechTestSelectionMarkerPixels(&selectionCapturedPixels))
         {
             if (!retainCoveredEntry)
             {
-                if (selectionCount>SELECTION_LIST_PREFIX) abort();
+                if (selectionCount>SELECTION_LIST_PREFIX) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: selectionCount>SELECTION_LIST_PREFIX");
                 selectionObjectListIndices[index]=selectionObjectListIndices[selectionCount-1];
                 --index;--selectionCount;
                 selected->prefix.flags&=(uint8_t)~WORLD_OBJECT_TARGET_PROBE_VISIBLE;
@@ -154,7 +155,7 @@ void BtechUpdateObjectSelectionPixels(BtechHeapWorldObject *object,uint16_t ordi
         ==(OBJECT_CAPTURE_PROJECTION|OBJECT_PROJECTED_VISIBLE))
     {
         uint16_t count=selectionCount++;
-        if (count>=SELECTION_LIST_PREFIX || ordinal>=COMBAT_WORLD_OBJECTS) abort();
+        if (count>=SELECTION_LIST_PREFIX || ordinal>=COMBAT_WORLD_OBJECTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: count>=SELECTION_LIST_PREFIX || ordinal>=COMBAT_WORLD_OBJECTS");
         selectionObjectListIndices[count]=ordinal;
         objectSortOrSelectionScratch.distances[ordinal]=BtechCaptureSelectionPixels(object->projectedScreenA,object->projectedScreenB);
         BtechWriteSelectionPixels(object->projectedScreenA,object->projectedScreenB,&selectionMarkerPixels);
@@ -178,7 +179,7 @@ uint32_t BtechCaptureSelectionPixels(int16_t x,int16_t y)
     uint32_t pixels=0;
     for (uint16_t column=0;column<2;++column)
         for (uint16_t row=0;row<2;++row)
-            pixels|=(uint32_t)(uint8_t)BtechReadClippedPixel((int16_t)(uint16_t)(x+column),(int16_t)(uint16_t)(y+row))<<((column*2+row)*8);
+            pixels|=(uint32_t)(uint8_t)BtechReadClippedPixel((int16_t)(x+column),(int16_t)(y+row))<<((column*2+row)*8);
     return pixels;
 }
 
@@ -189,7 +190,7 @@ void BtechWriteSelectionPixels(int16_t x,int16_t y,const uint32_t *pixels)
     {
         for (uint16_t column=0;column<2;++column)
             for (uint16_t row=0;row<2;++row)
-                BtechWriteClippedPixel((int16_t)(uint16_t)(x+column),(int16_t)(uint16_t)(y+row),(uint8_t)(*pixels>>((column*2+row)*8)));
+                BtechWriteClippedPixel((int16_t)(x+column),(int16_t)(y+row),(uint8_t)(*pixels>>((column*2+row)*8)));
     }
     else BtechWriteClippedPixel(x,y,pixels==&selectionMarkerPixels?SELECTION_MARKER_COLOUR:(uint8_t)*pixels);
 }

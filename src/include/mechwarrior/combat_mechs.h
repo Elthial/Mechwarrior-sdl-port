@@ -11,11 +11,20 @@ enum { COMBAT_MECH_SLOTS=8,COMBAT_LANCE_SLOTS=4,COMBAT_MECH_TEMPLATES=8,
     COMBAT_JUMP_CHARGE_CAPACITY=0x0320,COMBAT_ACTUATOR_CONDITION_FULL=4,
     COMBAT_RANDOM_WEAR_BOUND=6,COMBAT_RANDOM_WEAR_ROLL=3,
     COMBAT_BODY_LEFT_LEG=2,COMBAT_BODY_RIGHT_LEG=3,COMBAT_BODY_LEFT_TORSO=5,COMBAT_WEAPON_KINDS=10,
-    COMBAT_WEAPON_NONE=0xFFFF,COMBAT_HEAT_THRESHOLDS=5,COMBAT_HEAT_CLAMP_MAXIMUM=0x0960,
+    COMBAT_WEAPON_NONE=0xFFFF,COMBAT_AMMO_NONE=0xFFFF,COMBAT_HEAT_THRESHOLDS=5,COMBAT_HEAT_CLAMP_MAXIMUM=0x0960,
     COMBAT_HEAT_SPEED_TIER_STEP=0x0190,COMBAT_HEAT_SPEED_TIER_PENALTY=6,
     COMBAT_HEAT_INHIBIT_THRESHOLD=0x0640,COMBAT_ENGINE_HIT_HEAT=5,
     COMBAT_MOVEMENT_HEAT_REFERENCE_MULTIPLIER=0x48,COMBAT_MOVEMENT_HEAT_REFERENCE_SHIFT=7,
-    COMBAT_ARCTIC_LANDSCAPE=2,COMBAT_JUMP_RECHARGE_STEP=2 };
+    COMBAT_ARCTIC_LANDSCAPE=2,COMBAT_JUMP_RECHARGE_STEP=2,
+    COMBAT_HEAT_UNITS_PER_DISPLAY_POINT=0x50,COMBAT_ACTUATOR_SPEED_SHIFT=2,
+    COMBAT_WEAPON_CONDITION_SCORE_SHIFT=1 };
+
+/* Nonnegative scores are distinct from disabled and exited Mechs. Zero is a
+ * valid score; callers deliberately differ between > minimum and >= minimum.
+ * Boundary indices 0..3 encode as -2..-5; <= threshold also retains the native
+ * treatment of more-negative values. Do not add a lower-bound check. */
+enum { COMBAT_CONDITION_SCORE_MINIMUM=0,COMBAT_MECH_DISABLED_VALUE=-1,
+    COMBAT_EXIT_CODE_OFFSET=2,COMBAT_EXIT_CODE_THRESHOLD=-COMBAT_EXIT_CODE_OFFSET };
 
 enum { COMBAT_ACTUATOR_LEFT_LEG=2,COMBAT_ACTUATOR_RIGHT_LEG=3 };
 
@@ -27,8 +36,7 @@ typedef struct BtechWeaponDefinition {
     uint16_t criticalSlots,unidentifiedField10;
 } BtechWeaponDefinition;
 
-/* Runtime records are ordinary naturally aligned C objects. Native suffixes
- * identify field provenance, NOT sizeof/offsetof contracts for binary IO. */
+/* Runtime records are naturally aligned C objects, not binary file layouts. */
 typedef struct BtechBodyReferencePoint
 { int16_t componentA,componentB,componentC; } BtechBodyReferencePoint;
 typedef struct BtechWeaponMount
@@ -77,7 +85,11 @@ typedef struct BtechUnitControlState
     int32_t orderDestinationPosition[3];
     int16_t trackedUnitOrSpecialSlot;
     uint16_t sideIndex,unitSlot;
-    int16_t targetUnitSlot,combatValueOrBoundaryCode,lastAiFiringTargetSlot,lastDirectHitUnitSlot;
+    int16_t targetUnitSlot;
+    /* Condition score, -1 disabled, or -(boundary index + COMBAT_EXIT_CODE_OFFSET).
+     * This shared original WORD is not tabletop Battle Value. */
+    int16_t conditionScoreOrExitCode;
+    int16_t lastAiFiringTargetSlot,lastDirectHitUnitSlot;
     uint16_t targetSelectionCount;
     int16_t navigationReferenceSlot;
     int32_t trackedPosition[3];
@@ -85,9 +97,10 @@ typedef struct BtechUnitControlState
     int32_t lastVisiblePosition[3];
     uint16_t avoidanceReverseFlag,avoidanceTurnIndex;
     uint8_t maneuverFlags,unidentifiedField14;
-    uint16_t doubleWeaponRange;
-    int16_t weaponRangeMinusMargin,quarterWeaponRange;
-    uint16_t controlState,decisionCountdown;
+    /* Longest operational, reloaded weapon range; ammunition is not tested here. */
+    uint16_t twiceReadyWeaponRange;
+    int16_t readyWeaponRangeMinusMargin,quarterReadyWeaponRange;
+    uint16_t tacticalState,decisionCountdown;
     uint8_t unidentifiedField16[2];
     uint16_t animationSequence,biasedHeadingSnapshot;
     uint8_t animationRequestFlags;
@@ -107,11 +120,11 @@ enum { COMBAT_POSITION_UNKNOWN=0,COMBAT_POSITION_REMEMBERED=1,COMBAT_POSITION_VI
 void BtechBuildTemplateMaximumCombatScores(void);
 uint8_t BtechClassifyUnitWorldBoundary(uint16_t unitSlot);
 void BtechRefreshLastVisibleUnitPositions(void);
-void BtechRecalculateUnitCombatValuesAndBoundaries(void);
+void BtechRecalculateUnitConditionScoresAndExitCodes(void);
 extern BtechMechState mechStates[COMBAT_MECH_SLOTS];
 extern BtechUnitBinding unitBindings[COMBAT_MECH_SLOTS];
 extern BtechUnitControlState unitControls[COMBAT_MECH_SLOTS];
-extern uint16_t heatEffectThresholds[COMBAT_HEAT_THRESHOLDS];
+extern uint16_t heatAimJitterThresholds[COMBAT_HEAT_THRESHOLDS];
 extern uint16_t heatSpeedPenalties[COMBAT_MECH_SLOTS],heatInhibitFlags[COMBAT_MECH_SLOTS];
 void BtechAdvanceWeaponReloadTimers(void);
 void BtechUpdateUnitHeatEffects(void);

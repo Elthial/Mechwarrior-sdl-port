@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_runtime.h"
 #include "mechwarrior/combat_import.h"
 #include "mechwarrior/combat_world.h"
@@ -23,52 +24,52 @@ void BtechExportCombatResultsAndTransition(uint16_t resultCode)
     campaignResultExchange.result=(uint8_t)resultCode;
     uint16_t disabledEnemies=0;
     for (uint16_t slot=COMBAT_LANCE_SLOTS;slot<COMBAT_MECH_SLOTS;++slot)
-        if (unitBindings[slot].mech && (uint16_t)unitControls[slot].combatValueOrBoundaryCode==COMBAT_DISABLED_UNIT_VALUE)
+        if (unitBindings[slot].mech && (uint16_t)unitControls[slot].conditionScoreOrExitCode==COMBAT_DISABLED_UNIT_VALUE)
             ++disabledEnemies;
     campaignResultExchange.disabledEnemyCount.low=(uint8_t)disabledEnemies;
     for (uint16_t slot=0;slot<COMBAT_LANCE_SLOTS;++slot)
     {
         const BtechMechState *mech=unitBindings[slot].mech;
         if (!mech) continue;
-        if (mech->templateIndex>=COMBAT_MECH_TEMPLATES || combatToOwnedMechSlots[slot]>=CAMPAIGN_OWNED_UNIT_SLOTS) abort();
+        if (mech->templateIndex>=COMBAT_MECH_TEMPLATES || combatToOwnedMechSlots[slot]>=CAMPAIGN_OWNED_UNIT_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mech->templateIndex>=COMBAT_MECH_TEMPLATES || combatToOwnedMechSlots[slot]>=CAMPAIGN_OWNED_UNIT_SLOTS");
         const BtechMechTemplate *chassis=&mechTemplates[mech->templateIndex];
         CampaignUnitDamage *damage=&campaignResultExchange.ownedDamage[combatToOwnedMechSlots[slot]];
         damage->engineHits=(uint8_t)mech->engineHits;
-        if (damage->gyroDamageTier>=4) abort();
+        if (damage->gyroDamageTier>=4) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: damage->gyroDamageTier>=4");
         if (systemHitsByDamageTier[damage->gyroDamageTier]!=mech->gyroHits)
         {
-            if (mech->gyroHits>=3) abort();
+            if (mech->gyroHits>=3) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mech->gyroHits>=3");
             damage->gyroDamageTier=(uint8_t)systemDamageTierByHits[mech->gyroHits];
         }
-        if (damage->sensorDamageTier>=4) abort();
+        if (damage->sensorDamageTier>=4) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: damage->sensorDamageTier>=4");
         if (systemHitsByDamageTier[damage->sensorDamageTier]!=mech->sensorHits)
         {
-            if (mech->sensorHits>=3) abort();
+            if (mech->sensorHits>=3) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mech->sensorHits>=3");
             damage->sensorDamageTier=(uint8_t)systemDamageTierByHits[mech->sensorHits];
         }
-        if (damage->lifeSupportDamageTier>=4) abort();
+        if (damage->lifeSupportDamageTier>=4) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: damage->lifeSupportDamageTier>=4");
         if (systemHitsByDamageTier[damage->lifeSupportDamageTier]!=mech->lifeSupportHits)
         {
-            if (mech->lifeSupportHits>=3) abort();
+            if (mech->lifeSupportHits>=3) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mech->lifeSupportHits>=3");
             damage->lifeSupportDamageTier=(uint8_t)systemDamageTierByHits[mech->lifeSupportHits];
         }
         damage->destroyedJumpJetGroups=(uint8_t)mech->destroyedJumpJetGroups;
         damage->destroyedHeatSinks=(uint8_t)mech->destroyedHeatSinks;
         for (uint16_t actuator=0;actuator<COMBAT_ACTUATORS;++actuator)
         {
-            if (mech->actuatorCondition[actuator]>=5) abort();
+            if (mech->actuatorCondition[actuator]>=5) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mech->actuatorCondition[actuator]>=5");
             damage->actuatorDamageTiers[actuator]=(uint8_t)(CAMPAIGN_FULL_BODY_INTEGRITY-actuatorIntegrityTierByCondition[mech->actuatorCondition[actuator]]);
         }
         for (int16_t mount=0;mount<(int16_t)chassis->weaponMountCount;++mount)
         {
-            if (mount>=COMBAT_WEAPON_MOUNTS || damage->weaponDamageTiers[mount]>=4) abort();
+            if (mount>=COMBAT_WEAPON_MOUNTS || damage->weaponDamageTiers[mount]>=4) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mount>=COMBAT_WEAPON_MOUNTS || damage->weaponDamageTiers[mount]>=4");
             int16_t operational=(int8_t)mech->weapons[mount].operational;
             if ((uint16_t)(1-weaponDisabledByDamageTier[damage->weaponDamageTiers[mount]])!=(uint16_t)operational)
             {
                 uint16_t integrity;
                 if (operational==-1) integrity=systemDamageTierByHits[2]; /*09EA, the actual preceding WORD. */
                 else if ((uint16_t)operational<2) integrity=weaponIntegrityTierByOperational[operational];
-                else abort();
+                else /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Weapon operational state cannot be converted to campaign damage.");
                 damage->weaponDamageTiers[mount]=(uint8_t)(CAMPAIGN_FULL_BODY_INTEGRITY-integrity);
             }
         }
@@ -79,23 +80,23 @@ void BtechExportCombatResultsAndTransition(uint16_t resultCode)
         for (uint16_t armor=0;armor<COMBAT_ARMOR_LOCATIONS;++armor)
         {
             uint16_t body=armorToBodyLocations[armor],tier=campaignBodyTierByArmorLocation[armor];
-            if (body>=COMBAT_BODY_LOCATIONS || tier>=CAMPAIGN_BODY_LOCATION_COUNT) abort();
-            int16_t maximum=(int16_t)(uint16_t)(chassis->maximumInternalStructure[body]+chassis->maximumArmor[armor]);
-            int16_t scaledRemaining=(int16_t)(uint16_t)((mech->currentInternalStructure[body]+mech->currentArmor[armor])*CAMPAIGN_FULL_BODY_INTEGRITY+CAMPAIGN_FULL_BODY_INTEGRITY);
-            if (!maximum) abort();
+            if (body>=COMBAT_BODY_LOCATIONS || tier>=CAMPAIGN_BODY_LOCATION_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: body>=COMBAT_BODY_LOCATIONS || tier>=CAMPAIGN_BODY_LOCATION_COUNT");
+            int16_t maximum=chassis->maximumInternalStructure[body]+chassis->maximumArmor[armor];
+            int16_t scaledRemaining=(mech->currentInternalStructure[body]+mech->currentArmor[armor])*CAMPAIGN_FULL_BODY_INTEGRITY+CAMPAIGN_FULL_BODY_INTEGRITY;
+            if (!maximum) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !maximum");
             int32_t remainingTier=(int32_t)scaledRemaining/maximum;
-            if (remainingTier<INT16_MIN || remainingTier>INT16_MAX) abort();
+            if (remainingTier<INT16_MIN || remainingTier>INT16_MAX) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: remainingTier<INT16_MIN || remainingTier>INT16_MAX");
             damage->bodyDamageTiers[tier]=(uint8_t)(CAMPAIGN_FULL_BODY_INTEGRITY-remainingTier);
         }
     }
     for (uint16_t slot=COMBAT_LANCE_SLOTS;slot<COMBAT_MECH_SLOTS && (int16_t)salvageEntryCount<CAMPAIGN_ROSTER_SLOTS;++slot)
     {
         const BtechMechState *mech=unitBindings[slot].mech;
-        if (mech && (uint16_t)unitControls[slot].combatValueOrBoundaryCode==COMBAT_DISABLED_UNIT_VALUE
+        if (mech && (uint16_t)unitControls[slot].conditionScoreOrExitCode==COMBAT_DISABLED_UNIT_VALUE
             && resultCode==COMBAT_RESULT_SUCCESS && sideObjectiveRules[0]!=OBJECTIVE_WITHDRAW)
         {
             uint8_t condition=BtechCalculateSalvageConditionPercent(mech);
-            if (salvageEntryCount>=CAMPAIGN_ROSTER_SLOTS) abort(); /* Native negative count corrupts earlier transfer bytes. */
+            if (salvageEntryCount>=CAMPAIGN_ROSTER_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: salvageEntryCount>=CAMPAIGN_ROSTER_SLOTS"); /* Native negative count corrupts earlier transfer bytes. */
             CampaignSalvageEntry *salvage=&campaignResultExchange.salvage[salvageEntryCount];
             salvage->unitKind=(uint8_t)campaignUnitKindByCombatTemplate[mech->templateIndex];
             salvage->leadingZeroByte=0;salvage->conditionPercent=condition;salvage->trailingZeroByte=0;
@@ -110,7 +111,7 @@ void BtechExportCombatResultsAndTransition(uint16_t resultCode)
         if (mech && (mech->lifeSupportHits==COMBAT_LIFE_SUPPORT_HIT_LIMIT || mech->cockpitDisabled
             || (mech->engineHits==COMBAT_ENGINE_HIT_LIMIT && slot)))
         {
-            if (combatToPilotRosterSlots[slot]>=CAMPAIGN_ROSTER_SLOTS) abort();
+            if (combatToPilotRosterSlots[slot]>=CAMPAIGN_ROSTER_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: combatToPilotRosterSlots[slot]>=CAMPAIGN_ROSTER_SLOTS");
             campaignResultExchange.pilotStatus[combatToPilotRosterSlots[slot]]=1;
         }
     }
@@ -143,7 +144,7 @@ void BtechExportCombatResultsAndTransition(uint16_t resultCode)
             if (!registered) break;
             if ((int16_t)registered->resourceId<(int16_t)surfaceResourceBank.resourceCount && (int16_t)registered->resourceId>=0)
             {
-                if (selectedObjectCount>=COMBAT_SELECTED_WORLD_OBJECTS) abort();
+                if (selectedObjectCount>=COMBAT_SELECTED_WORLD_OBJECTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: selectedObjectCount>=COMBAT_SELECTED_WORLD_OBJECTS");
                 selectedWorldObjects[selectedObjectCount++]=worldObjects[object];
             }
         }

@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "SDLBackend.h"
 #include "mechwarrior/campaign_runtime.h"
 #include "mechwarrior/campaign_ui.h"
@@ -39,8 +40,6 @@ static bool ExecuteChild(const char *filename,const MwCampaignLaunch *launch,uin
     if (!MwHostLoadCampaignInitialData(path) || !MwHostLoadCampaignEventText(path)
         || !MwHostLoadCampaignMusicData(path)) return true;
     *exitCode=(uint8_t)MwRunCampaignProgram(launch,audioCode);
-    if (*exitCode==CAMPAIGN_EXIT_COMBAT)
-        MwSdlRetainCampaignPictureTail(MwResolveNativeSegment(secondaryPictureBankSelector));
     ReleaseChildResources();
     return false;
 }
@@ -60,7 +59,7 @@ _Noreturn void MwSdlFail(const char *operation)
     fprintf(stderr,"MechWarrior: %s",operation);
     const char *error=SDL_GetError();
     if (error && *error) fprintf(stderr,". SDL: %s",error);
-    fputc('\n',stderr);abort();
+    fputc('\n',stderr);/* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("SDL backend operation failed; see the preceding operation and SDL diagnostic.");
 }
 static bool AllocateParagraphs(uint16_t paragraphs,uint16_t *selectorOrError)
 {

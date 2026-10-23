@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_render.h"
 #include <stdlib.h>
 
@@ -42,11 +43,11 @@ BtechDwordDivisionResult *BtechDivideSignedDwordStoreQuotientRemainder(uint16_t 
     if (denominatorHigh==0x0000)
     {
         // F0AC/F0B3: two unsigned WORD DIVs; zero divisor faults before result stores.
-        if (!denominatorLow) abort();
+        if (!denominatorLow) /* Port emulation of a native CPU fault. */ MW_NATIVE_FAULT("Rejected condition: !denominatorLow");
         quotientHigh=(uint16_t)(numeratorHigh/denominatorLow);
-        uint16_t highRemainder=(uint16_t)((uint32_t)numeratorHigh-(uint32_t)quotientHigh*denominatorLow);
+        uint16_t highRemainder=(uint32_t)numeratorHigh-(uint32_t)quotientHigh*denominatorLow;
         uint32_t remainingNumerator=((uint32_t)highRemainder<<0x0010)|numeratorLow;
-        if (remainingNumerator/denominatorLow>UINT16_MAX) abort();
+        if (remainingNumerator/denominatorLow>UINT16_MAX) /* Port emulation of a native CPU fault. */ MW_NATIVE_FAULT("Rejected condition: remainingNumerator/denominatorLow>UINT16_MAX");
         quotientLow=(uint16_t)(remainingNumerator/denominatorLow);
         remainder=(uint32_t)(uint16_t)(remainingNumerator-(uint32_t)quotientLow*denominatorLow);
     }
@@ -58,8 +59,8 @@ BtechDwordDivisionResult *BtechDivideSignedDwordStoreQuotientRemainder(uint16_t 
             shiftedDenominator>>=0x0001;
             shiftedNumerator>>=0x0001;
         } while ((shiftedDenominator>>0x0010)!=0x0000);
-        if (!(uint16_t)shiftedDenominator || shiftedNumerator/(uint16_t)shiftedDenominator>UINT16_MAX) abort();
-        uint16_t quotientCandidate=(uint16_t)(shiftedNumerator/(uint16_t)shiftedDenominator);
+        if (!(uint16_t)shiftedDenominator || shiftedNumerator/(uint16_t)shiftedDenominator>UINT16_MAX) /* Port emulation of a native CPU fault. */ MW_NATIVE_FAULT("Rejected condition: !(uint16_t)shiftedDenominator || shiftedNumerator/(uint16_t)shiftedDenominator>UINT16_MAX");
+        uint16_t quotientCandidate=shiftedNumerator/(uint16_t)shiftedDenominator;
         // Actual F1DA NEAR helper multiplies modulo DWORD and RET0008 cleans its args.
         uint32_t product=BtechMultiplyDwordLow(denominatorLow,denominatorHigh,quotientCandidate,0x0000);
         if ((uint16_t)(product>>0x0010)>numeratorHigh ||
@@ -91,10 +92,10 @@ uint32_t BtechMultiplyDwordLow(uint16_t leftLow, uint16_t leftHigh, uint16_t rig
     // Native cross terms contribute only their LOW WORD; no signed saturation.
     if ((leftHigh|rightHigh)!=0x0000)
     {
-        uint16_t crossTerms=(uint16_t)((uint32_t)leftHigh*rightLow);
+        uint16_t crossTerms=(uint32_t)leftHigh*rightLow;
         crossTerms=(uint16_t)(crossTerms+(uint16_t)((uint32_t)leftLow*rightHigh));
         uint32_t lowProduct=(uint32_t)leftLow*rightLow;
-        uint16_t resultHigh=(uint16_t)((lowProduct>>0x0010)+crossTerms);
+        uint16_t resultHigh=(lowProduct>>0x0010)+crossTerms;
         return ((uint32_t)resultHigh<<0x0010)|(uint16_t)lowProduct;
     }
     // F1EA fast path skips cross products and leaves CX unchanged.
@@ -111,10 +112,10 @@ uint32_t BtechDivideSignedDword(uint32_t numerator,uint32_t denominator)
     uint32_t quotient;
     if (!(denominator>>16))
     {
-        uint16_t divisor=(uint16_t)denominator;
-        if (!divisor) abort();
-        uint16_t upper=(uint16_t)((numerator>>16)/divisor);
-        uint16_t remainder=(uint16_t)((numerator>>16)%divisor);
+        uint16_t divisor=denominator;
+        if (!divisor) /* Port emulation of a native CPU fault. */ MW_NATIVE_FAULT("Rejected condition: !divisor");
+        uint16_t upper=(numerator>>16)/divisor;
+        uint16_t remainder=(numerator>>16)%divisor;
         uint32_t lowerDividend=((uint32_t)remainder<<16)|(uint16_t)numerator;
         quotient=((uint32_t)upper<<16)|(uint16_t)(lowerDividend/divisor);
     }
@@ -123,7 +124,7 @@ uint32_t BtechDivideSignedDword(uint32_t numerator,uint32_t denominator)
         uint32_t scaledNumerator=numerator,scaledDenominator=denominator;
         do {scaledNumerator>>=1;scaledDenominator>>=1;} while (scaledDenominator>>16);
         uint32_t candidate=scaledNumerator/(uint16_t)scaledDenominator;
-        if (candidate>UINT16_MAX) abort();
+        if (candidate>UINT16_MAX) /* Port emulation of a native CPU fault. */ MW_NATIVE_FAULT("Rejected condition: candidate>UINT16_MAX");
         uint32_t lowProduct=(uint32_t)(uint16_t)denominator*candidate;
         uint32_t highSum=(lowProduct>>16)+(uint16_t)((denominator>>16)*candidate);
         if (highSum>UINT16_MAX || (uint16_t)highSum>(uint16_t)(numerator>>16)

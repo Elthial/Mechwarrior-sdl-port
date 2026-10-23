@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_cockpit.h"
 #include "mechwarrior/combat_heap.h"
 #include <stdlib.h>
@@ -5,14 +6,14 @@
 /*1BF5:045D. Genuine FAR tail, one native retrace WORD forwarded unchanged. */
 void BtechSwapScreenPages(uint16_t waitForRetrace)
 {
-    if (!graphicsSwapScreenPages) abort();
+    if (!graphicsSwapScreenPages) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !graphicsSwapScreenPages");
     graphicsSwapScreenPages(waitForRetrace);
 }
 
 /*1BF5:044D. Original FAR tail forwards the same four rectangle WORDs. */
 void BtechCopyScreenRectangle(uint16_t x,uint16_t y,uint16_t width,uint16_t height)
 {
-    if (!graphicsCopyScreenRectangle) abort();
+    if (!graphicsCopyScreenRectangle) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !graphicsCopyScreenRectangle");
     graphicsCopyScreenRectangle(x,y,width,height);
 }
 
@@ -21,7 +22,7 @@ void BtechSetEgaSpriteWriteRegisters(void)
 {
     if (combatRendererKind==COMBAT_VIDEO_EGA)
     {
-        if (!btechHostWritePortWord) abort();
+        if (!btechHostWritePortWord) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostWritePortWord");
         btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,COMBAT_EGA_WRITE_MODE_TWO);
         btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,COMBAT_EGA_DATA_ROTATE_COPY);
         btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,COMBAT_EGA_ALL_PIXEL_BITS);
@@ -31,13 +32,13 @@ void BtechSetEgaSpriteWriteRegisters(void)
 /*1BF5:3441/3445. Genuine FAR tails, typed source instead of selector:offset. */
 void BtechDispatchImageRegionPrimary(BtechResourceAllocation source,uint16_t left,uint16_t top,uint16_t width,uint16_t height)
 {
-    if (!graphicsUploadPackedScreenRegion) abort();
+    if (!graphicsUploadPackedScreenRegion) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !graphicsUploadPackedScreenRegion");
     graphicsUploadPackedScreenRegion(source,left,top,width,height);
 }
 void BtechDispatchImageRegionAlternate(BtechResourceAllocation source,uint16_t left,uint16_t top,uint16_t width,uint16_t height)
 {
     (void)source;(void)left;(void)top;(void)width;(void)height;
-    if (!graphicsUploadAlternateScreenRegion) abort();
+    if (!graphicsUploadAlternateScreenRegion) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !graphicsUploadAlternateScreenRegion");
     graphicsUploadAlternateScreenRegion(); /* Actual selected000B ignores all incoming arguments. */
 }
 
@@ -45,7 +46,7 @@ void BtechDispatchImageRegionAlternate(BtechResourceAllocation source,uint16_t l
 void BtechPresentScreenRectangle(int16_t x,int16_t y,uint16_t width,uint16_t height)
 {
     (void)x;(void)y;(void)width;(void)height;
-    if (!graphicsPresentRectangle) abort();
+    if (!graphicsPresentRectangle) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !graphicsPresentRectangle");
     graphicsPresentRectangle();
 }
 

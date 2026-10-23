@@ -1,5 +1,6 @@
 #ifndef MECHWARRIOR_CAMPAIGN_HANDOFF_H
 #define MECHWARRIOR_CAMPAIGN_HANDOFF_H
+#include "mechwarrior/ega_campaign.h"
 #include "mechwarrior/campaign_exchange.h"
 #include "mechwarrior/campaign_state.h"
 #include "mechwarrior/campaign_mechanics.h"
@@ -44,7 +45,7 @@ extern char darkWingVictoryText[0x185];
 enum { VICTORY_TRANSITION_PICTURE=0x004D,VICTORY_TRANSITION_TICKS=5,VICTORY_ANIMATION_CYCLES=0x14 };
 void MwDrawVictoryTransitionPictureAndWait(void);
 bool MwLoadVictoryMusic(void);
-enum { AFTER_ACTION_BACKGROUND=3,AFTER_ACTION_FOREGROUND=1,AFTER_ACTION_FONT=3,
+enum { AFTER_ACTION_BACKGROUND=Campaign_Pal_EGA_LightGrey,AFTER_ACTION_FOREGROUND=Campaign_Pal_EGA_Black,AFTER_ACTION_FONT=3,
     AFTER_ACTION_TEXT_X=0x00A0,AFTER_ACTION_STATUS_X=0x00F8,
     AFTER_ACTION_FIRST_PILOT_Y=0x0014,AFTER_ACTION_FIRST_MECH_Y=0x0046,
     AFTER_ACTION_ROW_HEIGHT=8,AFTER_ACTION_PERCENT_X=0x0108,

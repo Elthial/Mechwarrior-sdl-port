@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/campaign_continuations.h"
 #include "mechwarrior/campaign_input.h"
 #include "mechwarrior/campaign_startup.h"
@@ -11,10 +12,10 @@ MwCampaignInputCalls mwCampaignInput;
 /* MW_MAIN081B:0E10..0E8E. INT33 release, then relative motion; X wins ties. */
 bool MwPollMouseNavigationKey(uint16_t *navigationKey)
 {
-    if (mwCampaignInput.mouseReleaseCount==NULL) abort();
+    if (mwCampaignInput.mouseReleaseCount==NULL) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mwCampaignInput.mouseReleaseCount==NULL");
     if (mwCampaignInput.mouseReleaseCount(MOUSE_BUTTON_LEFT)!=0)
     { *navigationKey=CAMPAIGN_KEY_ENTER;return true; }
-    if (mwCampaignInput.readMouseMotion==NULL) abort();
+    if (mwCampaignInput.readMouseMotion==NULL) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mwCampaignInput.readMouseMotion==NULL");
     uint16_t motionX,motionY;
     mwCampaignInput.readMouseMotion(&motionX,&motionY);
     mouseMotionX+=motionX;mouseMotionY+=motionY;
@@ -40,8 +41,8 @@ bool MwPollNavigationKeyFromMouseOrJoystick(uint16_t *navigationKey)
     if (joystickRepeatActive!=0 && joystickRepeatDeadline>campaignTimerTicks) return false;
     joystickRepeatDeadline=campaignTimerTicks+JOYSTICK_REPEAT_TICKS;
     joystickRepeatActive=1;
-    uint16_t byteOffset=(uint16_t)(joystickDirection*2);
-    if (byteOffset>=sizeof(joystickNavigationKeys)) abort(); /* Unmapped adjacent input storage. */
+    uint16_t byteOffset=joystickDirection*2;
+    if (byteOffset>=sizeof(joystickNavigationKeys)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: byteOffset>=sizeof(joystickNavigationKeys)"); /* Unmapped adjacent input storage. */
     *navigationKey=joystickNavigationKeys[byteOffset/2];
     return *navigationKey!=0;
 }
@@ -49,7 +50,7 @@ bool MwPollNavigationKeyFromMouseOrJoystick(uint16_t *navigationKey)
  * calibration must not reset direction, button edge flags or live poll counts. */
 void MwCalibrateJoystickA(void)
 {
-    if (!mwCampaignInput.setInterruptsEnabled || !mwCampaignInput.writeGamePort || !mwCampaignInput.readGamePort) abort();
+    if (!mwCampaignInput.setInterruptsEnabled || !mwCampaignInput.writeGamePort || !mwCampaignInput.readGamePort) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwCampaignInput.setInterruptsEnabled || !mwCampaignInput.writeGamePort || !mwCampaignInput.readGamePort");
     uint16_t tick;
     do
     {
@@ -116,7 +117,7 @@ bool MwPollInputUntilIdleOrEvent(void)
     {
         if (mouseInstalled != 0)
         {
-            if (mwCampaignInput.mouseReleaseCount == NULL) abort();
+            if (mwCampaignInput.mouseReleaseCount == NULL) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mwCampaignInput.mouseReleaseCount == NULL");
             if (mwCampaignInput.mouseReleaseCount(MOUSE_BUTTON_LEFT) != 0) return true;
             if (mwCampaignInput.mouseReleaseCount(MOUSE_BUTTON_RIGHT) != 0) return true;
         }
@@ -126,10 +127,10 @@ bool MwPollInputUntilIdleOrEvent(void)
             if ((joystickButtonOnePressed | joystickButtonTwoPressed) != 0) return true;
         }
         (void)MwRandomUpTo(UINT8_MAX);
-        if (mwCampaignInput.keyboardAvailable == NULL) abort();
+        if (mwCampaignInput.keyboardAvailable == NULL) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mwCampaignInput.keyboardAvailable == NULL");
         if (mwCampaignInput.keyboardAvailable())
         {
-            if (mwCampaignInput.readKeyboard == NULL) abort();
+            if (mwCampaignInput.readKeyboard == NULL) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mwCampaignInput.readKeyboard == NULL");
             (void)mwCampaignInput.readKeyboard();
             return true;
         }
@@ -158,7 +159,7 @@ uint16_t MwReadCampaignTextInput(uint16_t x,uint16_t y,uint16_t capacity,
     memset(campaignTextInputBuffer,0,sizeof(campaignTextInputBuffer));textInputLength=0;
     for (;;)
     {
-        if (!mwCampaignInput.keyboardAvailable || !mwCampaignInput.readKeyboard) abort();
+        if (!mwCampaignInput.keyboardAvailable || !mwCampaignInput.readKeyboard) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwCampaignInput.keyboardAvailable || !mwCampaignInput.readKeyboard");
         if (!mwCampaignInput.keyboardAvailable())
         {
             if (campaignTimerAlternatingPhase!=textInputLastPhase)
@@ -168,32 +169,32 @@ uint16_t MwReadCampaignTextInput(uint16_t x,uint16_t y,uint16_t capacity,
                 (void)EgaDrawCharacter(textInputCursorX,&cursorY,
                     campaignTimerAlternatingPhase?'*':' ',textInputForeground,textInputBackground);
             }
-            if (!mwCampaignInput.waitForInterrupt) abort();
+            if (!mwCampaignInput.waitForInterrupt) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwCampaignInput.waitForInterrupt");
             mwCampaignInput.waitForInterrupt();continue;
         }
         uint16_t key=mwCampaignInput.readKeyboard();
         if (key==CAMPAIGN_KEY_ENTER)
         {
-            if (mouseInstalled!=0) {if (!mwCampaignInput.resetMouse) abort();mwCampaignInput.resetMouse();}
+            if (mouseInstalled!=0) {if (!mwCampaignInput.resetMouse) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwCampaignInput.resetMouse");mwCampaignInput.resetMouse();}
             MwEraseTextInputCursor();return 0;
         }
         if (key==CAMPAIGN_KEY_BACKSPACE)
         {
             if (textInputLength==0) continue;
             campaignTextInputBuffer[--textInputLength]=0;MwEraseTextInputCursor();
-            textInputCursorX=(uint16_t)(textInputCursorX-selectedGlyphAdvance);continue;
+            textInputCursorX -= selectedGlyphAdvance;continue;
         }
         if (key==CAMPAIGN_KEY_ESCAPE)
         {
-            if (!mwCampaignInput.readKeyboardShiftFlags) abort();
+            if (!mwCampaignInput.readKeyboardShiftFlags) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !mwCampaignInput.readKeyboardShiftFlags");
             if (mwCampaignInput.readKeyboardShiftFlags()&BIOS_SHIFT_CONTROL) return CAMPAIGN_CONTINUE_CLEANUP;
             continue;
         }
-        uint8_t character=(uint8_t)key;
+        uint8_t character=key;
         if (character<' ' || character>'z') continue;
-        if (character>='a') character=(uint8_t)(character-ASCII_CASE_DISTANCE);
+        if (character>='a') character -= ASCII_CASE_DISTANCE;
         if (textInputLength==textInputMaximumIndex) continue;
-        if (character>='a') character=(uint8_t)(character-CAMPAIGN_TEXT_SECOND_CASE_ADJUSTMENT);
+        if (character>='a') character -= CAMPAIGN_TEXT_SECOND_CASE_ADJUSTMENT;
         campaignTextInputBuffer[textInputLength++]=character;
         MwEraseTextInputCursor();
         textInputCursorX=EgaDrawCharacter(textInputCursorX,&textInputCursorY,
@@ -206,7 +207,7 @@ uint16_t MwReadCampaignTextInput(uint16_t x,uint16_t y,uint16_t capacity,
 void MwPollJoystickA(void)
 {
     if (mwCampaignInput.readGamePort == NULL || mwCampaignInput.writeGamePort == NULL
-        || mwCampaignInput.setInterruptsEnabled == NULL) abort();
+        || mwCampaignInput.setInterruptsEnabled == NULL) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: mwCampaignInput.readGamePort == NULL || mwCampaignInput.writeGamePort == NULL || mwCampaignInput.setInterruptsEnabled == NULL");
     uint16_t startTick;
     uint8_t port;
     do

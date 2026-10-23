@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_runtime.h"
 #include "mechwarrior/combat_startup.h"
 #include <stdlib.h>
@@ -26,7 +27,7 @@ const char *BtechFindRuntimeMessageByCode(uint16_t messageCode)
         if (runtimeMessages[message].code==messageCode) return runtimeMessages[message].text;
         if (runtimeMessages[message].code==UINT16_MAX) return NULL;
     }
-    abort(); /* Unsupported table without its native terminator. */
+    /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Unsupported table without its native terminator."); /* Unsupported table without its native terminator. */
 }
 
 /*0810:F4B5. Only DOS handle2 output crosses the host boundary. */
@@ -34,7 +35,7 @@ void BtechWriteRuntimeMessageToStderr(uint16_t messageCode)
 {
     const char *text=BtechFindRuntimeMessageByCode(messageCode);
     if (!text) return;
-    if (!btechHostWriteHandle) abort();
+    if (!btechHostWriteHandle) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostWriteHandle");
     btechHostWriteHandle(COMBAT_STDERR_HANDLE,text,(uint16_t)strlen(text));
 }
 
@@ -73,7 +74,7 @@ void BtechRestoreRuntimeVectors(void)
 {
     /*4DF0 is the selector HALF of4DEE, not another enable-flag owner. */
     if (runtimeDeviceCleanup) runtimeDeviceCleanup(COMBAT_RUNTIME_DEVICE_EXIT);
-    if (!btechHostSetInterruptVector) abort();
+    if (!btechHostSetInterruptVector) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostSetInterruptVector");
     btechHostSetInterruptVector(0,runtimeSavedDivideVector);
     if (runtimeExtraVectorActive) btechHostSetInterruptVector(runtimeExtraInterrupt,runtimeSavedExtraVector);
 }
@@ -90,11 +91,11 @@ void BtechRuntimeExitAndCloseHandles(uint16_t exitCode)
     for (uint16_t handle=COMBAT_STANDARD_HANDLES;handle<COMBAT_DOS_HANDLES;++handle)
     {
         if (!(runtimeHandleFlags[handle]&1)) continue;
-        if (!btechHostCloseHandle) abort();
+        if (!btechHostCloseHandle) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostCloseHandle");
         btechHostCloseHandle(handle); /* Raw INT21 close: no runtime table write. */
     }
     BtechRestoreRuntimeVectors();
-    if (!btechHostTerminateChild) abort();
+    if (!btechHostTerminateChild) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostTerminateChild");
     btechHostTerminateChild((uint8_t)exitCode);
-    abort(); /* DOS4C never returns into E1A0's following bytes. */
+    /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("DOS4C never returns into E1A0's following bytes."); /* DOS4C never returns into E1A0's following bytes. */
 }

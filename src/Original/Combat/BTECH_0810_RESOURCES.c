@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_runtime.h"
 #include "mechwarrior/combat_resources.h"
 #include "mechwarrior/native_address.h"
@@ -12,7 +13,7 @@ uint32_t BtechGetDecodedResourceLength(const char *filename)
     long savedPosition=ftell(stream);fseek(stream,0,SEEK_END);
     uint32_t physicalBytes=(uint32_t)ftell(stream);fseek(stream,savedPosition,SEEK_SET);
     int16_t archive=BtechOpenCompressedArchive(UINT16_MAX,stream,"r",physicalBytes);
-    if (archive==-1) abort();
+    if (archive==-1) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: archive==-1");
     uint32_t decodedBytes=BtechGetArchiveDecodedLength((uint16_t)archive);
     BtechFlushAndCloseCompressedArchive((uint16_t)archive);BtechCloseStreamFile(stream);
     return decodedBytes;
@@ -26,7 +27,7 @@ void BtechDecodeResourceIntoAllocation(const char *filename,BtechResourceAllocat
     long savedPosition=ftell(stream);fseek(stream,0,SEEK_END);
     uint32_t physicalBytes=(uint32_t)ftell(stream);fseek(stream,savedPosition,SEEK_SET);
     int16_t archive=BtechOpenCompressedArchive(UINT16_MAX,stream,"r",physicalBytes);
-    if (archive==-1) abort();
+    if (archive==-1) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: archive==-1");
     uint32_t total=0;
     uint16_t decodedBytes;
     /* This local is IO transport only: the allocation is private until return.
@@ -35,10 +36,10 @@ void BtechDecodeResourceIntoAllocation(const char *filename,BtechResourceAllocat
     uint8_t decodedChunk[RESOURCE_DECODE_CHUNK];
     while ((decodedBytes=BtechReadArchiveIntoFarBuffer((uint16_t)archive,decodedChunk,RESOURCE_DECODE_CHUNK))!=0)
     {
-        if (decodedBytes>allocation.byteCount-total) abort();
+        if (decodedBytes>allocation.byteCount-total) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: decodedBytes>allocation.byteCount-total");
         memcpy(allocation.bytes+total,decodedChunk,decodedBytes);total+=decodedBytes;
     }
-    if (total!=allocation.byteCount) abort(); /* Native fatal resource-length mismatch. */
+    if (total!=allocation.byteCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: total!=allocation.byteCount"); /* Native fatal resource-length mismatch. */
     BtechFlushAndCloseCompressedArchive((uint16_t)archive);BtechCloseStreamFile(stream);
 }
 
@@ -46,9 +47,9 @@ void BtechDecodeResourceIntoAllocation(const char *filename,BtechResourceAllocat
 BtechResourceAllocation BtechAllocateAndDecodeResource(const char *filename)
 {
     uint32_t bytes=BtechGetDecodedResourceLength(filename);
-    if (bytes>DOS_MAX_PARAGRAPH_ALLOCATION_BYTES) abort(); /* Native paragraph wrap would corrupt foreign owners, not a host buffer of this length. */
+    if (bytes>DOS_MAX_PARAGRAPH_ALLOCATION_BYTES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: bytes>DOS_MAX_PARAGRAPH_ALLOCATION_BYTES"); /* Native paragraph wrap would corrupt foreign owners, not a host buffer of this length. */
     BtechDosAllocation allocation=BtechAllocateDosMemoryBlock(bytes);
-    if (!allocation.bytes) abort();
+    if (!allocation.bytes) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !allocation.bytes");
     BtechResourceAllocation resource={allocation.bytes,bytes};
     BtechDecodeResourceIntoAllocation(filename,resource);
     return resource;
@@ -57,11 +58,11 @@ BtechResourceAllocation BtechAllocateAndDecodeResource(const char *filename)
 /*0810:DD6E. First dot wins; extension is replaced, not concatenated twice. */
 const char *BtechBuildFilenameWithExtension(const char *basename,const char *extension)
 {
-    if (strlen(basename)>=sizeof(resourceFilename)) abort();
+    if (strlen(basename)>=sizeof(resourceFilename)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: strlen(basename)>=sizeof(resourceFilename)");
     strcpy(resourceFilename,basename);
     char *dot=strchr(resourceFilename,'.');
     if (!dot) dot=resourceFilename+strlen(resourceFilename);
-    if ((size_t)(dot-resourceFilename)+strlen(extension)+2>sizeof(resourceFilename)) abort();
+    if ((size_t)(dot-resourceFilename)+strlen(extension)+2>sizeof(resourceFilename)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (size_t)(dot-resourceFilename)+strlen(extension)+2>sizeof(resourceFilename)");
     *dot++='.';strcpy(dot,extension);
     return resourceFilename;
 }

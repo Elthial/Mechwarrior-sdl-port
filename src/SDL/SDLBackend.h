@@ -82,7 +82,6 @@ void MwSdlInitializeCombatHardware(void);
 void MwSdlResetCombatHardware(void);
 bool MwSdlInitializeCombatProcess(const char *directory);
 bool MwSdlExecuteCombatChild(const char *path,const MwCampaignLaunch *launch,uint8_t audioCode,uint8_t *exitCode);
-void MwSdlRetainCampaignPictureTail(const uint8_t *pictureBank);
 bool MwSdlCombatKeyboardPending(void);
 uint16_t MwSdlCombatDosAllocationCount(void);
 void MwSdlDeliverCombatKeyboardInterrupt(void);

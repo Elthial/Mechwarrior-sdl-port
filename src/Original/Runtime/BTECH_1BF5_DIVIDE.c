@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_render.h"
 #include "mechwarrior/combat_startup.h"
 #include <stdlib.h>
@@ -9,6 +10,6 @@
  * and delivery without the installed hook are not ordinary C calls. */
 uint32_t BtechDivideErrorInterrupt(uint32_t dividend)
 {
-    if (!divideErrorHookMarkedActive) abort();
+    if (!divideErrorHookMarkedActive) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !divideErrorHookMarkedActive");
     return (dividend>>1)|(dividend&UINT32_C(0x80000000));
 }

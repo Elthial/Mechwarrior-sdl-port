@@ -4,5 +4,5 @@
     <BuildType Name="Release" />
     <Platform Name="x64" />
   </Configurations>
-  <Project Path="MechWarrior.vcxproj" />
+  <Project Path="MechWarrior.vcxproj" Id="9377bc36-013b-4cab-a13c-f08622b26dcb" />
 </Solution>

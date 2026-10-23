@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_video.h"
 #include <stdlib.h>
 
@@ -6,7 +7,7 @@
 void BtechWriteClippedPixel(int16_t x,int16_t y,uint16_t colour)
 {
     if (screenPolygonNeedsClip && (x<clipMinimumX || x>clipMaximumX || y<clipMinimumY || y>clipMaximumY)) return;
-    if (!graphicsWritePixel) abort();
+    if (!graphicsWritePixel) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !graphicsWritePixel");
     graphicsWritePixel((uint16_t)x,(uint16_t)y,colour);
 }
 
@@ -14,13 +15,13 @@ void BtechWriteClippedPixel(int16_t x,int16_t y,uint16_t colour)
 uint16_t BtechReadClippedPixel(int16_t x,int16_t y)
 {
     if (screenPolygonNeedsClip && (x<clipMinimumX || x>clipMaximumX || y<clipMinimumY || y>clipMaximumY)) return UINT16_MAX;
-    if (!graphicsReadPixel) abort();
+    if (!graphicsReadPixel) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !graphicsReadPixel");
     return graphicsReadPixel((uint16_t)x,(uint16_t)y);
 }
 
 /*1BF5:211F. Genuine dispatch tail, no new presentation policy. */
 void BtechSetOverscanColour(uint16_t colour)
 {
-    if (!graphicsSetOverscanColour) abort();
+    if (!graphicsSetOverscanColour) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !graphicsSetOverscanColour");
     graphicsSetOverscanColour(colour);
 }

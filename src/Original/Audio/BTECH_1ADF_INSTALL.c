@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_sound.h"
 #include "mechwarrior/combat_startup.h"
 #include "mechwarrior/combat_adlib.h"
@@ -40,7 +41,7 @@ uint16_t BtechProbeAudioBackendMask(void)
  * enable interrupts. Non-ACK input consumes a second byte without dispatch. */
 uint16_t BtechSendMpuProbeCommandAndWaitAck(uint8_t command)
 {
-    if (!btechHostReadPort || !btechHostWritePort || !btechHostSetInterrupts) abort();
+    if (!btechHostReadPort || !btechHostWritePort || !btechHostSetInterrupts) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostReadPort || !btechHostWritePort || !btechHostSetInterrupts");
     uint16_t statusPort=mpuProbeStatusPort;
     for (uint16_t ready=MPU_PROBE_READY_POLLS;ready;--ready)
     {
@@ -72,7 +73,7 @@ uint16_t BtechProbeMpuWithTemporaryInterrupt(void)
     if (!(uint8_t)response) return 0;
     btechHostReadPort(mpuProbeDataPort);
     uint8_t savedInterrupts=btechHostSetInterrupts(1);
-    if (!btechHostGetInterruptVector || !btechHostSetInterruptVector) abort();
+    if (!btechHostGetInterruptVector || !btechHostSetInterruptVector) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostGetInterruptVector || !btechHostSetInterruptVector");
     mpuProbePreviousIrq=btechHostGetInterruptVector(MPU_IRQ_VECTOR);
     btechHostSetInterruptVector(MPU_IRQ_VECTOR,0x1ADF1082);
     btechHostWritePort(PIC_MASK_PORT,btechHostReadPort(PIC_MASK_PORT)&~MPU_IRQ_MASK);
@@ -95,7 +96,7 @@ uint16_t BtechProbeMpuWithTemporaryInterrupt(void)
  * The original neither saves DS nor selects its own data segment. */
 void BtechMpuProbeInterrupt(void)
 {
-    if (!btechHostReadPort || !btechHostWritePort) abort();
+    if (!btechHostReadPort || !btechHostWritePort) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostReadPort || !btechHostWritePort");
     if (!(btechHostReadPort(mpuProbeStatusPort)&MPU_INPUT_EMPTY))
     {
         btechHostReadPort(mpuProbeDataPort);

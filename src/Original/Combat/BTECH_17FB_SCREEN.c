@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_orders.h"
 #include "mechwarrior/combat_cockpit.h"
 #include "mechwarrior/combat_input.h"
@@ -9,7 +10,7 @@ enum { ORDER_REDUCED_PANEL_X=0x6D,ORDER_REDUCED_PANEL_Y=0x7A,
     ORDER_REDUCED_PANEL_WIDTH=0x67,ORDER_REDUCED_PANEL_HEIGHT=0x4A,
     ORDER_REDUCED_BORDER_LEFT=0x70,ORDER_REDUCED_BORDER_RIGHT=0xD2,
     ORDER_REDUCED_BORDER_TOP=0x78,ORDER_REDUCED_BORDER_BOTTOM=0xC4,
-    ORDER_PANEL_BACKGROUND=7,ORDER_PANEL_SHADOW=8,ORDER_PANEL_HIGHLIGHT=15,
+    ORDER_PANEL_BACKGROUND=Combat_Pal_EGA_LightGrey,ORDER_PANEL_SHADOW=Combat_Pal_EGA_DarkGrey,ORDER_PANEL_HIGHLIGHT=Combat_Pal_EGA_White,
     ORDER_DESTINATION_BLINK_MASK=2,ORDER_DESTINATION_MARKER_INSET=2,ORDER_DESTINATION_MARKER_SIZE=5 };
 
 /*17FB:00DF. Actual FAR command-screen refresh. The full-map capture excludes
@@ -22,12 +23,12 @@ void BtechRefreshLanceOrderScreen(void)
     if (orderScreenFullRedrawPending)
     {
         cockpitFullRedrawPending=0;
-        screenPolygonNeedsClip=0;
+        screenPolygonNeedsClip=false;
         BtechLoadScreenImage("map.scr",NULL);
         if (reducedMemoryMode)
         {
             drawLineColour=ORDER_PANEL_BACKGROUND;drawFillColour=ORDER_PANEL_BACKGROUND;
-            drawPolygonFilled=1;
+            drawPolygonFilled=true;
             BtechDrawStyledRectangle(ORDER_REDUCED_PANEL_X,ORDER_REDUCED_PANEL_Y,ORDER_REDUCED_PANEL_WIDTH,ORDER_REDUCED_PANEL_HEIGHT);
             drawFillColour=ORDER_PANEL_SHADOW;
             BtechDrawClippedLine(ORDER_REDUCED_BORDER_LEFT,ORDER_REDUCED_BORDER_TOP,ORDER_REDUCED_BORDER_RIGHT,ORDER_REDUCED_BORDER_TOP);
@@ -40,7 +41,7 @@ void BtechRefreshLanceOrderScreen(void)
         BtechUpdateLanceOrderHighlight();
         orderMapPositionMask=BtechBuildOrderMapPositionMask();
     }
-    if (!orderMapCameraObject || !orderMapCameraContext || orderMapScaleIndex>=ORDER_MAP_SCALE_COUNT) abort();
+    if (!orderMapCameraObject || !orderMapCameraContext || orderMapScaleIndex>=ORDER_MAP_SCALE_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !orderMapCameraObject || !orderMapCameraContext || orderMapScaleIndex>=ORDER_MAP_SCALE_COUNT");
     if (orderMapScaleIndex==ORDER_MAP_FULL_SCALE)
     {
         if (previousOrderMapScaleIndex!=ORDER_MAP_FULL_SCALE || orderScreenFullRedrawPending)
@@ -53,17 +54,17 @@ void BtechRefreshLanceOrderScreen(void)
     else
     {
         BtechPosition3D *camera=&orderMapCameraObject->object.prefix.position;
-        if (!playerUnitBinding || !playerUnitBinding->positionedLeftLeg) abort();
+        if (!playerUnitBinding || !playerUnitBinding->positionedLeftLeg) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerUnitBinding || !playerUnitBinding->positionedLeftLeg");
         camera->positionA=playerUnitBinding->positionedLeftLeg->object.prefix.position.positionA&orderMapPositionMask;
         /* Native reloads camera/binding/object after the X write. */
         camera=&orderMapCameraObject->object.prefix.position;
-        if (!playerUnitBinding || !playerUnitBinding->positionedLeftLeg) abort();
+        if (!playerUnitBinding || !playerUnitBinding->positionedLeftLeg) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerUnitBinding || !playerUnitBinding->positionedLeftLeg");
         camera->positionB=playerUnitBinding->positionedLeftLeg->object.prefix.position.positionB&orderMapPositionMask;
         redrawRequired=1;
     }
     orderMapCameraObject->object.prefix.position.positionC=
         BtechShiftDwordLeftPair(1,orderMapScaleShifts[orderMapScaleIndex]);
-    drawPolygonFilled=1;drawPageSelector=backPageSelector;
+    drawPolygonFilled=true;drawPageSelector=backPageSelector;
     if (redrawRequired)
     {
         BtechRenderObjectListVeneer(orderMapCameraContext,selectedWorldObjects,(int16_t)selectedObjectCount);
@@ -83,14 +84,14 @@ void BtechRefreshLanceOrderScreen(void)
     }
     for (uint16_t panel=0;panel<ORDER_WINGMATE_PANELS;++panel)
         lanceOrderControls[panel]=unitBindings[panel+1].mech?&unitControls[panel+1]:NULL;
-    screenPolygonNeedsClip=0;
+    screenPolygonNeedsClip=false;
     BtechDrawLanceMapUnitMarkers();
     if (lanceOrderControls[0])
     {
-        if (selectedLanceOrderPanel>=ORDER_WINGMATE_PANELS || !lanceOrderControls[selectedLanceOrderPanel]) abort();
+        if (selectedLanceOrderPanel>=ORDER_WINGMATE_PANELS || !lanceOrderControls[selectedLanceOrderPanel]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: selectedLanceOrderPanel>=ORDER_WINGMATE_PANELS || !lanceOrderControls[selectedLanceOrderPanel]");
         const BtechUnitControlState *control=lanceOrderControls[selectedLanceOrderPanel];
         uint16_t unitSlot=control->unitSlot;
-        if (control->trackedPosition[2]>=0 && control->combatValueOrBoundaryCode>0)
+        if (control->trackedPosition[2]>=0 && control->conditionScoreOrExitCode>COMBAT_CONDITION_SCORE_MINIMUM)
         {
             /* A typed read-only argument value replaces native control+20,
              * not a cast between unrelated C struct and int32 array types. */
@@ -98,27 +99,27 @@ void BtechRefreshLanceOrderScreen(void)
             int16_t trackedX,trackedY;
             if (BtechProjectPositionToOrderMap(&trackedPosition,&trackedX,&trackedY))
             {
-                if (hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES || combatLandscapeIndex>=COMBAT_LANDSCAPES || unitSlot>=COMBAT_MECH_SLOTS) abort();
+                if (hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES || combatLandscapeIndex>=COMBAT_LANDSCAPES || unitSlot>=COMBAT_MECH_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: hudColourSchemeIndex>=COMBAT_HUD_COLOUR_SCHEMES || combatLandscapeIndex>=COMBAT_LANDSCAPES || unitSlot>=COMBAT_MECH_SLOTS");
                 drawFillColour=(uint8_t)landscapeCameraColourRows[hudColourSchemeIndex][combatLandscapeIndex].orderTrackingLineColour;
                 BtechDrawClippedLine(unitOrderMapScreenX[unitSlot],unitOrderMapScreenY[unitSlot],trackedX,trackedY);
                 if ((orderPanelMode==ORDER_PANEL_DESTINATION || orderPanelMode==ORDER_PANEL_TARGET) && (combatTickCounter&ORDER_DESTINATION_BLINK_MASK))
                 {
-                    drawFillColour=0;drawPolygonFilled=0;
+                    drawFillColour=Combat_Pal_EGA_Black;drawPolygonFilled=false;
                     BtechDrawStyledRectangle((uint16_t)(trackedX-ORDER_DESTINATION_MARKER_INSET),(uint16_t)(trackedY-ORDER_DESTINATION_MARKER_INSET),ORDER_DESTINATION_MARKER_SIZE,ORDER_DESTINATION_MARKER_SIZE);
                 }
             }
         }
     }
     if (orderMapScaleIndex==ORDER_MAP_FULL_SCALE) BtechDrawLanceMapRetreatBoundaries();
-    screenPolygonNeedsClip=0;drawPolygonFilled=0;
+    screenPolygonNeedsClip=false;drawPolygonFilled=false;
     previousOrderMapScaleIndex=orderMapScaleIndex;
     BtechEditSelectedUnitOrders();
     if (combatDispatchState!=PLAYER_SCREEN_ORDERS)
-    {screenPolygonNeedsClip=1;drawPolygonFilled=1;return;}
+    {screenPolygonNeedsClip=true;drawPolygonFilled=true;return;}
     BtechDrawUnitOrderPanels();
     while (BtechGetActiveRuntimeDelayFar())
-    {if (!btechHostPollInterrupts) abort();btechHostPollInterrupts();}
-    BtechSwapScreenPages(0);
+    {if (!btechHostPollInterrupts) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostPollInterrupts");btechHostPollInterrupts();}
+    BtechSwapScreenPages(false);
     if (orderScreenFullRedrawPending)
     {
         BtechPresentScreenRectangle(0,0,COMBAT_SCREEN_WIDTH,COMBAT_SCREEN_HEIGHT);

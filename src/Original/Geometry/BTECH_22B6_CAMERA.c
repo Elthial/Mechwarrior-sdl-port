@@ -1,10 +1,11 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_render.h"
 #include <stdlib.h>
 
 /*22B6:02D2. Clear ONLY the occupied flags BYTE. Camera object/pose stay stale. */
 void BtechReleaseCameraContextFar(BtechCameraContext *camera)
 {
-    if (!camera) abort(); /* Unrepresented native near-zero corruption. */
+    if (!camera) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !camera"); /* Unrepresented native near-zero corruption. */
     camera->flags=0;
 }
 
@@ -55,7 +56,7 @@ void BtechPrepareCameraContext(BtechCameraContext *camera)
         forceObjectScreenClip=1;
     combatProjectionShift=camera->projectionShift;
     uint16_t projectionUnit=1;
-    for (uint8_t shifts=(uint8_t)combatProjectionShift;shifts;--shifts) projectionUnit=(uint16_t)(projectionUnit<<1);
+    for (uint8_t shifts=combatProjectionShift;shifts;--shifts) projectionUnit=(uint16_t)(projectionUnit<<1);
     combatProjectionUnit=projectionUnit;
     nearClipDepth=projectionUnit;
     clipMinimumX=camera->clipMinimumA;
@@ -67,10 +68,10 @@ void BtechPrepareCameraContext(BtechCameraContext *camera)
     activePaletteRemap=camera->paletteRemap;
     if (!(camera->flags&CAMERA_KEEP_SCREEN_CENTRE))
     {
-        uint16_t difference=(uint16_t)(clipMaximumX-clipMinimumX);
-        screenCentreA=(int16_t)(uint16_t)(clipMinimumX+((difference>>1)|(difference&0x8000)));
+        uint16_t difference=clipMaximumX-clipMinimumX;
+        screenCentreA=(int16_t)(clipMinimumX+((difference>>1)|(difference&0x8000)));
         difference=(uint16_t)(clipMaximumY-clipMinimumY);
-        screenCentreB=(int16_t)(uint16_t)(clipMinimumY+((difference>>1)|(difference&0x8000)));
+        screenCentreB=(int16_t)(clipMinimumY+((difference>>1)|(difference&0x8000)));
     }
     if (!(camera->flags&CAMERA_NO_BACKGROUND))
     {
@@ -78,18 +79,18 @@ void BtechPrepareCameraContext(BtechCameraContext *camera)
         if (activePaletteRemap) fillA=activePaletteRemap[fillA];
         uint8_t fillB=activeCameraContext->fillPaletteB;
         if (activePaletteRemap) fillB=activePaletteRemap[fillB];
-        if ((camera->flags&CAMERA_GRADIENT_BACKGROUND) && graphicsColourMode) abort(); /*2D03 alternate adapter. */
+        if ((camera->flags&CAMERA_GRADIENT_BACKGROUND) && graphicsColourMode) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (camera->flags&CAMERA_GRADIENT_BACKGROUND) && graphicsColourMode"); /*2D03 alternate adapter. */
         BtechFillTiltedCameraHorizonRegions(fillA,fillB,cameraViewOrientation[0],cameraViewOrientation[1]);
     }
 }
 
-/*22B6:2EEE. Native culling and basis selection. Stops before the unconverted
- * resource primitives; hidden/near/outside returns really return. */
+/*22B6:2EEE. Cull hidden, near-clipped and off-screen world objects, then select
+ * their orientation basis and submit the visible resource entries for drawing. */
 void BtechCullAndRenderWorldObject(BtechHeapWorldObject *object)
 {
     if (object->prefix.renderFlags&OBJECT_HIDDEN) return;
     uint32_t farthestDepth=transformedViewPosition.positionB+resourceScaledExtent;
-    uint16_t builderCx=(uint16_t)farthestDepth; /*2F00/2F08, retained on forced-clip branch. */
+    uint16_t builderCx=farthestDepth; /*2F00/2F08, retained on forced-clip branch. */
     if ((int32_t)farthestDepth<(int16_t)nearClipDepth || !objectProjectionScale) return;
     if (forceObjectScreenClip) objectNeedsScreenClip=1;
     else
@@ -101,7 +102,7 @@ void BtechCullAndRenderWorldObject(BtechHeapWorldObject *object)
             projectionRatio.ratio.numerator=phase?magnitude+resourceScaledExtent:magnitude-resourceScaledExtent;
             projectionRatio.ratio.denominator=phase?transformedViewPosition.positionB-resourceScaledExtent
                 :transformedViewPosition.positionB+resourceScaledExtent;
-            uint32_t nearDepth=(uint32_t)(int32_t)(int16_t)nearClipDepth;
+            uint32_t nearDepth=(int16_t)nearClipDepth;
             if (phase && (int32_t)nearDepth>(int32_t)projectionRatio.ratio.denominator)
                 projectionRatio.ratio.denominator=nearDepth;
             magnitude=transformedViewPosition.positionC;

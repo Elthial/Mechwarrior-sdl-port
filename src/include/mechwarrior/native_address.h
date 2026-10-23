@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #ifndef MECHWARRIOR_NATIVE_ADDRESS_H
 #define MECHWARRIOR_NATIVE_ADDRESS_H
 
@@ -23,7 +24,7 @@ static inline uint8_t MwReadNativeViewByte(const MwNativeByteView *view,uint16_t
 {
     if (view->readPhysicalByte) return view->readPhysicalByte(offset);
     uint16_t relative=offset-view->nativeBase;
-    if (relative>=view->byteCount) abort();
+    if (relative>=view->byteCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: relative>=view->byteCount");
     return view->bytes[relative];
 }
 

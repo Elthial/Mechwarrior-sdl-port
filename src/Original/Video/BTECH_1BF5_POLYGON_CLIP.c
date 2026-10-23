@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_polygons.h"
 #include <stdlib.h>
 
@@ -17,7 +18,7 @@ void BtechClipScreenPolygonToViewport(void)
         int16_t minimum=axis?clipMinimumY:clipMinimumX;
         int16_t maximum=axis?clipMaximumY:clipMaximumX;
         uint8_t minimumBit=axis?8:1,maximumBit=axis?4:2;
-        if (polygonVertexCount>COMBAT_POLYGON_VERTEX_WORDS) abort();
+        if (polygonVertexCount>COMBAT_POLYGON_VERTEX_WORDS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: polygonVertexCount>COMBAT_POLYGON_VERTEX_WORDS");
         uint16_t previous=polygonVertexCount-1,output=0;
         uint8_t previousOutside=(plane[previous]<minimum?minimumBit:0)|(plane[previous]>maximum?maximumBit:0);
         for (uint16_t current=0;current!=polygonVertexCount;++current)
@@ -25,7 +26,7 @@ void BtechClipScreenPolygonToViewport(void)
             uint8_t currentOutside=(plane[current]<minimum?minimumBit:0)|(plane[current]>maximum?maximumBit:0);
             if (!(previousOutside|currentOutside))
             {
-                if (output>=COMBAT_POLYGON_VERTEX_WORDS) abort();
+                if (output>=COMBAT_POLYGON_VERTEX_WORDS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: output>=COMBAT_POLYGON_VERTEX_WORDS");
                 destinationX[output]=sourceX[current];destinationY[output]=sourceY[current];++output;
             }
             else if (!(previousOutside&currentOutside))
@@ -35,21 +36,21 @@ void BtechClipScreenPolygonToViewport(void)
                     uint8_t outside=endpoint?currentOutside:previousOutside;
                     if (!outside) continue;
                     uint16_t base=endpoint?current:previous,next=endpoint?previous:current;
-                    if (output>=COMBAT_POLYGON_VERTEX_WORDS) abort();
+                    if (output>=COMBAT_POLYGON_VERTEX_WORDS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: output>=COMBAT_POLYGON_VERTEX_WORDS");
                     int16_t boundary=outside&minimumBit?minimum:maximum;
                     outPlane[output]=boundary; /* Native store precedes IDIV, even on a fault. */
-                    int16_t distance=(int16_t)(uint16_t)(boundary-plane[base]);
-                    int16_t difference=(int16_t)(uint16_t)(other[next]-other[base]);
+                    int16_t distance=boundary-plane[base];
+                    int16_t difference=other[next]-other[base];
                     int32_t product=(int32_t)difference*distance;
-                    int16_t divisor=(int16_t)(uint16_t)(plane[next]-plane[base]);
-                    if (!divisor || (product==INT32_MIN && divisor==-1)) abort();
+                    int16_t divisor=plane[next]-plane[base];
+                    if (!divisor || (product==INT32_MIN && divisor==-1)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !divisor || (product==INT32_MIN && divisor==-1)");
                     int32_t quotient=product/divisor;
-                    if (quotient<INT16_MIN || quotient>INT16_MAX) abort();
-                    outOther[output]=(int16_t)(uint16_t)(quotient+other[base]);++output;
+                    if (quotient<INT16_MIN || quotient>INT16_MAX) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: quotient<INT16_MIN || quotient>INT16_MAX");
+                    outOther[output]=(int16_t)(quotient+other[base]);++output;
                 }
                 if (!currentOutside)
                 {
-                    if (output>=COMBAT_POLYGON_VERTEX_WORDS) abort();
+                    if (output>=COMBAT_POLYGON_VERTEX_WORDS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: output>=COMBAT_POLYGON_VERTEX_WORDS");
                     destinationX[output]=sourceX[current];destinationY[output]=sourceY[current];++output;
                 }
             }

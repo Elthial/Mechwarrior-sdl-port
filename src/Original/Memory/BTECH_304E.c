@@ -93,7 +93,7 @@ uint8_t unitVisibility[COMBAT_MECH_SLOTS][COMBAT_MECH_SLOTS];
 BtechMechState mechStates[COMBAT_MECH_SLOTS];
 BtechUnitBinding unitBindings[COMBAT_MECH_SLOTS];
 BtechUnitControlState unitControls[COMBAT_MECH_SLOTS];
-uint16_t heatEffectThresholds[COMBAT_HEAT_THRESHOLDS];
+uint16_t heatAimJitterThresholds[COMBAT_HEAT_THRESHOLDS];
 uint16_t heatSpeedPenalties[COMBAT_MECH_SLOTS],heatInhibitFlags[COMBAT_MECH_SLOTS];
 uint16_t specialAssaultMode;
 uint16_t randomStateWords[COMBAT_RANDOM_WORDS],randomWriteIndex,randomAddendIndex;
@@ -105,7 +105,7 @@ bool BtechImportMechInitialData(const uint8_t *data,size_t byteCount)
 {
     if (!data || byteCount<NATIVE_SEGMENT_BYTE_COUNT) return false;
     for (uint16_t tier=0;tier<COMBAT_HEAT_THRESHOLDS;++tier)
-        heatEffectThresholds[tier]=MwReadNativeWord(data,0x271E+tier*2);
+        heatAimJitterThresholds[tier]=MwReadNativeWord(data,0x271E+tier*2);
     for (uint16_t kind=0;kind<COMBAT_WEAPON_KINDS;++kind)
     {
         const uint8_t *bytes=data+0x0EEC+kind*0x16;

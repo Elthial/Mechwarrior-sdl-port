@@ -1,5 +1,6 @@
 #ifndef MECHWARRIOR_CAMPAIGN_UI_H
 #define MECHWARRIOR_CAMPAIGN_UI_H
+#include "mechwarrior/ega_campaign.h"
 #include "mechwarrior/campaign.h"
 #include "mechwarrior/campaign_continuations.h"
 #include "mechwarrior/native_address.h"
@@ -8,7 +9,7 @@ enum { CAMPAIGN_UI_RECORD_BYTES = 0x000E, HUB_UI_RECORD_COUNT = 0x0006,
     CONTRACT_HUB_UI_RECORD_COUNT = 0x0003, UI_HIGHLIGHT_WIDTH = 0x0022,
     UI_HIGHLIGHT_HEIGHT = 0x0023, NOTIFICATION_TEXT_START = 0x5EDB,
     NOTIFICATION_TEXT_END = 0x6067 };
-enum { UI_SELECTED_TEXT_COLOUR = 0x0D, UI_ACTIVATION_FLASH_COUNT = 2,UI_NO_NEIGHBOUR=0xFF,
+enum { UI_SELECTED_TEXT_COLOUR = Campaign_Pal_EGA_Yellow, UI_ACTIVATION_FLASH_COUNT = 2,UI_NO_NEIGHBOUR=0xFF,
     UI_FLASH_FIRST_WAIT_TICKS = 2 };
 enum { PANEL_HORIZONTAL_TILE_PIXELS = 0x0040, PANEL_VERTICAL_TILE_PIXELS = 0x0020,
     PANEL_BOTTOM_EDGE_INSET = 4, PANEL_RIGHT_EDGE_INSET = 6,
@@ -21,7 +22,7 @@ void MwDrawStoredPicturePanelBorder(void);
 void MwDrawAlternatePicturePanelBorder(uint16_t x, uint16_t y, uint16_t width, uint16_t height);
 
 enum { TEXT_PANEL_MONOSPACE_FONT = 3, TEXT_PANEL_COMPACT_FONT = 0,
-    TEXT_PANEL_FOREGROUND = 3, TEXT_PANEL_BACKGROUND = 4,
+    TEXT_PANEL_FOREGROUND = Campaign_Pal_EGA_LightGrey, TEXT_PANEL_BACKGROUND = Campaign_Pal_EGA_DarkGrey,
     TEXT_PANEL_CAPTURE_MARGIN = 8, TEXT_PANEL_MODE_DISCARD_RETURN = 1,
     TEXT_PANEL_MODE_LEAVE_VISIBLE = 0x0063 };
 /* Register/stack transport, NOT a newly discovered native source return struct.
@@ -32,6 +33,8 @@ typedef struct MwTextPanelReturn
     uint16_t textOffset, textOriginX, textOriginY;
     bool discardReturnWord;
 } MwTextPanelReturn;
+/* textOffset is the cursor within text, usually text->nativeBase. It is not
+ * a colour; TEXT_PANEL_FOREGROUND/BACKGROUND select the panel colours. */
 MwTextPanelReturn MwShowMonospaceTextPanel(uint16_t insetX, uint16_t insetY,
     uint16_t columns, uint16_t rows, const MwNativeByteView *text, uint16_t textOffset);
 MwTextPanelReturn MwShowCompactTextPanel(uint16_t insetX, uint16_t insetY,

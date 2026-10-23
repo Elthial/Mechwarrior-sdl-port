@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_input.h"
 #include "mechwarrior/combat_video.h"
 #include <stdlib.h>
@@ -8,7 +9,7 @@
 void BtechKeyboardInterrupt(void)
 {
     if (!btechHostReadPort || !btechHostWritePort || !btechHostReadBiosByte || !btechHostWriteBiosByte
-        || !btechHostReadBiosWord || !btechHostWriteBiosWord) abort();
+        || !btechHostReadBiosWord || !btechHostWriteBiosWord) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostReadPort || !btechHostWritePort || !btechHostReadBiosByte || !btechHostWriteBiosByte || !btechHostReadBiosWord || !btechHostWriteBiosWord");
     uint8_t scan=btechHostReadPort(KEYBOARD_DATA_PORT);
     uint8_t keyboardControl=btechHostReadPort(KEYBOARD_CONTROL_PORT);
     btechHostWritePort(KEYBOARD_CONTROL_PORT,keyboardControl|KEYBOARD_ACKNOWLEDGE_BIT);

@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_world.h"
 #include <stdlib.h>
 
@@ -22,6 +23,6 @@ BtechCameraContext *BtechAllocateCameraContext(BtechWorldObjectPrefix *object)
 /*22B6:0953. The original CS table, not floating-point atan. */
 uint16_t BtechLookupHeadingRatio(uint16_t ratioIndex)
 {
-    if (ratioIndex>=0x200) abort();
+    if (ratioIndex>=0x200) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: ratioIndex>=0x200");
     return headingRatioAngles[ratioIndex];
 }

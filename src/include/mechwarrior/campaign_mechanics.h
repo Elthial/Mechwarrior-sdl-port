@@ -120,6 +120,8 @@ extern uint16_t *weaponRepairPricesByKind[CAMPAIGN_MECH_KIND_COUNT];
 extern uint16_t weaponRepairPrices[REPAIR_WEAPON_PRICE_WORD_COUNT];
 extern uint8_t bodyRepairBasePricesByKind[CAMPAIGN_MECH_KIND_COUNT];
 extern uint8_t rosterStatus[CAMPAIGN_ROSTER_SLOTS];
+/* Slot 0 is commander reputation. Hired MechWarriors retain their hiring-time
+ * wage tier, even after Gunnery promotions change their quoted card wage. */
 extern uint16_t rosterPayTiers[CAMPAIGN_ROSTER_SLOTS];
 extern uint16_t rosterGunneryTiers[CAMPAIGN_ROSTER_SLOTS];
 extern uint16_t rosterPilotingTiers[CAMPAIGN_ROSTER_SLOTS];
@@ -162,7 +164,7 @@ void MwQuoteRepairComponent(CampaignUnitDamage *damage);
 void MwQuoteMechRepairTotal(uint16_t unitKind, CampaignUnitDamage *damage);
 void MwInitializePilotRatingsFromDefinitions(void);
 void MwAdvancePilotSkillFromExperience(uint16_t pilotRosterSlot);
-uint16_t MwRemovePilotAndCompactRoster(uint16_t rosterByteOffset);
+uint16_t MwRemovePilotAndCompactRoster(uint16_t rosterSlot);
 uint16_t MwLookupScaledSquareRoot(uint16_t tableIndex);
 uint16_t MwApproximateSquareRoot(uint32_t squaredMagnitude);
 uint16_t MwCalculatePlanetTravelDistance(uint16_t destinationPlanetIndex);

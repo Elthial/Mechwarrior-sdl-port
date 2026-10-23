@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_runtime.h"
 #include "mechwarrior/combat_video.h"
 #include "mechwarrior/combat_startup.h"
@@ -16,13 +17,13 @@ uint32_t BtechEgaGetCaptureStorageSize(uint16_t width,uint16_t height)
  * require recovery of their actual owners, not an address registry. */
 void BtechInitializeEgaVideo(uint16_t paletteByteOffset)
 {
-    if (paletteByteOffset) abort();
-    if (!btechHostSetVideoMode || !btechHostWritePortWord) abort();
+    if (paletteByteOffset) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: paletteByteOffset");
+    if (!btechHostSetVideoMode || !btechHostWritePortWord) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostSetVideoMode || !btechHostWritePortWord");
     videoColourCount=COMBAT_EGA_COLOURS;
     frontPageSelector=COMBAT_EGA_FRONT_PAGE;
     backPageSelector=COMBAT_EGA_BACK_PAGE;
     videoScratchPageSelector=COMBAT_EGA_SCRATCH_PAGE;
-    btechHostSetVideoMode(0x0D);
+    btechHostSetVideoMode(COMBAT_EGA_MODE_320X200);
     uint16_t pattern=0;
     for (uint16_t colour=0;colour<COMBAT_EGA_COLOURS;++colour)
     {
@@ -44,14 +45,14 @@ void BtechInitializeEgaVideo(uint16_t paletteByteOffset)
  * Direct DF-set calls, invalid row/font aliases are not converted here. */
 void BtechEgaDrawGlyph(uint16_t character,uint16_t x,uint16_t y,uint16_t page)
 {
-    if (y>=COMBAT_SCREEN_HEIGHT) abort();
-    if (!btechHostWritePortWord || !btechHostReadVideoByte || !btechHostWriteVideoByte) abort();
+    if (y>=COMBAT_SCREEN_HEIGHT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: y>=COMBAT_SCREEN_HEIGHT");
+    if (!btechHostWritePortWord || !btechHostReadVideoByte || !btechHostWriteVideoByte) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostWritePortWord || !btechHostReadVideoByte || !btechHostWriteVideoByte");
     // FAR AX/DX/BP entry, ambient ES page; DX/SI/BP/DS preserved. DI is scratch.
     // No clipping here; the shared text caller owns clipping decisions.
     uint8_t width=fontAdvanceWidths[0x0000];
     uint8_t byteAligned=(x&0x0007)==0x0000&&(width&0x07)==0x00;
-    uint8_t bytesPerRow=(uint8_t)((width>>0x03)+(!byteAligned&&(width&0x07)!=0x00));
-    uint8_t shift=(uint8_t)(x&0x0007);
+    uint8_t bytesPerRow=(width>>0x03)+(!byteAligned&&(width&0x07)!=0x00);
+    uint8_t shift=x&0x0007;
     uint16_t cursor=0x0000;
     if (!byteAligned)
     {
@@ -59,13 +60,13 @@ void BtechEgaDrawGlyph(uint16_t character,uint16_t x,uint16_t y,uint16_t page)
         glyphTailMask=glyphTailMasks[width&0x07];
     } // Native scratch write precedes character rejection on general path.
     uint8_t rowsRemaining=combatFontHeights[0x0000];
-    uint8_t glyphStride=(uint8_t)(rowsRemaining*bytesPerRow); // MUL BYTE then MUL BL: high product BYTE discarded.
+    uint8_t glyphStride=rowsRemaining*bytesPerRow; // MUL BYTE then MUL BL: high product BYTE discarded.
     uint8_t characterByte=(uint8_t)character,firstCharacter=fontFirstCharacters[0x0000];
-    uint8_t relativeCharacter=(uint8_t)(characterByte-firstCharacter);
+    uint8_t relativeCharacter=characterByte-firstCharacter;
     if ((int8_t)characterByte<(int8_t)firstCharacter)return; // SUB/JL includes overflow, not just relative sign.
     uint8_t characterCount=fontCharacterCounts[0x0000];
     if (byteAligned?relativeCharacter>=characterCount:(int8_t)relativeCharacter>=(int8_t)characterCount)return;
-    uint16_t glyphCursor=(uint16_t)(relativeCharacter*glyphStride);
+    uint16_t glyphCursor=relativeCharacter*glyphStride;
     if (byteAligned)
         cursor=(uint16_t)(graphicsRowOffsets[y]+(x>>0x0003));
     uint8_t foreground=textForegroundPattern,background=textBackgroundPattern;
@@ -78,7 +79,7 @@ void BtechEgaDrawGlyph(uint16_t character,uint16_t x,uint16_t y,uint16_t page)
             uint8_t bytesRemaining=bytesPerRow;
             do
             {
-                if (!font->bytes || glyphCursor>=font->byteCount) abort();
+                if (!font->bytes || glyphCursor>=font->byteCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !font->bytes || glyphCursor>=font->byteCount");
                 uint8_t glyphBits=font->bytes[glyphCursor];
                 glyphCursor++;
                 btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,(uint16_t)((uint16_t)glyphBits<<0x0008)|COMBAT_EGA_BIT_MASK_REGISTER);
@@ -92,8 +93,8 @@ void BtechEgaDrawGlyph(uint16_t character,uint16_t x,uint16_t y,uint16_t page)
                 }
                 cursor++;
             } while (--bytesRemaining!=0x00); // BYTE0 means256 copies.
-            cursor=(uint16_t)(cursor-bytesPerRow);
-            cursor=(uint16_t)(cursor+COMBAT_SCREEN_ROW_BYTES);
+            cursor -= bytesPerRow;
+            cursor += COMBAT_SCREEN_ROW_BYTES;
         } while (--rowsRemaining!=0x00); // Height0 means256 rows.
         return;
     }
@@ -106,7 +107,7 @@ void BtechEgaDrawGlyph(uint16_t character,uint16_t x,uint16_t y,uint16_t page)
             {
                 do
                 {
-                    if (!font->bytes || glyphCursor>=font->byteCount) abort();
+                    if (!font->bytes || glyphCursor>=font->byteCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !font->bytes || glyphCursor>=font->byteCount");
                     uint8_t glyphBits=font->bytes[glyphCursor];
                     glyphCursor++;
                     btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,(uint16_t)((uint16_t)glyphBits<<0x0008)|COMBAT_EGA_BIT_MASK_REGISTER);
@@ -119,7 +120,7 @@ void BtechEgaDrawGlyph(uint16_t character,uint16_t x,uint16_t y,uint16_t page)
             {
                 while (--bytesRemaining!=0x00)
                 {
-                    if (!font->bytes || glyphCursor>=font->byteCount) abort();
+                    if (!font->bytes || glyphCursor>=font->byteCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !font->bytes || glyphCursor>=font->byteCount");
                     uint8_t glyphBits=font->bytes[glyphCursor];
                     glyphCursor++;
                     btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,(uint16_t)((uint16_t)glyphBits<<0x0008)|COMBAT_EGA_BIT_MASK_REGISTER);
@@ -130,7 +131,7 @@ void BtechEgaDrawGlyph(uint16_t character,uint16_t x,uint16_t y,uint16_t page)
                     btechHostWriteVideoByte(page,cursor,textBackgroundPattern);
                     cursor++;
                 }
-                if (!font->bytes || glyphCursor>=font->byteCount) abort();
+                if (!font->bytes || glyphCursor>=font->byteCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !font->bytes || glyphCursor>=font->byteCount");
                 uint8_t glyphBits=font->bytes[glyphCursor];
                 glyphCursor++;
                 btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,(uint16_t)((uint16_t)glyphBits<<0x0008)|COMBAT_EGA_BIT_MASK_REGISTER);
@@ -146,22 +147,22 @@ void BtechEgaDrawGlyph(uint16_t character,uint16_t x,uint16_t y,uint16_t page)
         else if (transparent)
         {
             uint8_t previousBits=0x00;
-            uint8_t bytesRemaining=(uint8_t)(bytesPerRow+0x01);
+            uint8_t bytesRemaining=bytesPerRow+0x01;
             while (--bytesRemaining!=0x00)
             {
-                if (!font->bytes || glyphCursor>=font->byteCount) abort();
+                if (!font->bytes || glyphCursor>=font->byteCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !font->bytes || glyphCursor>=font->byteCount");
                 uint8_t glyphBits=font->bytes[glyphCursor];
                 glyphCursor++;
                 uint16_t joinedBits=(uint16_t)((uint16_t)previousBits<<0x0008)|glyphBits;
                 previousBits=glyphBits;
-                uint8_t shiftedBits=(uint8_t)(joinedBits>>shift);
+                uint8_t shiftedBits=joinedBits>>shift;
                 btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,(uint16_t)((uint16_t)shiftedBits<<0x0008)|COMBAT_EGA_BIT_MASK_REGISTER);
                 btechHostReadVideoByte(page,cursor);
                 btechHostWriteVideoByte(page,cursor,textForegroundPattern);
                 cursor++;
             }
             uint16_t joinedBits=(uint16_t)previousBits<<0x0008;
-            uint8_t shiftedBits=(uint8_t)(joinedBits>>shift);
+            uint8_t shiftedBits=joinedBits>>shift;
             btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,(uint16_t)((uint16_t)shiftedBits<<0x0008)|COMBAT_EGA_BIT_MASK_REGISTER);
             btechHostReadVideoByte(page,cursor);
             btechHostWriteVideoByte(page,cursor,textForegroundPattern);
@@ -173,32 +174,32 @@ void BtechEgaDrawGlyph(uint16_t character,uint16_t x,uint16_t y,uint16_t page)
             uint8_t bytesRemaining=bytesPerRow;
             while (--bytesRemaining!=0x00)
             {
-                if (!font->bytes || glyphCursor>=font->byteCount) abort();
+                if (!font->bytes || glyphCursor>=font->byteCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !font->bytes || glyphCursor>=font->byteCount");
                 uint8_t glyphBits=font->bytes[glyphCursor];
                 glyphCursor++;
-                uint8_t foregroundMask=(uint8_t)(((uint16_t)((uint16_t)previousBits<<0x0008)|glyphBits)>>shift);
+                uint8_t foregroundMask=((uint16_t)((uint16_t)previousBits<<0x0008)|glyphBits)>>shift;
                 previousBits=glyphBits;
                 btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,(uint16_t)((uint16_t)foregroundMask<<0x0008)|COMBAT_EGA_BIT_MASK_REGISTER);
                 btechHostReadVideoByte(page,cursor);
                 btechHostWriteVideoByte(page,cursor,textForegroundPattern);
                 uint8_t invertedBits=(uint8_t)~previousBits;
-                uint8_t backgroundMask=(uint8_t)(((uint16_t)((uint16_t)previousBackground<<0x0008)|invertedBits)>>shift);
+                uint8_t backgroundMask=((uint16_t)((uint16_t)previousBackground<<0x0008)|invertedBits)>>shift;
                 previousBackground=invertedBits;
                 btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,(uint16_t)((uint16_t)backgroundMask<<0x0008)|COMBAT_EGA_BIT_MASK_REGISTER);
                 btechHostReadVideoByte(page,cursor);
                 btechHostWriteVideoByte(page,cursor,textBackgroundPattern);
                 cursor++;
             }
-            if (!font->bytes || glyphCursor>=font->byteCount) abort();
+            if (!font->bytes || glyphCursor>=font->byteCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !font->bytes || glyphCursor>=font->byteCount");
             uint8_t glyphBits=font->bytes[glyphCursor];
             glyphCursor++;
-            uint8_t foregroundMask=(uint8_t)(((uint16_t)((uint16_t)previousBits<<0x0008)|glyphBits)>>shift);
+            uint8_t foregroundMask=((uint16_t)((uint16_t)previousBits<<0x0008)|glyphBits)>>shift;
             previousBits=glyphBits;
             btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,(uint16_t)((uint16_t)foregroundMask<<0x0008)|COMBAT_EGA_BIT_MASK_REGISTER);
             btechHostReadVideoByte(page,cursor);
             btechHostWriteVideoByte(page,cursor,textForegroundPattern);
             uint8_t invertedBits=(uint8_t)~previousBits&glyphTailMask;
-            uint8_t backgroundMask=(uint8_t)(((uint16_t)((uint16_t)previousBackground<<0x0008)|invertedBits)>>shift);
+            uint8_t backgroundMask=((uint16_t)((uint16_t)previousBackground<<0x0008)|invertedBits)>>shift;
             previousBackground=invertedBits;
             btechHostWritePortWord(COMBAT_EGA_GRAPHICS_PORT,(uint16_t)((uint16_t)backgroundMask<<0x0008)|COMBAT_EGA_BIT_MASK_REGISTER);
             btechHostReadVideoByte(page,cursor);
@@ -216,8 +217,8 @@ void BtechEgaDrawGlyph(uint16_t character,uint16_t x,uint16_t y,uint16_t page)
         }
         uint16_t rowBytes=bytesPerRow;
         if (shift!=0x00&&transparent)++rowBytes;
-        cursor=(uint16_t)(cursor-rowBytes);
-        cursor=(uint16_t)(cursor+COMBAT_SCREEN_ROW_BYTES);
+        cursor -= rowBytes;
+        cursor += COMBAT_SCREEN_ROW_BYTES;
     } while (--rowsRemaining!=0x00);
     // EGA leaves the final bitmask in place; it does not restore FF or change write mode.
 }
@@ -227,23 +228,23 @@ void BtechEgaDrawGlyph(uint16_t character,uint16_t x,uint16_t y,uint16_t page)
  * DIV BL and the do/decrement loop; do not replace it with a whole-file read. */
 uint16_t BtechEgaLoadFont(BtechRuntimeStream *stream,uint16_t slot,uint8_t *scratch)
 {
-    if (slot>=COMBAT_FONT_SLOTS || !stream || !btechHostAllocateParagraphs) abort();
-    uint8_t bytesPerRow=(uint8_t)((fontAdvanceWidths[slot]+7)/8);
-    uint16_t bytes=(uint16_t)((uint8_t)(combatFontHeights[slot]*bytesPerRow)*fontCharacterCounts[slot]);
+    if (slot>=COMBAT_FONT_SLOTS || !stream || !btechHostAllocateParagraphs) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: slot>=COMBAT_FONT_SLOTS || !stream || !btechHostAllocateParagraphs");
+    uint8_t bytesPerRow=(fontAdvanceWidths[slot]+7)/8;
+    uint16_t bytes=(uint8_t)(combatFontHeights[slot]*bytesPerRow)*fontCharacterCounts[slot];
     egaFontChunkCounter=bytes;
     uint16_t paragraphs=(uint16_t)((bytes>>4)+((bytes&0x0F)!=0)),largestFreeParagraphs;
     uint8_t *allocation=btechHostAllocateParagraphs(paragraphs,&largestFreeParagraphs);
     if (!allocation) return 0;
     fonts[slot]=(BtechFont){allocation,(size_t)paragraphs*0x10};
     egaFontBuffer=allocation;
-    if (bytes/COMBAT_FONT_READ_BYTES>UINT8_MAX) abort(); // Native DIV BL fault after allocation stores.
+    if (bytes/COMBAT_FONT_READ_BYTES>UINT8_MAX) /* Port emulation of a native CPU fault. */ MW_NATIVE_FAULT("Rejected condition: bytes/COMBAT_FONT_READ_BYTES>UINT8_MAX"); // Native DIV BL fault after allocation stores.
     egaFontChunkCounter=(uint16_t)((bytes/COMBAT_FONT_READ_BYTES)|((bytes%COMBAT_FONT_READ_BYTES)<<8));
     uint16_t cursor=0;
     do
     {
         size_t read=BtechReadStreamElements(scratch,COMBAT_FONT_READ_BYTES,1,stream->file);
-        if (!cursor && read!=1) abort(); // First short block can expose unknown inherited stack bytes.
-        if ((uint32_t)cursor+COMBAT_FONT_READ_BYTES>fonts[slot].byteCount) abort();
+        if (!cursor && read!=1) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !cursor && read!=1"); // First short block can expose unknown inherited stack bytes.
+        if ((uint32_t)cursor+COMBAT_FONT_READ_BYTES>fonts[slot].byteCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (uint32_t)cursor+COMBAT_FONT_READ_BYTES>fonts[slot].byteCount");
         memcpy(egaFontBuffer+cursor,scratch,COMBAT_FONT_READ_BYTES);
         cursor+=COMBAT_FONT_READ_BYTES;
         egaFontChunkCounter=(uint16_t)((egaFontChunkCounter&0xFF00)
@@ -251,7 +252,7 @@ uint16_t BtechEgaLoadFont(BtechRuntimeStream *stream,uint16_t slot,uint8_t *scra
     } while ((uint8_t)egaFontChunkCounter);
     uint16_t tail=egaFontChunkCounter>>8;
     BtechReadStreamElements(scratch,tail,1,stream->file); // Native ignores short counts; retains previous staging bytes.
-    if ((uint32_t)cursor+tail>fonts[slot].byteCount) abort();
+    if ((uint32_t)cursor+tail>fonts[slot].byteCount) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: (uint32_t)cursor+tail>fonts[slot].byteCount");
     memcpy(egaFontBuffer+cursor,scratch,tail);
     return slot;
 }
@@ -261,9 +262,9 @@ uint16_t BtechEgaLoadFont(BtechRuntimeStream *stream,uint16_t slot,uint8_t *scra
  * residue and stay gated, rather than acquiring a fabricated black tail. */
 uint16_t BtechEgaLoadPalette(BtechRuntimeStream *stream,uint16_t slot)
 {
-    if (slot>=COMBAT_PALETTE_SLOTS || !stream) abort();
+    if (slot>=COMBAT_PALETTE_SLOTS || !stream) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: slot>=COMBAT_PALETTE_SLOTS || !stream");
     uint8_t encoded[COMBAT_PALETTE_FILE_BYTES];
-    if (BtechReadStreamElements(encoded,1,sizeof(encoded),stream->file)!=sizeof(encoded)) abort();
+    if (BtechReadStreamElements(encoded,1,sizeof(encoded),stream->file)!=sizeof(encoded)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: BtechReadStreamElements(encoded,1,sizeof(encoded),stream->file)!=sizeof(encoded)");
     uint16_t cursor=0;
     for (uint16_t colour=0;colour<COMBAT_PALETTE_WORDS;++colour,cursor+=2)
         palettePrimarySlots[slot][colour]=(encoded[cursor]&0x0F)|((uint16_t)(encoded[cursor+1]>>4)<<8);
@@ -278,7 +279,7 @@ uint16_t BtechEgaLoadPalette(BtechRuntimeStream *stream,uint16_t slot)
 void BtechEgaSelectPalette(uint16_t slot)
 {
     if (!slot) return;
-    if (slot>=COMBAT_PALETTE_SLOTS || !btechHostSetPaletteRegister) abort();
+    if (slot>=COMBAT_PALETTE_SLOTS || !btechHostSetPaletteRegister) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: slot>=COMBAT_PALETTE_SLOTS || !btechHostSetPaletteRegister");
     for (uint16_t colour=0;colour<COMBAT_EGA_COLOURS;++colour)
     {
         palettePrimarySlots[0][colour]=colour;
@@ -286,7 +287,7 @@ void BtechEgaSelectPalette(uint16_t slot)
         graphicsColourPatterns[colour]=colour;
         palettePrimarySlots[0][colour+COMBAT_EGA_COLOURS]=palettePrimarySlots[slot][colour+COMBAT_EGA_COLOURS];
         paletteSecondarySlots[0][colour+COMBAT_EGA_COLOURS]=paletteSecondarySlots[slot][colour+COMBAT_EGA_COLOURS];
-        uint8_t hardwareColour=(uint8_t)(palettePrimarySlots[slot][colour]&0x0F);
+        uint8_t hardwareColour=palettePrimarySlots[slot][colour]&0x0F;
         if (hardwareColour>=8) hardwareColour+=8;
         btechHostSetPaletteRegister((uint8_t)colour,hardwareColour);
     }

@@ -9,6 +9,11 @@ enum { NAVIGATION_ARRIVAL_HALF_WIDTH=160,AVOIDANCE_PROBES=4,AVOIDANCE_TURNS=3,
     NAVIGATION_JUMP_RANDOM_BOUND=25,AVOIDANCE_JUMP_DISTANCE_MINIMUM=2000,
     NAVIGATION_TACTICAL_CHARGING=2,NAVIGATION_TACTICAL_FLEEING=4,NAVIGATION_TACTICAL_CHARGING_BASE=6,
     AVOIDANCE_TRIG_FRACTION_BITS=14,JUMP_TURN_DAMPING=0x80,JUMP_GRAVITY_STEP=3 };
+/* Authored relative directions: probe 1 follows the positive heading offset,
+ * probe 2 the negative offset. These are not absolute compass directions. */
+enum { AVOIDANCE_PROBE_FORWARD=0,AVOIDANCE_PROBE_POSITIVE_TURN=1,
+    AVOIDANCE_PROBE_NEGATIVE_TURN=2,AVOIDANCE_PROBE_REVERSE=3 };
+enum { AVOIDANCE_TURN_STRAIGHT=0,AVOIDANCE_TURN_POSITIVE=1,AVOIDANCE_TURN_NEGATIVE=2 };
 extern int16_t avoidanceStepX,avoidanceStepY;
 extern const BtechPosition3D *avoidancePosition;
 /* Native5430 references angles at object+14; C retains the owning prefix so
@@ -17,10 +22,10 @@ extern const BtechWorldObjectPrefix *avoidanceOrientation;
 extern uint16_t avoidanceHeadingOffsets[AVOIDANCE_TURNS];
 extern int16_t avoidanceProbeSignsX[AVOIDANCE_PROBES],avoidanceProbeSignsY[AVOIDANCE_PROBES];
 extern const int16_t *avoidanceProbeComponentsX[AVOIDANCE_PROBES],*avoidanceProbeComponentsY[AVOIDANCE_PROBES];
-uint8_t BtechArePlanarPositionsWithinArrivalBounds(const BtechPosition3D *first,const BtechPosition3D *second);
-void BtechNavigateActiveUnitTowardPosition(const BtechPosition3D *destination);
-void BtechSteerActiveUnitAroundObstacles(uint16_t desiredHeading,uint8_t forward);
-uint8_t BtechIsAvoidanceProbeBlocked(uint16_t probe);
-uint16_t BtechIsPositionInForwardObstacleCorridor(const BtechPosition3D *position,int16_t halfWidth);
+uint8_t BtechArePlanarPositionsWithinArrivalBounds(const BtechPosition3D *destinationPosition,const BtechPosition3D *mechPosition);
+void BtechNavigateActiveUnitTowardPosition(const BtechPosition3D *destinationPosition);
+void BtechSteerActiveUnitAroundObstacles(uint16_t desiredHeading,uint8_t moveForward);
+uint8_t BtechIsAvoidanceProbeBlocked(uint16_t probeIndex);
+uint16_t BtechIsPositionInForwardObstacleCorridor(const BtechPosition3D *obstaclePosition,int16_t corridorHalfWidth);
 void BtechDampJumpMotion(void);
 #endif

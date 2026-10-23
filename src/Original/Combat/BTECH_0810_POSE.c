@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_world.h"
 #include "mechwarrior/combat_import.h"
 #include "mechwarrior/combat_startup.h"
@@ -13,14 +14,14 @@ void BtechApplyBodyHeadingToMechParts(void)
     {
         BtechUnitBinding *binding=&unitBindings[slot];
         if (!binding->mech) continue;
-        if (!binding->torso || !binding->positionedLeftLeg) abort();
+        if (!binding->torso || !binding->positionedLeftLeg) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !binding->torso || !binding->positionedLeftLeg");
         binding->torso->object.prefix.orientationC+=binding->positionedLeftLeg->object.prefix.orientationC;
         uint16_t torsoHeading=binding->torso->object.prefix.orientationC;
-        if (!binding->rightArm) abort();
+        if (!binding->rightArm) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !binding->rightArm");
         binding->rightArm->object.prefix.orientationC=torsoHeading;
-        if (!binding->leftArm) abort();
+        if (!binding->leftArm) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !binding->leftArm");
         binding->leftArm->object.prefix.orientationC=torsoHeading;
-        if (!binding->head) abort();
+        if (!binding->head) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !binding->head");
         binding->head->object.prefix.orientationC=torsoHeading;
     }
 }
@@ -32,14 +33,14 @@ void BtechRemoveBodyHeadingFromMechParts(void)
     {
         BtechUnitBinding *binding=&unitBindings[slot];
         if (!binding->mech) continue;
-        if (!binding->torso || !binding->positionedLeftLeg) abort();
+        if (!binding->torso || !binding->positionedLeftLeg) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !binding->torso || !binding->positionedLeftLeg");
         binding->torso->object.prefix.orientationC-=binding->positionedLeftLeg->object.prefix.orientationC;
         uint16_t torsoHeading=binding->torso->object.prefix.orientationC;
-        if (!binding->rightArm) abort();
+        if (!binding->rightArm) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !binding->rightArm");
         binding->rightArm->object.prefix.orientationC=torsoHeading;
-        if (!binding->leftArm) abort();
+        if (!binding->leftArm) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !binding->leftArm");
         binding->leftArm->object.prefix.orientationC=torsoHeading;
-        if (!binding->head) abort();
+        if (!binding->head) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !binding->head");
         binding->head->object.prefix.orientationC=torsoHeading;
     }
 }
@@ -47,11 +48,11 @@ void BtechRemoveBodyHeadingFromMechParts(void)
 /*0810:B383. Seven ordered motion WORD stores, then live player-binding test. */
 void BtechClearObjectMotionTail(BtechPooledWorldObject *object)
 {
-    if (!object) abort();
+    if (!object) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !object");
     object->positionSteps[2]=0;object->positionSteps[1]=0;object->positionSteps[0]=0;
     object->orientationSteps[2]=0;object->orientationSteps[1]=0;object->orientationSteps[0]=0;
     object->forwardStepScale=0;
-    if (!playerUnitBinding) abort();
+    if (!playerUnitBinding) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerUnitBinding");
     if (playerUnitBinding->positionedLeftLeg==object)
     {requestedPlayerForwardStepScale=0;unidentifiedField21=0;}
 }
@@ -72,7 +73,7 @@ void BtechUpdatePlayerMechPose(const BtechWorldObjectPrefix *source)
         playerPoseDistanceAccumulator=0;unidentifiedField26=0;playerPoseFrame=0;
         playerPosePerturbationTicks=PLAYER_POSE_PERTURBATION_TICKS;
     }
-    if (!playerUnitBinding || !playerUnitBinding->positionedLeftLeg) abort();
+    if (!playerUnitBinding || !playerUnitBinding->positionedLeftLeg) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerUnitBinding || !playerUnitBinding->positionedLeftLeg");
     uint16_t forwardStep=playerUnitBinding->positionedLeftLeg->forwardStepScale;
     uint8_t requests=unitControls[0].animationRequestFlags;
     if ((requests&ANIMATION_REQUEST_FALL_POSE) && playerPoseSequence!=ANIMATION_SEQUENCE_FALL)
@@ -120,13 +121,13 @@ void BtechUpdatePlayerMechPose(const BtechWorldObjectPrefix *source)
 resetFrame:
     playerPoseFrame=0;
 drawPose:;
-    if (playerPoseSequence>=PLAYER_POSE_SEQUENCES) abort();
+    if (playerPoseSequence>=PLAYER_POSE_SEQUENCES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: playerPoseSequence>=PLAYER_POSE_SEQUENCES");
     const BtechPoseKeyframe *sequence;
     if (unitControls[0].movementMode==MOVEMENT_MODE_JUMP && playerPoseSequence==ANIMATION_SEQUENCE_BEGIN_JUMP)
     {sequence=playerPoseSequences[ANIMATION_SEQUENCE_IDLE];playerPoseFrame=0;}
     else sequence=playerPoseSequences[playerPoseSequence];
     size_t frame=(size_t)(sequence-playerPoseKeyframes)+(uint16_t)(playerPoseFrame*PLAYER_POSE_KEYFRAME_BYTES)/PLAYER_POSE_KEYFRAME_BYTES;
-    if (frame>=PLAYER_POSE_KEYFRAMES || !source || !playerMechTemplate || !playerPoseObject) abort();
+    if (frame>=PLAYER_POSE_KEYFRAMES || !source || !playerMechTemplate || !playerPoseObject) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: frame>=PLAYER_POSE_KEYFRAMES || !source || !playerMechTemplate || !playerPoseObject");
     const BtechPoseKeyframe *keyframe=&playerPoseKeyframes[frame];
     uint16_t displacement[3]={(uint16_t)keyframe->displacementA,(uint16_t)keyframe->displacementB,(uint16_t)keyframe->displacementC};
     uint16_t height=playerMechTemplate->displayScale;
@@ -140,9 +141,9 @@ drawPose:;
     BtechOrientationBasis basis;uint16_t rotated[3];
     BtechBuildOrientationMatrix(orientation,&basis,0); /* Incoming CH changes only unused returned CX. */
     BtechTransformWordVectorFar(displacement,&basis,rotated);
-    playerPoseObject->object.prefix.position.positionA=source->position.positionA+(uint32_t)(int32_t)(int16_t)rotated[0];
-    playerPoseObject->object.prefix.position.positionB=source->position.positionB+(uint32_t)(int32_t)(int16_t)rotated[1];
-    playerPoseObject->object.prefix.position.positionC=source->position.positionC+(uint32_t)(int32_t)(int16_t)rotated[2];
+    playerPoseObject->object.prefix.position.positionA=source->position.positionA+(uint32_t)(int16_t)rotated[0];
+    playerPoseObject->object.prefix.position.positionB=source->position.positionB+(uint32_t)(int16_t)rotated[1];
+    playerPoseObject->object.prefix.position.positionC=source->position.positionC+(uint32_t)(int16_t)rotated[2];
     playerPoseObject->object.prefix.orientationA+=keyframe->orientationStepA;
     if (playerImpactThisTick) playerPosePerturbationTicks=0;
     if ((int16_t)playerPosePerturbationTicks<PLAYER_POSE_PERTURBATION_TICKS)
@@ -171,7 +172,7 @@ drawPose:;
         }
     }
     else ++playerPoseFrame;
-    if (playerPoseSequence>=PLAYER_POSE_SEQUENCES) abort();
+    if (playerPoseSequence>=PLAYER_POSE_SEQUENCES) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: playerPoseSequence>=PLAYER_POSE_SEQUENCES");
     if ((int16_t)playerPoseFrameCounts[playerPoseSequence]<=(int16_t)playerPoseFrame)
     {
         switch (playerPoseSequence)
@@ -181,9 +182,9 @@ drawPose:;
             playerPoseFrame=0;break;
         case ANIMATION_SEQUENCE_BEGIN_JUMP:
             unitControls[0].movementMode=MOVEMENT_MODE_JUMP;
-            if (!playerMechState) abort();
+            if (!playerMechState) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !playerMechState");
             playerMechState->jumpCharge-=JUMP_LAUNCH_CHARGE_COST;
-            playerUnitBinding->positionedLeftLeg->positionSteps[2]=(int16_t)(uint16_t)(playerMechTemplate->jumpSpeedLimit*2);
+            playerUnitBinding->positionedLeftLeg->positionSteps[2]=(int16_t)(playerMechTemplate->jumpSpeedLimit*JUMP_LAUNCH_VERTICAL_SPEED_MULTIPLIER);
             playerPoseFrame=0;
             BtechPlaySoundIfEnabled(PLAYER_JUMP_EVENT,PLAYER_JUMP_SOUND_DELAY);break;
         case ANIMATION_SEQUENCE_FALL:
@@ -204,17 +205,17 @@ drawPose:;
  * remain live; arbitrary partial-object and binding-overwrite aliases do not. */
 void BtechSynchronizeMechRenderParts(void)
 {
-    if (!activeUnitControl || activeUnitControl->unitSlot>=COMBAT_MECH_SLOTS) abort();
+    if (!activeUnitControl || activeUnitControl->unitSlot>=COMBAT_MECH_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !activeUnitControl || activeUnitControl->unitSlot>=COMBAT_MECH_SLOTS");
     BtechUnitBinding *binding=&unitBindings[activeUnitControl->unitSlot];
-    if (!binding->positionedLeftLeg || !binding->rightLeg) abort();
+    if (!binding->positionedLeftLeg || !binding->rightLeg) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !binding->positionedLeftLeg || !binding->rightLeg");
     binding->rightLeg->object.prefix.position=binding->positionedLeftLeg->object.prefix.position;
-    if (!binding->torso) abort(); /* Gate each near-zero alias at its first access, after prior stores. */
+    if (!binding->torso) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !binding->torso"); /* Gate each near-zero alias at its first access, after prior stores. */
     binding->torso->object.prefix.position=binding->rightLeg->object.prefix.position;
-    if (!binding->leftArm) abort();
+    if (!binding->leftArm) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !binding->leftArm");
     binding->leftArm->object.prefix.position=binding->positionedLeftLeg->object.prefix.position;
-    if (!binding->rightArm) abort();
+    if (!binding->rightArm) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !binding->rightArm");
     binding->rightArm->object.prefix.position=binding->leftArm->object.prefix.position;
-    if (!binding->head) abort();
+    if (!binding->head) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !binding->head");
     binding->head->object.prefix.position=binding->positionedLeftLeg->object.prefix.position;
     uint16_t torsoTwist=binding->torso->object.prefix.orientationC;
     /* Each native orientation chain copies A, B, C in that order. */

@@ -1,3 +1,4 @@
+#include "mechwarrior/port_diagnostics.h"
 #include "mechwarrior/combat_runtime.h"
 #include "mechwarrior/combat_video.h"
 #include "mechwarrior/combat_startup.h"
@@ -19,7 +20,7 @@ void BtechGraphicsNoOperation(uint16_t character,uint16_t x,uint16_t y,uint16_t 
 uint16_t BtechSelectCombatRenderer(uint8_t adapterOverride,uint8_t allowedMask)
 {
     static const uint8_t overrideMasks[]={0,1,2,4,8,0x10,0x20,0x40,0x80};
-    if (adapterOverride>=sizeof(overrideMasks)) abort();
+    if (adapterOverride>=sizeof(overrideMasks)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: adapterOverride>=sizeof(overrideMasks)");
     videoAdapterAllowedMask=adapterOverride?overrideMasks[adapterOverride]:allowedMask;
     videoAdapter=(uint8_t)BtechGetBiosDisplayAdapterBits();
     combatRendererKind=(uint8_t)BtechDetectVideoAdapter();
@@ -48,7 +49,7 @@ uint16_t BtechSelectCombatRenderer(uint8_t adapterOverride,uint8_t allowedMask)
         graphicsSwapScreenPages=BtechEgaSwapScreenPages;
         BtechInitializeEgaVideo(0); /* Native dispatch copy exhaustsCX. */
     }
-    if (!btechHostWriteBiosWord) abort();
+    if (!btechHostWriteBiosWord) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostWriteBiosWord");
     btechHostWriteBiosWord(0xF0,0x304E); /* Physical0000:04F0, not game state. */
     copySourcePageSelector=frontPageSelector;
     drawPageSelector=backPageSelector;
@@ -58,7 +59,7 @@ uint16_t BtechSelectCombatRenderer(uint8_t adapterOverride,uint8_t allowedMask)
 /*1BF5:0455. FAR tail through the installed backend; DX:AX is a byte count. */
 uint32_t BtechGetCaptureStorageSize(uint16_t width,uint16_t height)
 {
-    if (!graphicsCaptureStorageSize) abort();
+    if (!graphicsCaptureStorageSize) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !graphicsCaptureStorageSize");
     return graphicsCaptureStorageSize(width,height);
 }
 
@@ -66,21 +67,21 @@ uint32_t BtechGetCaptureStorageSize(uint16_t width,uint16_t height)
  * the original offset0/selector pair, not the remaining four native WORDs. */
 void BtechCaptureScreenRectangle(BtechResourceAllocation buffer,uint16_t x,uint16_t y,uint16_t width,uint16_t height)
 {
-    if (!graphicsCaptureRectangle) abort();
+    if (!graphicsCaptureRectangle) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !graphicsCaptureRectangle");
     graphicsCaptureRectangle(buffer,x,y,width,height);
 }
 
 /*1BF5:0459. Same native buffer, but destination is live drawPage. */
 void BtechRestoreScreenRectangle(BtechResourceAllocation buffer,uint16_t x,uint16_t y,uint16_t width,uint16_t height)
 {
-    if (!graphicsRestoreRectangle) abort();
+    if (!graphicsRestoreRectangle) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !graphicsRestoreRectangle");
     graphicsRestoreRectangle(buffer,x,y,width,height);
 }
 
 /*1BF5:0449. FAR tail to the selected bitmap backend, three native WORDs. */
 void BtechDrawBitmap(const BtechBitmap *bitmap,int16_t x,int16_t y)
 {
-    if (!graphicsDrawBitmap) abort();
+    if (!graphicsDrawBitmap) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !graphicsDrawBitmap");
     graphicsDrawBitmap(bitmap,(uint16_t)x,(uint16_t)y);
 }
 
@@ -89,8 +90,8 @@ void BtechDrawBitmap(const BtechBitmap *bitmap,int16_t x,int16_t y)
  * Incidental BX/DX results are unobserved by the supported EGA installer. */
 uint16_t BtechDetectVideoAdapter(void)
 {
-    if (videoAdapterAllowedMask&~COMBAT_VIDEO_ALLOWED) abort();
-    if (!btechHostQueryEgaInfo || !btechHostReadBiosByte) abort();
+    if (videoAdapterAllowedMask&~COMBAT_VIDEO_ALLOWED) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: videoAdapterAllowedMask&~COMBAT_VIDEO_ALLOWED");
+    if (!btechHostQueryEgaInfo || !btechHostReadBiosByte) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostQueryEgaInfo || !btechHostReadBiosByte");
     if ((videoAdapterAllowedMask&COMBAT_VIDEO_EGA) && btechHostQueryEgaInfo()!=0x0010)
     {
         if (btechHostReadBiosByte(0x87)&8) BtechSetBiosTextModeAndAdapterBits(2);
@@ -99,12 +100,12 @@ uint16_t BtechDetectVideoAdapter(void)
     else if (videoAdapterAllowedMask&5)
     {
         /*00FD: write/read CRTC register0F, including the native0F restore. */
-        if (!btechHostReadPort || !btechHostWritePort || !btechHostDelayLoops) abort();
+        if (!btechHostReadPort || !btechHostWritePort || !btechHostDelayLoops) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostReadPort || !btechHostWritePort || !btechHostDelayLoops");
         btechHostWritePort(0x3D4,0x0F);btechHostWritePort(0x3D5,0x66);
         btechHostDelayLoops(0x64);
         uint8_t readback=btechHostReadPort(0x3D5);
         btechHostWritePort(0x3D5,0x0F);
-        if (readback==0x66) abort(); /* CGA/Tandy initialization not converted. */
+        if (readback==0x66) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: readback==0x66"); /* CGA/Tandy initialization not converted. */
     }
     return 0;
 }
@@ -112,7 +113,7 @@ uint16_t BtechDetectVideoAdapter(void)
 /*1BF5:02AA. Equipment display bits, not a modern adapter classification. */
 uint16_t BtechGetBiosDisplayAdapterBits(void)
 {
-    if (!btechHostReadBiosByte) abort();
+    if (!btechHostReadBiosByte) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !btechHostReadBiosByte");
     return (btechHostReadBiosByte(BIOS_VIDEO_EQUIPMENT)&0x30)>>4;
 }
 
@@ -127,7 +128,7 @@ void BtechDrawNearText(const char *text,int16_t x,int16_t y)
     if (screenPolygonNeedsClip)
     {
         if (y<clipMinimumY) return;
-        int16_t bottom=(int16_t)(((uint16_t)y&0xFF00)|(uint8_t)((uint8_t)y+combatFontHeights[0]));
+        int16_t bottom=((uint16_t)y&0xFF00)|(uint8_t)((uint8_t)y+combatFontHeights[0]);
         if (bottom>clipMaximumY) return;
     }
     while (*text)
@@ -136,11 +137,11 @@ void BtechDrawNearText(const char *text,int16_t x,int16_t y)
         if (!screenPolygonNeedsClip || x>=clipMinimumX)
         {
             if (screenPolygonNeedsClip
-                && (int16_t)(uint16_t)(x+fontAdvanceWidths[0]-1)>clipMaximumX) return;
-            if (!graphicsDrawGlyph) abort();
+                && (int16_t)(x+fontAdvanceWidths[0]-1)>clipMaximumX) return;
+            if (!graphicsDrawGlyph) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !graphicsDrawGlyph");
             graphicsDrawGlyph(character,(uint16_t)x,(uint16_t)y,page);
         }
-        x=(int16_t)(uint16_t)(x+fontAdvanceWidths[0]);
+        x=(int16_t)(x+fontAdvanceWidths[0]);
     }
 }
 
@@ -155,7 +156,7 @@ uint16_t BtechLoadFontSlot(const char *filename,BtechRuntimeStream *stream)
     uint16_t openedHere=0;
     if (!stream || !BtechIsRegisteredTaggedStream(stream))
     {
-        if (!filename || strlen(filename)+(strchr(filename,'.')?1:5)>sizeof(scratch.bytes)) abort(); // Native filename spill is outside this port.
+        if (!filename || strlen(filename)+(strchr(filename,'.')?1:5)>sizeof(scratch.bytes)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !filename || strlen(filename)+(strchr(filename,'.')?1:5)>sizeof(scratch.bytes)"); // Native filename spill is outside this port.
         strcpy((char *)scratch.bytes,filename);
         if (!strchr((char *)scratch.bytes,'.')) strcat((char *)scratch.bytes,".fnt");
         stream=BtechOpenTaggedResourceStream((char *)scratch.bytes);openedHere=1;
@@ -168,7 +169,7 @@ uint16_t BtechLoadFontSlot(const char *filename,BtechRuntimeStream *stream)
         combatFontHeights[slot]=scratch.metrics.heightPixels;
         fontFirstCharacters[slot]=scratch.metrics.firstCharacter;
         fontCharacterCounts[slot]=scratch.metrics.characterCount;
-        if (!graphicsLoadFont) abort();
+        if (!graphicsLoadFont) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !graphicsLoadFont");
         slot=graphicsLoadFont(stream,slot,scratch.bytes);
     }
     if (openedHere) BtechCloseTaggedResourceStream(stream);
@@ -217,21 +218,21 @@ uint16_t BtechLoadPaletteSlot(const char *filename,BtechRuntimeStream *stream)
         uint16_t openedHere=0;
         if (!stream || !BtechIsRegisteredTaggedStream(stream))
         {
-            if (!filename || strlen(filename)+(strchr(filename,'.')?1:5)>sizeof(name)) abort();
+            if (!filename || strlen(filename)+(strchr(filename,'.')?1:5)>sizeof(name)) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !filename || strlen(filename)+(strchr(filename,'.')?1:5)>sizeof(name)");
             strcpy(name,filename);
             if (!strchr(name,'.')) strcat(name,".pal");
             stream=BtechOpenTaggedResourceStream(name);openedHere=1;
         }
-        if (combatRendererKind!=COMBAT_VIDEO_EGA) abort();
+        if (combatRendererKind!=COMBAT_VIDEO_EGA) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: combatRendererKind!=COMBAT_VIDEO_EGA");
         if (BtechFindResourceTagPosition(stream,"PAL:EGA:",0)==UINT32_MAX) slot=0;
         else
         {
-            if (!graphicsLoadPalette) abort();
+            if (!graphicsLoadPalette) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !graphicsLoadPalette");
             slot=graphicsLoadPalette(stream,slot);
         }
         if (openedHere) BtechCloseTaggedResourceStream(stream);
     }
-    if (slot>=COMBAT_PALETTE_SLOTS) abort(); // Foreign callback's wrapped registration aliases remain gated.
+    if (slot>=COMBAT_PALETTE_SLOTS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: slot>=COMBAT_PALETTE_SLOTS"); // Foreign callback's wrapped registration aliases remain gated.
     paletteSlotIds[slot]=(uint8_t)slot; // Failure clears active ID, not palette contents.
     return slot;
 }
@@ -239,9 +240,9 @@ uint16_t BtechLoadPaletteSlot(const char *filename,BtechRuntimeStream *stream)
 /*1BF5:2092. Query sign-extends the active BYTE. Backend precedes ID store. */
 uint16_t BtechSelectPaletteSlot(int16_t slot)
 {
-    if (!slot) return (uint16_t)(int16_t)(int8_t)paletteSlotIds[0];
+    if (!slot) return (int8_t)paletteSlotIds[0];
     if (!BtechIsPaletteSlotLoaded(slot)) return 0;
-    if (!graphicsSelectPalette) abort();
+    if (!graphicsSelectPalette) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !graphicsSelectPalette");
     graphicsSelectPalette((uint16_t)slot);
     paletteSlotIds[0]=(uint8_t)slot;
     return (uint16_t)slot;

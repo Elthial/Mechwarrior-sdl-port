@@ -20,6 +20,20 @@ command and damage screens, and returns mission results to the company.
 
 Full-campaign acceptance, every mission objective and all chassis/scenario
 combinations remain incomplete. Navigation and containment cases need more play.
+All eight chassis have headless real-startup/cockpit and repeated-deployment
+checks. A supervised factory-contract win has also exercised damage and
+ammunition import, payment, salvage, save/restore and subsequent repair/rearm.
+These checks do not certify every contract or match the original visually.
+Terrain probes use bounded grid coordinates and preserve the mission's retreat
+rules. Line of sight uses initialized surface queries. Targeting uses actual
+Mechs and objective health; resource ordering uses real surface metadata.
+Missing targets and map projections do not read unrelated memory or abort.
+Full cosmetic-effect and projectile pools reject extra allocations safely;
+required startup allocation failures retain the fatal-message/shutdown path.
+Retrieval deployment and a real failed-contract return have
+additional coverage, including damaged-Mech inspection and refused repairs.
+This does not establish successful objective destruction or a played multi-stage
+contract. The authored story graph is checked, not a completed story playthrough.
 CGA/Tandy and alternate sound backends are not release-qualified. Linux/macOS
 playable builds have not been qualified. No complete DOS visual/audio equivalence
 is claimed.
