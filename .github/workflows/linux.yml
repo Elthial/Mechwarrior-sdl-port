@@ -1,0 +1,54 @@
+name: linux playable build
+on:
+  push:
+    branches: [main, develop, 'ci/**']
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      commit:
+        type: string
+        required: true
+      label:
+        type: string
+        required: true
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit || github.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: libsdl-org/SDL
+          ref: 535d80badefc83c5c527ec5748f2a20d6a9310fe # SDL 3.2.0
+          path: dependencies/SDL
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned CMake
+        run: python -m pip install cmake==3.31.6
+      - name: Install Linux desktop and audio development libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential pkg-config libasound2-dev libpulse-dev libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxtst-dev libxkbcommon-dev libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev libegl1-mesa-dev libdbus-1-dev libudev-dev libwayland-dev wayland-protocols libdecor-0-dev libpipewire-0.3-dev
+      - name: Test archive packaging
+        run: python -m unittest discover -s tools -p test_build_package.py -v
+      - name: Build and verify extracted runtime package
+        env:
+          PACKAGE_LABEL: ${{ inputs.label || github.sha }}
+        run: python tools/build_package.py --sdl dependencies/SDL --label "$PACKAGE_LABEL"
+        shell: bash
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-linux
+          if-no-files-found: error
+          path: |
+            dist/*.tar.gz
+            dist/*.sha256

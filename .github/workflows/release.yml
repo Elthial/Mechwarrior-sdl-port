@@ -1,0 +1,108 @@
+name: Release Windows and Linux
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing version tag to build and release (vX.Y.Z)
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    outputs:
+      commit: ${{ steps.identity.outputs.commit }}
+      tag: ${{ steps.identity.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Resolve existing version tag
+        id: identity
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?$ ]]
+          commit=$(git rev-parse --verify "refs/tags/$RELEASE_TAG^{commit}")
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+          echo "tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+  windows:
+    needs: prepare
+    uses: ./.github/workflows/windows.yml
+    with:
+      commit: ${{ needs.prepare.outputs.commit }}
+      label: ${{ needs.prepare.outputs.tag }}
+  linux:
+    needs: prepare
+    uses: ./.github/workflows/linux.yml
+    with:
+      commit: ${{ needs.prepare.outputs.commit }}
+      label: ${{ needs.prepare.outputs.tag }}
+  publish:
+    needs: [prepare, windows, linux]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.commit }}
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          merge-multiple: true
+          path: release-assets
+      - name: Check both archives and generate combined checksums
+        env:
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+        run: |
+          set -euo pipefail
+          cd release-assets
+          test -s "MechWarrior-$RELEASE_TAG-windows-x64.zip"
+          test -s "MechWarrior-$RELEASE_TAG-linux-x86_64.tar.gz"
+          sha256sum --check "MechWarrior-$RELEASE_TAG-windows-x64.zip.sha256"
+          sha256sum --check "MechWarrior-$RELEASE_TAG-linux-x86_64.tar.gz.sha256"
+          sha256sum "MechWarrior-$RELEASE_TAG-windows-x64.zip" "MechWarrior-$RELEASE_TAG-linux-x86_64.tar.gz" > "MechWarrior-$RELEASE_TAG-SHA256SUMS.txt"
+      - name: Publish matching release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+          RELEASE_COMMIT: ${{ needs.prepare.outputs.commit }}
+        run: |
+          set -euo pipefail
+          # Refuse to replace assets of an existing release on a rerun.
+          git fetch origin "refs/tags/$RELEASE_TAG"
+          test "$(git rev-parse FETCH_HEAD^{commit})" = "$RELEASE_COMMIT"
+          cat > release-notes.txt <<'NOTES'
+          Experimental MechWarrior (1989) SDL preservation port.
+
+          Windows x64 ZIP and Linux x86-64 tar.gz packages include configuration,
+          SDL and replaceable audio libraries. Verify downloads with SHA256SUMS.
+          Linux targets Ubuntu 24.04 / glibc 2.39+ with desktop and audio services.
+
+          An original game installation is required. No game data, saves or MT-32
+          ROMs are included. Extract to a writable directory and run
+          `mechwarrior.exe <game-directory>` or `./mechwarrior <game-directory>`.
+
+          Automated validation builds the playable target and checks that the
+          extracted executable loads and prints usage. Gameplay, rendering and
+          audio compatibility are not established by this check.
+          NOTES
+          args=()
+          if [[ "$RELEASE_TAG" == *-* ]]; then args+=(--prerelease); fi
+          gh release create "$RELEASE_TAG" --verify-tag \
+            --title "MechWarrior SDL Port $RELEASE_TAG" --notes-file release-notes.txt \
+            "${args[@]}" \
+            "release-assets/MechWarrior-$RELEASE_TAG-windows-x64.zip" \
+            "release-assets/MechWarrior-$RELEASE_TAG-linux-x86_64.tar.gz" \
+            "release-assets/MechWarrior-$RELEASE_TAG-SHA256SUMS.txt"
