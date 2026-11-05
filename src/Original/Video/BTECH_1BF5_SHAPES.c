@@ -1,5 +1,7 @@
 #include "mechwarrior/port_diagnostics.h"
+#include "mechwarrior/combat_polygons.h"
 #include "mechwarrior/combat_video.h"
+#include "mechwarrior/combat_polygons.h"
 #include <stdlib.h>
 
 /*1BF5:1D04. Clipped-away sides do not acquire replacement borders. Vertical

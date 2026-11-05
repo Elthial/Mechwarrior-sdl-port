@@ -26,10 +26,10 @@ bool BtechImportPoseInitialData(const uint8_t *data,size_t bytes)
     activeUnitPositionedObject=NULL;activeUnitTorsoObject=NULL;
     activeMechState=NULL;activeMechTemplate=NULL;
     for (uint16_t byte=0;byte<UNIT_ANIMATION_MAP_BYTES;++byte)
-        animationFrameMapStorage[byte]=data[0x245E+byte];
+        animationFrameMapStorage[byte]=data[0x245E +byte];
     for (uint16_t sequence=0;sequence<UNIT_ANIMATION_SEQUENCES;++sequence)
     {
-        uint16_t offset=MwReadNativeWord(data,0x248E+sequence*2);
+        uint16_t offset=MwReadNativeWord(data,0x248E +sequence*2);
         if (offset<0x245E || offset>=0x248E) return false;
         animationFrameMaps[sequence]=&animationFrameMapStorage[offset-0x245E];
         animationLogicalFrameCounts[sequence]=data[0x24A0+sequence];
@@ -41,16 +41,16 @@ bool BtechImportPoseInitialData(const uint8_t *data,size_t bytes)
             chassisAnimationAvailability[chassis][sequence]=data[0x24C6+chassis*UNIT_ANIMATION_SEQUENCES+sequence];
     for (uint16_t frame=0;frame<PLAYER_POSE_KEYFRAMES;++frame)
     {
-        uint16_t offset=0x250E+frame*PLAYER_POSE_KEYFRAME_BYTES;
+        uint16_t offset=0x250E +frame*PLAYER_POSE_KEYFRAME_BYTES;
         playerPoseKeyframes[frame]=(BtechPoseKeyframe){(int16_t)MwReadNativeWord(data,offset),
             (int16_t)MwReadNativeWord(data,offset+2),(int16_t)MwReadNativeWord(data,offset+4),MwReadNativeWord(data,offset+6)};
     }
     for (uint16_t sequence=0;sequence<PLAYER_POSE_SEQUENCES;++sequence)
     {
-        uint16_t offset=MwReadNativeWord(data,0x264E+sequence*2);
+        uint16_t offset=MwReadNativeWord(data,0x264E +sequence*2);
         if (offset<0x250E || offset>=0x264E || (offset-0x250E)%PLAYER_POSE_KEYFRAME_BYTES) return false;
         playerPoseSequences[sequence]=&playerPoseKeyframes[(offset-0x250E)/PLAYER_POSE_KEYFRAME_BYTES];
-        playerPoseFrameCounts[sequence]=MwReadNativeWord(data,0x265E+sequence*2);
+        playerPoseFrameCounts[sequence]=MwReadNativeWord(data,0x265E +sequence*2);
     }
     playerPoseDistanceAccumulator=MwReadNativeWord(data,0x5432);
     playerPosePerturbationTicks=MwReadNativeWord(data,0x5434);

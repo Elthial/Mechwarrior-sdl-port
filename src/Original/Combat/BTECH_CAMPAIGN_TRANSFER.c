@@ -21,6 +21,6 @@ void BtechDecodeCampaignImport(const uint8_t bytes[CAMPAIGN_EXCHANGE_BYTES],Btec
         company->ownedUnitKinds[slot]=MwReadNativeWord(bytes,0x00EA+slot*2);
         memcpy(&company->ownedDamage[slot],bytes+0x0102+slot*sizeof(CampaignUnitDamage),sizeof(CampaignUnitDamage));
         for (uint16_t group=0;group<6;++group)
-            company->ammoQuantities[group][slot]=MwReadNativeWord(bytes,0x025E+group*0x18+slot*2);
+            company->ammoQuantities[group][slot]=MwReadNativeWord(bytes,0x025E +group*0x18+slot*2);
     }
 }

@@ -83,7 +83,7 @@ void BtechDrawCockpitHeadingStrip(uint16_t bodyHeading,int16_t torsoTwist)
     BtechDrawClippedLine(0x9E,(int16_t)(y+0x14),0xA0,(int16_t)(y+0x14));
     BtechDrawClippedLine(0x9D,(int16_t)(y+0x15),0xA1,(int16_t)(y+0x15));
     BtechWriteClippedPixel((int16_t)(0x9F-torsoMarkerOffset),(int16_t)(y+2),landscapeCameraColourRows[hudColourSchemeIndex][combatLandscapeIndex].headingTickPaletteIndex);
-    BtechDrawClippedLine((int16_t)(0x9E-torsoMarkerOffset),(int16_t)(y+1),(int16_t)(0xA0-torsoMarkerOffset),(int16_t)(y+1));
+    BtechDrawClippedLine((int16_t)(0x9E -torsoMarkerOffset),(int16_t)(y+1),(int16_t)(0xA0-torsoMarkerOffset),(int16_t)(y+1));
     BtechDrawClippedLine((int16_t)(0x9D-torsoMarkerOffset),y,(int16_t)(0xA1-torsoMarkerOffset),y);
     clipMinimumX=savedMinimumX;clipMaximumX=savedMaximumX;
     screenPolygonNeedsClip=false;egaBitmapEnabledPlanes=COMBAT_EGA_PLANE_MASK_ALL;

@@ -1,5 +1,7 @@
 #include "mechwarrior/port_diagnostics.h"
+#include "mechwarrior/combat_scene.h"
 #include "mechwarrior/combat_ballistics.h"
+#include "mechwarrior/combat_scene.h"
 #include "mechwarrior/combat_damage.h"
 #include "mechwarrior/combat_effects.h"
 #include "mechwarrior/combat_projectiles.h"

@@ -52,13 +52,13 @@ bool BtechImportOrderInitialData(const uint8_t *data,size_t bytes)
     orderLocationText=orderPanelText+0x028D-ORDER_PANEL_TEXT_START;
     orderBaseText=orderPanelText+0x029A-ORDER_PANEL_TEXT_START;
     orderDamageText=orderPanelText+0x02A7-ORDER_PANEL_TEXT_START;
-    orderWeaponsText=orderPanelText+0x02AE-ORDER_PANEL_TEXT_START;
+    orderWeaponsText=orderPanelText+0x02AE -ORDER_PANEL_TEXT_START;
     for (uint16_t code=0;code<ORDER_DISPLAY_CODES;++code) orderDisplayIndices[code]=MwReadNativeWord(data,0x02C4+code*2);
     for (uint16_t scheme=0;scheme<2;++scheme)
         for (uint16_t condition=0;condition<4;++condition)
         {
-            orderEngineConditionColours[scheme][condition]=MwReadNativeWord(data,0x030E+scheme*8+condition*2);
-            orderSystemConditionColours[scheme][condition]=MwReadNativeWord(data,0x031E+scheme*8+condition*2);
+            orderEngineConditionColours[scheme][condition]=MwReadNativeWord(data,0x030E +scheme*8+condition*2);
+            orderSystemConditionColours[scheme][condition]=MwReadNativeWord(data,0x031E +scheme*8+condition*2);
         }
     for (uint16_t kind=0;kind<COMBAT_WEAPON_KINDS;++kind)
     {mountedWeaponCountsByKind[kind]=MwReadNativeWord(data,0x4F32+kind*2);operationalWeaponCountsByKind[kind]=MwReadNativeWord(data,0x4F46+kind*2);}

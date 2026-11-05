@@ -59,7 +59,7 @@ bool BtechImportCockpitInitialData(const uint8_t *data,size_t bytes)
     for (uint16_t chassis=0;chassis<COMBAT_MECH_TEMPLATES;++chassis)
     {
         uint16_t offset=MwReadNativeWord(data,0x04A8+chassis*2);
-        if (offset<0x034E || offset>=0x038E || !memchr(data+offset,0,0x038E-offset)) return false;
+        if (offset<0x034E || offset>=0x038E || !memchr(data+offset,0,0x038E -offset)) return false;
         inspectionDamageBitmapFilenames[chassis]=inspectionBitmapNames+offset-0x034E;
         inspectionDiagramOrigins[chassis]=(BtechHudGaugeAnchor){(int16_t)MwReadNativeWord(data,0x1878+chassis*4),(int16_t)MwReadNativeWord(data,0x187A+chassis*4)};
         for (uint16_t armor=0;armor<COMBAT_ARMOR_LOCATIONS;++armor)
@@ -87,7 +87,7 @@ bool BtechImportCockpitInitialData(const uint8_t *data,size_t bytes)
         memcpy(inspectionLegendText[legend],data+offset,(size_t)(end-data-offset)+1);
     }
     for (uint16_t index=0;index<3;++index) twoHitSystemConditionLabelIndices[index]=MwReadNativeWord(data,0x04D8+index*2);
-    for (uint16_t index=0;index<4;++index) engineConditionLabelIndices[index]=MwReadNativeWord(data,0x04DE+index*2);
+    for (uint16_t index=0;index<4;++index) engineConditionLabelIndices[index]=MwReadNativeWord(data,0x04DE +index*2);
     for (uint16_t index=0;index<5;++index) actuatorConditionLabelIndices[index]=MwReadNativeWord(data,0x04E6+index*2);
     memcpy(simulationText,data+0x0076,sizeof(simulationText));
     memcpy(pausedText,data+0x0081,sizeof(pausedText));
@@ -129,7 +129,7 @@ bool BtechImportCockpitInitialData(const uint8_t *data,size_t bytes)
     if (zoomLabel[6] || automaticWeaponsLabel[3] || reactorShutdownText[24]) return false;
     memcpy(subsystemLampLabels,data+0x23BE,sizeof(subsystemLampLabels));
     for (uint16_t label=0;label<4;++label) if (subsystemLampLabels[label][1]) return false;
-    for (uint16_t word=0;word<14;++word) subsystemLampColourTables.words[word]=MwReadNativeWord(data,0x23CE+word*2);
+    for (uint16_t word=0;word<14;++word) subsystemLampColourTables.words[word]=MwReadNativeWord(data,0x23CE +word*2);
     for (uint16_t scheme=0;scheme<COMBAT_HUD_COLOUR_SCHEMES;++scheme)
     {
         BtechHudColourScheme *colours=&hudColourSchemes[scheme];uint16_t base=0x1F3C+scheme*0x64;

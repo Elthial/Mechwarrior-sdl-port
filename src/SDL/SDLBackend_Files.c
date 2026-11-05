@@ -278,7 +278,7 @@ bool MwHostLoadCampaignMusicData(const char *executablePath)
     bool loaded=false;
     if (fread(header,1,sizeof(header),file)!=sizeof(header) || header[0]!='M' || header[1]!='Z') goto finished;
     uint16_t paragraphs=(uint16_t)(header[8]|((uint16_t)header[9]<<8));
-    long position=(long)paragraphs*0x10+(0x28BE-0x0800)*0x10;
+    long position=(long)paragraphs*0x10+(0x28BE -0x0800)*0x10;
     if ((uint32_t)paragraphs*0x10<sizeof(header) || fseek(file,position,SEEK_SET)!=0) goto finished;
     if (fread(data,1,sizeof(data),file)!=sizeof(data) || ferror(file)) goto finished;
     loaded=MwImportCampaignMusicData(data,sizeof(data));

@@ -46,12 +46,12 @@ bool BtechImportToneInitialData(const uint8_t *data,size_t bytes,const uint8_t *
         soundEventIndices[channel]=MwReadNativeWord(toneData,0x001D+channel*2);
         soundPriorities[channel]=MwReadNativeWord(toneData,0x009F+channel*2);
         channelFlags[channel]=(BtechToneChannelFlags){toneData[0x00DF+channel*2],toneData[0x00E0+channel*2]};
-        uint16_t offset=MwReadNativeWord(toneData,0x039E+channel*2);
+        uint16_t offset=MwReadNativeWord(toneData,0x039E +channel*2);
         if (offset<0x00FE || (offset-0x00FE)%0x30 || (offset-0x00FE)/0x30>=COMBAT_TONE_CHANNELS) return false;
         toneChannelStates[channel]=&toneChannels[(offset-0x00FE)/0x30];
         /* All authored state WORDs are zero. Reject a different image rather
          * than interpreting an aligned host record as little-endian file data. */
-        for (uint16_t byte=0;byte<0x30;++byte) if (toneData[0x00FE+channel*0x30+byte]) return false;
+        for (uint16_t byte=0;byte<0x30;++byte) if (toneData[0x00FE +channel*0x30+byte]) return false;
         toneChannels[channel]=(BtechToneChannelState){0};
     }
     soundTimerInstalled=data[0x28D0];

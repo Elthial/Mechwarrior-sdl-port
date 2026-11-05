@@ -45,7 +45,7 @@ bool BtechImportCombatStageInitialData(const uint8_t *data,size_t byteCount)
         damageTransferArmorLocations[location]=MwReadNativeWord(data,0x0E4C+location*2);
         criticalTransferBodyLocations[location]=MwReadNativeWord(data,0x0E28+location*2);
     }
-    for (uint16_t location=0;location<4;++location) actuatorIndicesByBodyLocation[location]=MwReadNativeWord(data,0x0E5E+location*2);
+    for (uint16_t location=0;location<4;++location) actuatorIndicesByBodyLocation[location]=MwReadNativeWord(data,0x0E5E +location*2);
     memcpy(combatDefaultCommanderNameBytes,data+0x0978,sizeof(combatDefaultCommanderNameBytes));
     salvageEntryCount=MwReadNativeWord(data,0x0976);
     for (uint16_t chassis=0;chassis<COMBAT_MECH_TEMPLATES;++chassis)
@@ -59,7 +59,7 @@ bool BtechImportCombatStageInitialData(const uint8_t *data,size_t byteCount)
     for (uint16_t i=0;i<9;++i)
     {
         armorToBodyLocations[i]=MwReadNativeWord(data,0x0E3A+i*2);
-        campaignBodyTierByArmorLocation[i]=MwReadNativeWord(data,0x08AE+i*2);
+        campaignBodyTierByArmorLocation[i]=MwReadNativeWord(data,0x08AE +i*2);
         for (uint16_t stage=0;stage<3;++stage)
             combatContinuationProfiles[i].missionCodes[stage]=MwReadNativeWord(data,0x08F6+i*6+stage*2);
     }
@@ -105,7 +105,7 @@ bool BtechImportMechInitialData(const uint8_t *data,size_t byteCount)
 {
     if (!data || byteCount<NATIVE_SEGMENT_BYTE_COUNT) return false;
     for (uint16_t tier=0;tier<COMBAT_HEAT_THRESHOLDS;++tier)
-        heatAimJitterThresholds[tier]=MwReadNativeWord(data,0x271E+tier*2);
+        heatAimJitterThresholds[tier]=MwReadNativeWord(data,0x271E +tier*2);
     for (uint16_t kind=0;kind<COMBAT_WEAPON_KINDS;++kind)
     {
         const uint8_t *bytes=data+0x0EEC+kind*0x16;
@@ -146,7 +146,7 @@ bool BtechImportMechInitialData(const uint8_t *data,size_t byteCount)
             BtechWeaponMount *weapon=&mech->weaponMounts[mount];
             weapon->weaponKind=(int16_t)MwReadNativeWord(bytes,0x004A+mount*8);
             weapon->bodyLocation=MwReadNativeWord(bytes,0x004C+mount*8);
-            weapon->unidentifiedField4=MwReadNativeWord(bytes,0x004E+mount*8);
+            weapon->unidentifiedField4=MwReadNativeWord(bytes,0x004E +mount*8);
             weapon->unidentifiedField6=MwReadNativeWord(bytes,0x0050+mount*8);
         }
         for (uint16_t family=0;family<COMBAT_AMMO_FAMILIES;++family)

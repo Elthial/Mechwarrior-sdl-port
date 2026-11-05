@@ -110,25 +110,25 @@ bool BtechImportWorldInitialData(const uint8_t *data,size_t bytes,const uint8_t 
     for (uint16_t turn=0;turn<AVOIDANCE_TURNS;++turn) avoidanceHeadingOffsets[turn]=MwReadNativeWord(data,0x2438+turn*2);
     for (uint16_t probe=0;probe<AVOIDANCE_PROBES;++probe)
     {
-        avoidanceProbeSignsX[probe]=(int16_t)MwReadNativeWord(data,0x243E+probe*2);
+        avoidanceProbeSignsX[probe]=(int16_t)MwReadNativeWord(data,0x243E +probe*2);
         avoidanceProbeSignsY[probe]=(int16_t)MwReadNativeWord(data,0x2446+probe*2);
-        uint16_t x=MwReadNativeWord(data,0x244E+probe*2),y=MwReadNativeWord(data,0x2456+probe*2);
+        uint16_t x=MwReadNativeWord(data,0x244E +probe*2),y=MwReadNativeWord(data,0x2456+probe*2);
         if ((x!=0x542A && x!=0x542C) || (y!=0x542A && y!=0x542C)) return false;
         avoidanceProbeComponentsX[probe]=x==0x542A?&avoidanceStepX:&avoidanceStepY;
         avoidanceProbeComponentsY[probe]=y==0x542A?&avoidanceStepX:&avoidanceStepY;
     }
     for (uint16_t kind=0;kind<COMBAT_WEAPON_KINDS;++kind) missileClusterRowByWeapon[kind]=(int16_t)MwReadNativeWord(data,0x234A+kind*2);
     for (uint16_t row=0;row<COMBAT_MISSILE_CLUSTER_ROWS;++row)
-        for (uint16_t roll=0;roll<COMBAT_MISSILE_CLUSTER_ROLLS;++roll) missileClusterRows[row][roll]=MwReadNativeWord(data,0x235E+row*0x18+roll*2);
+        for (uint16_t roll=0;roll<COMBAT_MISSILE_CLUSTER_ROLLS;++roll) missileClusterRows[row][roll]=MwReadNativeWord(data,0x235E +row*0x18+roll*2);
     for (uint16_t arc=0;arc<ATTACK_ARCS;++arc)
         for (uint16_t roll=0;roll<HIT_LOCATION_ROLLS;++roll) hitLocationRows[arc][roll]=MwReadNativeWord(data,0x26BC+arc*0x16+roll*2);
     for (uint16_t band=0;band<WEAPON_RANGE_BANDS;++band) rangeHitModifiers[band]=MwReadNativeWord(data,0x2714+band*2);
     for (uint16_t profile=0;profile<COMBAT_PROJECTILE_PROFILES;++profile)
     {
-        uint16_t at=0x0E6E+profile*8;
+        uint16_t at=0x0E6E +profile*8;
         projectileProfiles[profile]=(BtechProjectileProfile){MwReadNativeWord(data,at),MwReadNativeWord(data,at+2),MwReadNativeWord(data,at+4),MwReadNativeWord(data,at+6)};
     }
-    for (uint16_t kind=0;kind<COMBAT_WEAPON_KINDS;++kind) projectileProfileIndicesByWeapon[kind]=MwReadNativeWord(data,0x232E+kind*2);
+    for (uint16_t kind=0;kind<COMBAT_WEAPON_KINDS;++kind) projectileProfileIndicesByWeapon[kind]=MwReadNativeWord(data,0x232E +kind*2);
     for (uint16_t location=0;location<COMBAT_BODY_LOCATIONS;++location) bodyLocationReferenceIndices[location]=MwReadNativeWord(data,0x0EBC+location*2);
     for (uint16_t location=0;location<COMBAT_BODY_LOCATIONS;++location) muzzleLateralOffsetsByBodyLocation[location]=(int16_t)MwReadNativeWord(data,0x2302+location*2);
     for (uint16_t kind=0;kind<COMBAT_WEAPON_KINDS;++kind) beamHalfWidths[kind]=MwReadNativeWord(data,0x2802+kind*2);
