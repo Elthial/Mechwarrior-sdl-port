@@ -82,7 +82,7 @@ bool MwImportCampaignMusicData(const uint8_t *data,size_t byteCount)
     for (size_t i=0;i<sizeof(audioVoices);++i) ((uint8_t *)audioVoices)[i]=data[0x0400+i];
     for (size_t i=0;i<sizeof(audioChannels);++i) ((uint8_t *)audioChannels)[i]=data[0x04C6+i];
     for (size_t i=0;i<sizeof(audioDummyChannel);++i) ((uint8_t *)&audioDummyChannel)[i]=data[0x0646+i];
-    for (size_t i=0;i<sizeof(midiSysex);++i) ((uint8_t *)&midiSysex)[i]=data[0x07CE+i];
+    for (size_t i=0;i<sizeof(midiSysex);++i) ((uint8_t *)&midiSysex)[i]=data[0x07CE +i];
     selectedAudioBackend=backendOffset==MIDI_MPU_BACKEND_OFFSET?&mpuBackend
         :backendOffset==MIDI_ADLIB_BACKEND_OFFSET?&adlibBackend:backendOffset?&speakerBackend:NULL;
     return true;

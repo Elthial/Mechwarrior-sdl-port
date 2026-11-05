@@ -148,8 +148,8 @@ bool BtechImportVideoInitialData(const uint8_t *data,size_t bytes)
     ellipsePageSelector=MwReadNativeWord(data,0x4151);
     for (uint16_t row=0;row<COMBAT_ELLIPSE_ROWS;++row)
     {ellipseLeftInsets[row]=data[0x401C+row];ellipseBorderWidths[row]=data[0x4083+row];ellipseInteriorWidths[row]=data[0x40EA+row];}
-    for (uint16_t row=0;row<COMBAT_SCREEN_HEIGHT;++row) graphicsRowOffsets[row]=MwReadNativeWord(data,0x334E+row*2);
-    for (uint16_t row=0;row<0x15C;++row) herculesDisplayRowOffsets[row]=MwReadNativeWord(data,0x34DE+row*2);
+    for (uint16_t row=0;row<COMBAT_SCREEN_HEIGHT;++row) graphicsRowOffsets[row]=MwReadNativeWord(data,0x334E +row*2);
+    for (uint16_t row=0;row<0x15C;++row) herculesDisplayRowOffsets[row]=MwReadNativeWord(data,0x34DE +row*2);
     for (uint16_t slot=0;slot<COMBAT_PALETTE_SLOTS;++slot)
         for (uint16_t colour=0;colour<COMBAT_PALETTE_WORDS;++colour)
         {

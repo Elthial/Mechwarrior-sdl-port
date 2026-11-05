@@ -224,7 +224,7 @@ MwUiMenu travelHouseBrowserMenu={travelHouseBrowserRecords,TRAVEL_HOUSE_BROWSER_
 MwUiMenu travelHousePlanetMenu={travelHousePlanetRecords,TRAVEL_HOUSE_PLANET_RECORD_COUNT,
     NULL,&planetRecordOffsets[(0x65FA-0x6570)/sizeof(uint16_t)],8};
 MwUiMenu travelMapMenu={travelMapRecords,TRAVEL_MAP_MENU_RECORD_COUNT,
-    &planetRecordStorage[0x697E-PLANET_RECORDS_START]};
+    &planetRecordStorage[0x697E -PLANET_RECORDS_START]};
 MwPanelDescriptor travelDestinationHeaderPanel;
 MwPanelDescriptor travelCostPanel, travelConfirmPanel, travelBrowsePanel;
 MwServiceCaption travelDestinationHeaderLabels[2];
@@ -436,7 +436,7 @@ MwCampaignEvent *eventChoiceBranches[3];
 uint16_t eventChoiceSavedFontIndex;
 MwUiRecord eventTwoChoiceRecords[2],eventThreeChoiceRecords[3];
 /* FF-link probes alias existing planet text bytes, NOT new globals at6C0E/2A. */
-MwUiMenu eventTwoChoiceMenu={eventTwoChoiceRecords,2,&planetRecordStorage[0x6C0E-PLANET_RECORDS_START],NULL,0};
+MwUiMenu eventTwoChoiceMenu={eventTwoChoiceRecords,2,&planetRecordStorage[0x6C0E -PLANET_RECORDS_START],NULL,0};
 MwUiMenu eventThreeChoiceMenu={eventThreeChoiceRecords,3,&planetRecordStorage[0x6C2A-PLANET_RECORDS_START],NULL,0};
 MwEventClassHandler eventClassHandlers[7]={MwShowCampaignEventText,MwShowCampaignEventText,
     MwShowCampaignEventText,MwShowClassThreeEventPages,MwShowCampaignEventText,
@@ -1070,7 +1070,7 @@ bool MwImportCampaignInitialData(const uint8_t *data, size_t byteCount)
     for (uint16_t entry=0;entry<AMMO_PROFILE_ENTRY_COUNT;++entry)
     {
         unitAmmoProfileEntries[entry].ammoFamily=MwReadNativeWord(data,(uint16_t)(0x2F3C+entry*4));
-        unitAmmoProfileEntries[entry].quantityMaximum=MwReadNativeWord(data,(uint16_t)(0x2F3E+entry*4));
+        unitAmmoProfileEntries[entry].quantityMaximum=MwReadNativeWord(data,(uint16_t)(0x2F3E +entry*4));
     }
     for (uint16_t kind=0;kind<CAMPAIGN_MECH_KIND_COUNT;++kind)
     {
@@ -1083,7 +1083,7 @@ bool MwImportCampaignInitialData(const uint8_t *data, size_t byteCount)
         unitAmmoProfiles[kind]=&unitAmmoProfileEntries[(profile-0x2F3C)/4];
         weaponRepairPricesByKind[kind]=&weaponRepairPrices[(prices-0x3C2F)/2];
         mechBodyDiagramLayoutsByKind[kind]=layout?&mechBodyDiagramLayouts[(layout-0x3CEE)/0x50]:NULL;
-        uint16_t labelOffset=MwReadNativeWord(data,(uint16_t)(0x36AE+kind*2)),label=0;
+        uint16_t labelOffset=MwReadNativeWord(data,(uint16_t)(0x36AE +kind*2)),label=0;
         while (data[labelOffset]!=0xFF && label<CAMPAIGN_WEAPON_SLOTS+1)
         {
             if (!ImportInitialString(data,labelOffset,repairWeaponLabelStorage[kind][label],0x0F)) return false;
@@ -1893,7 +1893,7 @@ bool MwImportCampaignInitialData(const uint8_t *data, size_t byteCount)
         for (uint16_t region=0;region<10;++region)
         {
             MwMechDiagramRectangle *rectangle=region?&mechBodyDiagramLayouts[chassis].bodyRegions[region-1]:&mechBodyDiagramLayouts[chassis].background;
-            uint16_t at=0x3CEE+chassis*0x50+region*8;
+            uint16_t at=0x3CEE +chassis*0x50+region*8;
             rectangle->x=MwReadNativeWord(data,at);rectangle->y=MwReadNativeWord(data,(uint16_t)(at+2));
             rectangle->width=MwReadNativeWord(data,(uint16_t)(at+4));rectangle->height=MwReadNativeWord(data,(uint16_t)(at+6));
         }
@@ -2069,7 +2069,7 @@ static bool ImportPilotUiData(const uint8_t *data)
     recruitInterviewPanel.lines[2]=&recruitInterviewLabels[2].display;
     for (uint16_t i=0;i<3;++i)
     {
-        uint16_t offset=0x222E+i*CAMPAIGN_UI_RECORD_BYTES;
+        uint16_t offset=0x222E +i*CAMPAIGN_UI_RECORD_BYTES;
         MwUiRecord *record=&companyMenu.records[i];
         record->enabled=data[offset];record->textRecord=data[offset+1];
         record->x=MwReadNativeWord(data,offset+2);record->y=MwReadNativeWord(data,offset+4);
@@ -2150,7 +2150,7 @@ static bool ImportPilotUiData(const uint8_t *data)
     }
     for (uint16_t i=0;i<PILOT_ASSIGNMENT_CAPTION_COUNT;++i)
     {
-        uint16_t offset=MwReadNativeWord(data,0x247E+i*2);
+        uint16_t offset=MwReadNativeWord(data,0x247E +i*2);
         pilotAssignmentCaptionColours[i]=data[offset];
         if (!ImportInitialString(data,offset+1,pilotAssignmentCaptions[i],sizeof(pilotAssignmentCaptions[i]))) return false;
     }

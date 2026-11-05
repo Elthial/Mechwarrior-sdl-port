@@ -1,4 +1,5 @@
 #include "mechwarrior/port_diagnostics.h"
+#include "mechwarrior/combat_polygons.h"
 #include "mechwarrior/combat_video.h"
 #include <stdlib.h>
 

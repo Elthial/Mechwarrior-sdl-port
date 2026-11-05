@@ -1,4 +1,5 @@
 #include "mechwarrior/port_diagnostics.h"
+#include "mechwarrior/combat_scene.h"
 #include "mechwarrior/combat_navigation.h"
 #include "mechwarrior/combat_movement.h"
 #include "mechwarrior/combat_pose.h"
