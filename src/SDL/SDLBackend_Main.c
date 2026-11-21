@@ -28,7 +28,7 @@ static void ReleaseChildResources(void)
 static bool ExecuteChild(const char *filename,const MwCampaignLaunch *launch,uint8_t audioCode,uint8_t *exitCode)
 {
     char path[4096];
-    if (snprintf(path,sizeof(path),"%s/%s",installationDirectory,filename)>=(int)sizeof(path)) return true;
+    if (!MwHostJoinGamePath(path,sizeof(path),installationDirectory,filename)) return true;
     FILE *file=fopen(path,"rb");
     if (!file) return true;
     if (fclose(file)!=0) return true;
@@ -92,7 +92,7 @@ static bool LoadOverlay(const char *filename,uint16_t selector)
     (void)selector;
     if (strcmp(filename,"MW_EGA.EXE")) MwSdlFail("Only the native EGA overlay is converted");
     char path[4096];
-    if (snprintf(path,sizeof(path),"%s/%s",installationDirectory,filename)>=(int)sizeof(path)) return true;
+    if (!MwHostJoinGamePath(path,sizeof(path),installationDirectory,filename)) return true;
     return !MwHostLoadEgaInitialData(path);
 }
 static uint16_t ResetMouse(void) {return UINT16_MAX;} /* SDL supplies the INT33-equivalent boundary. */
@@ -124,10 +124,10 @@ bool MwSdlInitialize(const char *gameDirectory,const char *captureDirectory)
     if (initialized || strlen(gameDirectory)>=sizeof(installationDirectory)) return false;
     strcpy(installationDirectory,gameDirectory);
     char path[4096];
-    if (snprintf(path,sizeof(path),"%s/MW_MAIN.EXE",gameDirectory)>=(int)sizeof(path)
+    if (!MwHostJoinGamePath(path,sizeof(path),gameDirectory,"MW_MAIN.EXE")
         || !MwHostLoadCampaignInitialData(path) || !MwHostLoadCampaignEventText(path)
         || !MwHostLoadCampaignMusicData(path) || !MwHostSetOriginalGameDirectory(gameDirectory)) return false;
-    if (snprintf(path,sizeof(path),"%s/MW.EXE",gameDirectory)>=(int)sizeof(path) || !LoadResidentLauncher(path)) return false;
+    if (!MwHostJoinGamePath(path,sizeof(path),gameDirectory,"MW.EXE") || !LoadResidentLauncher(path)) return false;
     if (!SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_EVENTS)) return false;
     const char *configuredSaveDirectory=getenv("MECHWARRIOR_SAVE_DIRECTORY");
     bool saveDirectorySet;

@@ -1,5 +1,6 @@
 #include "SDLBackend.h"
 #include "mechwarrior/launcher.h"
+#include "mechwarrior/dos_files.h"
 #include "mechwarrior/combat_installation.h"
 #include "mechwarrior/combat_startup.h"
 #include "mechwarrior/combat_runtime.h"
@@ -114,7 +115,7 @@ static FILE *OpenStream(const char *filename,const char *mode)
      * working directory or let a native filename escape the installation. */
     if (!filename[0] || strpbrk(filename,"/\\:")) return NULL;
     char path[4096];
-    if (snprintf(path,sizeof(path),"%s/%s",gameDirectory,filename)>=(int)sizeof(path)) return NULL;
+    if (!MwHostJoinGamePath(path,sizeof(path),gameDirectory,filename)) return NULL;
     return fopen(path,mode);
 }
 static int16_t CloseHandle(uint16_t handle)
