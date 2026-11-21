@@ -4,7 +4,7 @@
 #include "mechwarrior/combat_world.h"
 /* Modal text references replace the unobserved near string offsets. */
 typedef struct BtechDialogMessagePair {const char *firstText,*secondText;} BtechDialogMessagePair;
-extern char simulationText[11],pausedText[7],retreatQuestionText[14],retreatChoiceText[14];
+extern char simulationText[11],pausedText[7],retreatQuestionText[15],retreatChoiceText[14];
 extern uint16_t savedLineColour,savedFillColour,savedCopySourcePage,savedDrawPage;
 extern uint16_t savedTextBackground,savedTextForeground,savedPolygonFilled,savedPolygonClip;
 void BtechShowSimulationPausedDialog(void);
