@@ -13,6 +13,7 @@
 #include <io.h>
 #else
 #include <dirent.h>
+#include <strings.h>
 #include <sys/stat.h>
 #endif
 
@@ -21,6 +22,25 @@ enum { DOS_FIRST_FILE_HANDLE = 5, DOS_FILE_HANDLE_COUNT = 20, HOST_PATH_BYTES = 
     DOS_ERROR_TOO_MANY_FILES = 4, DOS_ERROR_ACCESS_DENIED = 5,
     DOS_ERROR_INVALID_HANDLE = 6 };
 static FILE *fileStreams[DOS_FILE_HANDLE_COUNT];
+bool MwHostJoinGamePath(char *path,size_t pathBytes,const char *directory,const char *name)
+{
+    const char *separator=directory[0]?"/":"";
+    if (snprintf(path,pathBytes,"%s%s%s",directory,separator,name)>=(int)pathBytes) return false;
+#if !defined(_WIN32)
+    struct stat attributes;
+    if (stat(path,&attributes)==0 || strpbrk(name,"/\\:")) return true;
+    DIR *listing=opendir(directory[0]?directory:".");
+    if (!listing) return true;
+    for (struct dirent *entry;(entry=readdir(listing))!=NULL;)
+        if (!strcasecmp(entry->d_name,name))
+        {
+            bool fits=snprintf(path,pathBytes,"%s%s%s",directory,separator,entry->d_name)<(int)pathBytes;
+            closedir(listing);return fits;
+        }
+    closedir(listing);
+#endif
+    return true;
+}
 static char originalGameDirectory[HOST_PATH_BYTES];
 static char campaignSaveDirectory[HOST_PATH_BYTES];
 static char dtaFilename[13];
@@ -57,8 +77,7 @@ static bool HostOpenFileReadWrite(const char *filename, uint16_t *handleOrError)
     const char *directory=saveFile?campaignSaveDirectory:originalGameDirectory;
     if (saveFile && (!directory[0] || strpbrk(filename,"/\\:")))
     {*handleOrError=DOS_ERROR_ACCESS_DENIED;return true;} /* Confined host DOS save mount. */
-    if (snprintf(path, sizeof(path), "%s%s%s", directory,
-        directory[0] ? "/" : "", filename) >= (int)sizeof(path))
+    if (!MwHostJoinGamePath(path,sizeof(path),directory,filename))
     { *handleOrError = DOS_ERROR_PATH_NOT_FOUND; return true; }
     for (uint16_t handle = DOS_FIRST_FILE_HANDLE; handle < DOS_FILE_HANDLE_COUNT; ++handle)
     {
@@ -105,7 +124,7 @@ static bool HostCreateFile(const char *filename,uint16_t *handleOrError)
     char path[HOST_PATH_BYTES];
     if (!campaignSaveDirectory[0] || strpbrk(filename,"/\\:"))
     {*handleOrError=DOS_ERROR_ACCESS_DENIED;return true;}
-    if (snprintf(path,sizeof(path),"%s/%s",campaignSaveDirectory,filename)>=(int)sizeof(path))
+    if (!MwHostJoinGamePath(path,sizeof(path),campaignSaveDirectory,filename))
     {*handleOrError=DOS_ERROR_PATH_NOT_FOUND;return true;}
     for (uint16_t handle=DOS_FIRST_FILE_HANDLE;handle<DOS_FILE_HANDLE_COUNT;++handle)
     {

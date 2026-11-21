@@ -2,6 +2,7 @@
 #define MECHWARRIOR_DOS_FILES_H
 #include <stdbool.h>
 #include <stdint.h>
+#include <stddef.h>
 
 /* INT21 file boundary: true means Carry set; AX output is count/handle/error. */
 typedef struct MwDosFileCalls
@@ -22,5 +23,11 @@ extern MwDosFileCalls mwDosFiles;
 extern void (*mwHostValidateFileDestination)(const uint8_t *buffer,uint16_t bytesRead);
 bool MwHostSetOriginalGameDirectory(const char *directory);
 bool MwHostSetCampaignSaveDirectory(const char *directory);
+/* DIRECTORY/NAME for a flat DOS file name, as DOS finds it: the exact name
+ * if it exists, else the one entry whose name matches ignoring case (an
+ * install copied with upper- or mixed-case names on a case-sensitive file
+ * system), else the exact name, so a missing file fails as before. False
+ * only if the path does not fit. */
+bool MwHostJoinGamePath(char *path,size_t pathBytes,const char *directory,const char *name);
 void MwHostCloseProcessFiles(void);
 #endif
