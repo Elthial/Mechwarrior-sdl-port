@@ -27,7 +27,7 @@ BtechSubsystemLampColours subsystemLampColourTables;
 char subsystemLampLabels[4][2];
 uint16_t rememberedSensorTargetSlot;
 char zoomLabel[7],automaticWeaponsLabel[4],reactorShutdownText[25];
-char simulationText[11],pausedText[7],retreatQuestionText[14],retreatChoiceText[14];
+char simulationText[11],pausedText[7],retreatQuestionText[15],retreatChoiceText[14];
 uint16_t savedLineColour,savedFillColour,savedCopySourcePage,savedDrawPage;
 uint16_t savedTextBackground,savedTextForeground,savedPolygonFilled,savedPolygonClip;
 BtechDecimalFieldAndTargetCache decimalFieldAndTargetCache;
