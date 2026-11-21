@@ -61,9 +61,13 @@ void BtechDrawHeadingRadar(void)
             if (!unitVisibility[0][slot]) continue;
             paletteIndex=hudColourSchemeIndex?Combat_Pal_EGA_Green:Combat_Pal_EGA_LightRed;
         }
-        /* Do not repair671B by silently skipping absent eligible contacts. */
-        if (!unitBindings[slot].torso) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: !unitBindings[slot].torso");
-        const BtechPosition3D *contact=&unitBindings[slot].torso->object.prefix.position;
+        /* An empty slot (no Mech, condition 0, friendly) still passes the
+         * tests above. The original reads its zero torso near pointer:
+         * [0+8] and [0+0Ch] are DS:0008/000C, constant null-segment words,
+         * so the contact is plotted where they put it, if in range. */
+        const BtechPosition3D nullContact=BtechReadNullNearWorldObjectPosition();
+        const BtechPosition3D *contact=unitBindings[slot].torso
+            ?&unitBindings[slot].torso->object.prefix.position:&nullContact;
         int16_t relativeX=(int16_t)BtechShiftSignedDwordRight(contact->positionA-player->position.positionA,(uint8_t)radarRangeShift);
         int16_t relativeY=(int16_t)BtechShiftSignedDwordRight(contact->positionB-player->position.positionB,(uint8_t)radarRangeShift);
         BtechRotateSignedWordPair(&relativeX,&relativeY,(uint16_t)(0-heading));

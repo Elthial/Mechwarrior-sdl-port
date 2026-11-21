@@ -100,11 +100,20 @@ uint8_t archiveStreamScratch[0x32];
 
 /* Installation IO, not a runtime memory mirror. Strings are resolved exactly
  * once from authored near directories. Runtime consumers use real C strings. */
+uint8_t nullNearSegment[NULL_NEAR_SEGMENT_BYTES];
+static uint32_t NullSegmentDword(uint16_t offset)
+{return (uint32_t)MwReadNativeWord(nullNearSegment,offset)|((uint32_t)MwReadNativeWord(nullNearSegment,(uint16_t)(offset+2))<<16);}
+BtechPosition3D BtechReadNullNearWorldObjectPosition(void)
+{
+    BtechPosition3D position={NullSegmentDword(0x0008),NullSegmentDword(0x000C),NullSegmentDword(0x0010)};
+    return position;
+}
 bool BtechImportWorldInitialData(const uint8_t *data,size_t bytes,const uint8_t *segment22B6,size_t segmentBytes)
 {
     if (!data || bytes<0x10000 || !segment22B6 || segmentBytes<0x6473) return false;
     if (MwReadNativeWord(data,0x4A6C) || MwReadNativeWord(data,0x4A6E)) return false;
     borrowedArchiveWorkspace=NULL;
+    memcpy(nullNearSegment,data,sizeof(nullNearSegment));
     memcpy(boundaryMaskByCode,data+0x0EB6,sizeof(boundaryMaskByCode));
     for (uint16_t side=0;side<2;++side) opposingSideFirstUnitSlots[side]=MwReadNativeWord(data,0x2434+side*2);
     for (uint16_t turn=0;turn<AVOIDANCE_TURNS;++turn) avoidanceHeadingOffsets[turn]=MwReadNativeWord(data,0x2438+turn*2);

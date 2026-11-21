@@ -111,6 +111,16 @@ extern uint16_t specialTargetDamageRemaining;
 extern uint16_t headingRatioAngles[0x200]; /* Authored CS22B6, not304E. */
 extern uint8_t vertexNearPlaneState[0xFF];
 bool BtechImportWorldInitialData(const uint8_t *data,size_t bytes,const uint8_t *segment22B6,size_t segmentBytes);
+/* DS:0000, what a null near pointer reads and writes in the original. It is
+ * the C runtime's null segment (eight zero bytes, then its copyright bytes,
+ * checked at exit), loaded from the image. Two original paths go through it:
+ * the heading radar reads an empty slot's zero torso pointer (position at
+ * DS:0008), and the order screen edits an empty lance panel's zero control
+ * pointer (a 0x55-byte unit control at DS:0000). Writes stay here, so the
+ * two alias as they do natively. */
+enum { NULL_NEAR_SEGMENT_BYTES=0x60 };
+extern uint8_t nullNearSegment[NULL_NEAR_SEGMENT_BYTES];
+BtechPosition3D BtechReadNullNearWorldObjectPosition(void);
 void BtechLoadScenarioAndWorld(uint16_t scenarioIndex);
 void BtechLoadTerrainWorldResources(void);
 void BtechLoadCombatChassisResourceBanks(void);

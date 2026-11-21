@@ -7,6 +7,69 @@
 #include "mechwarrior/combat_tactics.h"
 #include <stdlib.h>
 
+/* An empty lance panel's control pointer is zero. The original never tests
+ * it on these paths: it reads and writes the unit control at DS:0000, the
+ * C runtime's null segment (nullNearSegment). While an order procedure runs,
+ * the 0x55 native bytes are decoded into nullControl; they are written back
+ * as the outermost procedure leaves, so a later read (here, or the radar's
+ * DS:0008) sees what the original would. */
+static BtechUnitControlState nullControl;
+static unsigned nullControlDepth;
+static bool nullControlLoaded;
+static void NullField(bool load,uint16_t offset,void *field,size_t bytes)
+{
+    uint32_t value=0;
+    if (load)
+    {
+        for (size_t i=0;i<bytes;++i) value|=(uint32_t)nullNearSegment[offset+i]<<(8*i);
+        if (bytes==1) *(uint8_t *)field=(uint8_t)value;
+        else if (bytes==2) *(uint16_t *)field=(uint16_t)value;
+        else *(uint32_t *)field=value;
+        return;
+    }
+    if (bytes==1) value=*(const uint8_t *)field;
+    else if (bytes==2) value=*(const uint16_t *)field;
+    else value=*(const uint32_t *)field;
+    for (size_t i=0;i<bytes;++i) nullNearSegment[offset+i]=(uint8_t)(value>>(8*i));
+}
+#define NULL_FIELD(load,offset,field) NullField(load,(uint16_t)(offset),&(field),sizeof(field))
+static void TransferNullControl(bool load)
+{
+    BtechUnitControlState *c=&nullControl;
+    _Static_assert(NULL_NEAR_SEGMENT_BYTES>=0x55,"native unit control");
+    NULL_FIELD(load,0x00,c->commandCode);
+    for (unsigned axis=0;axis<3;++axis) NULL_FIELD(load,0x02 + axis*4,c->orderDestinationPosition[axis]);
+    NULL_FIELD(load,0x0E,c->trackedUnitOrSpecialSlot);NULL_FIELD(load,0x10,c->sideIndex);NULL_FIELD(load,0x12,c->unitSlot);
+    NULL_FIELD(load,0x14,c->targetUnitSlot);NULL_FIELD(load,0x16,c->conditionScoreOrExitCode);
+    NULL_FIELD(load,0x18,c->lastAiFiringTargetSlot);NULL_FIELD(load,0x1A,c->lastDirectHitUnitSlot);
+    NULL_FIELD(load,0x1C,c->targetSelectionCount);NULL_FIELD(load,0x1E,c->navigationReferenceSlot);
+    for (unsigned axis=0;axis<3;++axis) NULL_FIELD(load,0x20 + axis*4,c->trackedPosition[axis]);
+    NULL_FIELD(load,0x2C,c->positionKnowledgeCode);
+    for (unsigned axis=0;axis<3;++axis) NULL_FIELD(load,0x2E + axis*4,c->lastVisiblePosition[axis]);
+    NULL_FIELD(load,0x3A,c->avoidanceReverseFlag);NULL_FIELD(load,0x3C,c->avoidanceTurnIndex);
+    NULL_FIELD(load,0x3E,c->maneuverFlags);NULL_FIELD(load,0x3F,c->unidentifiedField14);
+    NULL_FIELD(load,0x40,c->twiceReadyWeaponRange);NULL_FIELD(load,0x42,c->readyWeaponRangeMinusMargin);
+    NULL_FIELD(load,0x44,c->quarterReadyWeaponRange);NULL_FIELD(load,0x46,c->tacticalState);NULL_FIELD(load,0x48,c->decisionCountdown);
+    NULL_FIELD(load,0x4A,c->unidentifiedField16[0]);NULL_FIELD(load,0x4B,c->unidentifiedField16[1]);
+    NULL_FIELD(load,0x4C,c->animationSequence);NULL_FIELD(load,0x4E,c->biasedHeadingSnapshot);
+    NULL_FIELD(load,0x50,c->animationRequestFlags);NULL_FIELD(load,0x51,c->movementMode);NULL_FIELD(load,0x53,c->animationFrame);
+}
+static void EnterOrderProcedure(void) {++nullControlDepth;}
+static void LeaveOrderProcedure(void)
+{
+    if (--nullControlDepth || !nullControlLoaded) return;
+    TransferNullControl(false);nullControlLoaded=false;
+}
+/* The selected panel's control, or the null segment's for an empty panel. */
+static BtechUnitControlState *SelectedOrderControl(void)
+{
+    if (selectedLanceOrderPanel>=ORDER_WINGMATE_PANELS) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: selectedLanceOrderPanel>=ORDER_WINGMATE_PANELS");
+    BtechUnitControlState *control=lanceOrderControls[selectedLanceOrderPanel];
+    if (control) return control;
+    if (!nullControlLoaded) {TransferNullControl(true);nullControlLoaded=true;}
+    return &nullControl;
+}
+
 /*17FB:1927. Genuine FAR three-WORD DWORD/shift entry. Signed nonpositive
  * counts leave the value unchanged; the native loop does not mask CL. */
 uint32_t BtechShiftDwordLeftPair(uint32_t value,uint16_t shiftCount)
@@ -113,10 +176,9 @@ uint16_t BtechClassifyOrderSelection(uint16_t commandCode)
 
 /*17FB:0C62. Existing tracked target, actual target, living special objective,
  * then first known non-disabled enemy. No range/visibility recomputation. */
-void BtechSeedSelectedOrderTracking(void)
+static void OrderSeedSelectedOrderTrackingBody(void)
 {
-    if (selectedLanceOrderPanel>=ORDER_WINGMATE_PANELS || !lanceOrderControls[selectedLanceOrderPanel]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: selectedLanceOrderPanel>=ORDER_WINGMATE_PANELS || !lanceOrderControls[selectedLanceOrderPanel]");
-    BtechUnitControlState *control=lanceOrderControls[selectedLanceOrderPanel];
+    BtechUnitControlState *control=SelectedOrderControl();
     if (control->trackedUnitOrSpecialSlot==-1)
     {
         if (control->targetUnitSlot!=-1) control->trackedUnitOrSpecialSlot=control->targetUnitSlot;
@@ -130,11 +192,15 @@ void BtechSeedSelectedOrderTracking(void)
     }
     control->navigationReferenceSlot=control->trackedUnitOrSpecialSlot;
 }
+void BtechSeedSelectedOrderTracking(void)
+{
+    EnterOrderProcedure();OrderSeedSelectedOrderTrackingBody();LeaveOrderProcedure();
+}
 
 /*17FB:0666. Original global keys, confirm/commit and navigation share this
  * procedure. Q/Space still fall through after viewport setup; saved scan is
  * not reread after pause. No invented editor/update loop or DI argument. */
-void BtechEditSelectedUnitOrders(void)
+static void OrderEditSelectedUnitOrdersBody(void)
 {
     uint16_t scan=combatInputScanCode;
     switch (scan)
@@ -158,23 +224,20 @@ void BtechEditSelectedUnitOrders(void)
     if (scan!=COMBAT_KEY_ENTER && !combatInputButton1State && !combatInputButton0State)
     {
         if (orderPanelMode==ORDER_PANEL_SUMMARY || (int16_t)orderPanelMode>=ORDER_PANEL_DAMAGE) goto navigation;
-        if (selectedLanceOrderPanel>=ORDER_WINGMATE_PANELS || !lanceOrderControls[selectedLanceOrderPanel]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: selectedLanceOrderPanel>=ORDER_WINGMATE_PANELS || !lanceOrderControls[selectedLanceOrderPanel]");
-        if (lanceOrderControls[selectedLanceOrderPanel]->conditionScoreOrExitCode>=COMBAT_CONDITION_SCORE_MINIMUM) goto navigation;
+        if (SelectedOrderControl()->conditionScoreOrExitCode>=COMBAT_CONDITION_SCORE_MINIMUM) goto navigation;
     }
     if (orderPanelMode==ORDER_PANEL_SUMMARY)
     {
         switch (orderActionSelection)
         {
         case ORDER_ACTION_COMMAND:
-            if (selectedLanceOrderPanel>=ORDER_WINGMATE_PANELS || !lanceOrderControls[selectedLanceOrderPanel]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: selectedLanceOrderPanel>=ORDER_WINGMATE_PANELS || !lanceOrderControls[selectedLanceOrderPanel]");
-            control=lanceOrderControls[selectedLanceOrderPanel];
+            control=SelectedOrderControl();
             if (control->conditionScoreOrExitCode<=COMBAT_CONDITION_SCORE_MINIMUM) goto navigation;
             orderPanelMode=ORDER_PANEL_COMMAND;pendingOrderCommand=control->commandCode;
             selectedOrderPanelRow=control->commandCode+orderSelectionFirstRows[1];
             break;
         case ORDER_ACTION_REFERENCE:
-            if (selectedLanceOrderPanel>=ORDER_WINGMATE_PANELS || !lanceOrderControls[selectedLanceOrderPanel]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: selectedLanceOrderPanel>=ORDER_WINGMATE_PANELS || !lanceOrderControls[selectedLanceOrderPanel]");
-            control=lanceOrderControls[selectedLanceOrderPanel];
+            control=SelectedOrderControl();
             if (control->conditionScoreOrExitCode<=COMBAT_CONDITION_SCORE_MINIMUM) goto navigation;
             if (control->commandCode==COMBAT_ORDER_ACT_ON_OWN)
             {
@@ -201,8 +264,7 @@ void BtechEditSelectedUnitOrders(void)
     {
         if (orderPanelMode==ORDER_PANEL_COMMAND)
         {
-            if (selectedLanceOrderPanel>=ORDER_WINGMATE_PANELS || !lanceOrderControls[selectedLanceOrderPanel]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: selectedLanceOrderPanel>=ORDER_WINGMATE_PANELS || !lanceOrderControls[selectedLanceOrderPanel]");
-            control=lanceOrderControls[selectedLanceOrderPanel];
+            control=SelectedOrderControl();
             if (pendingOrderCommand!=COMBAT_ORDER_ACT_ON_OWN && control->commandCode==COMBAT_ORDER_ACT_ON_OWN)
             {
                 control->trackedUnitOrSpecialSlot=-1;
@@ -255,8 +317,7 @@ navigation:
         }
         else if (orderPanelMode==ORDER_PANEL_TARGET)
         {
-            if (selectedLanceOrderPanel>=ORDER_WINGMATE_PANELS || !lanceOrderControls[selectedLanceOrderPanel]) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: selectedLanceOrderPanel>=ORDER_WINGMATE_PANELS || !lanceOrderControls[selectedLanceOrderPanel]");
-            control=lanceOrderControls[selectedLanceOrderPanel];
+            control=SelectedOrderControl();
             int16_t step=orderNavigationPanelDeltas[direction]+orderNavigationRowDeltas[direction];
             int16_t candidate=control->trackedUnitOrSpecialSlot,target=-1;
             if (candidate==-1) candidate=control->targetUnitSlot>=0?control->targetUnitSlot:COMBAT_LANCE_SLOTS;
@@ -287,8 +348,8 @@ navigation:
                 else repeatShift=ORDER_DESTINATION_REPEAT_SHIFT;
             }
             else orderDestinationRepeatCountdown=ORDER_DESTINATION_REPEAT_TICKS;
-            if (selectedLanceOrderPanel>=ORDER_WINGMATE_PANELS || !lanceOrderControls[selectedLanceOrderPanel] || orderMapScaleIndex>=ORDER_MAP_SCALE_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: selectedLanceOrderPanel>=ORDER_WINGMATE_PANELS || !lanceOrderControls[selectedLanceOrderPanel] || orderMapScaleIndex>=ORDER_MAP_SCALE_COUNT");
-            control=lanceOrderControls[selectedLanceOrderPanel];
+            if (orderMapScaleIndex>=ORDER_MAP_SCALE_COUNT) /* Port failsafe; not an original DOS exit. */ MW_PORT_FAILSAFE("Rejected condition: orderMapScaleIndex>=ORDER_MAP_SCALE_COUNT");
+            control=SelectedOrderControl();
             uint8_t shift=orderMapScaleShifts[orderMapScaleIndex]+repeatShift-ORDER_MAP_PROJECTION_BASE_SHIFT;
             int16_t deltaX=shift<16?(int16_t)((uint32_t)(uint16_t)orderNavigationPanelDeltas[direction]<<shift):0;
             int16_t deltaY=shift<16?(int16_t)((uint32_t)(uint16_t)orderNavigationRowDeltas[direction]<<shift):0;
@@ -303,6 +364,10 @@ navigation:
         }
         previousOrderNavigationKey=direction;
     }
+}
+void BtechEditSelectedUnitOrders(void)
+{
+    EnterOrderProcedure();OrderEditSelectedUnitOrdersBody();LeaveOrderProcedure();
 }
 
 /*17FB:0040. Width excludes the right edge; height includes the bottom.
